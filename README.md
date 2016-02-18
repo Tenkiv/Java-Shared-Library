@@ -1,20 +1,22 @@
 Java-Shared-Library
 ====================
 
-Base Java library to connect to, control and read data from Tekdaqcs.
+Base Java library containg the classes used by both the [Tekdaqc-Java-Library](https://github.com/Tenkiv/Tekdaqc-Java-Library) and the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library) for connectinga dn managing Tekdaqcs.
 
 Join [Intelligent Automation, Computer Interface, & DAQ Community](https://plus.google.com/u/0/communities/109351353187504550254) on [![DAQ Community on Google Plus](https://ssl.gstatic.com/images/icons/gplus-16.png)](https://plus.google.com/u/0/communities/109351353187504550254) to stay up-to-date on the latest news.
 
-## Using the Tekdaqc Java Library
+## Java-Shared-Library
 
 ### Dependencies
 * [Apache Commons Net Library](http://commons.apache.org/proper/commons-net/) _NOTE: This is currently included in the repository_
+* Intellij Annotations Library _NOTE: This is currently included in the repository_
 
 ### Setup
 
-1. Clone or download a copy of the Tekdaqc Android Library source code.
-2. Import the Tekdaqc Java Library project into Eclipse.
-3. In your project's build path settings, add a project reference to Tekdaqc Java Library.
+1. Clone or download a copy of the Java-Shared-Library source code.
+2. Build library using Gradle.
+3. Upload to local Maven repo.
+4. It is now ready to use in the [Tekdaqc-Java-Library](https://github.com/Tenkiv/Tekdaqc-Java-Library), the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library), or for your own Tekdaqc control software.
 
 ## More Information
 
@@ -44,8 +46,6 @@ Please see our [contribution guidelines](https://github.com/Tenkiv/Tekdaqc-Andro
 
 ## License
 
-    Copyright 2013 Tenkiv, Inc.
-    
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
