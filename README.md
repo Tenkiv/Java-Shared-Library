@@ -1,7 +1,7 @@
-Tekdaqc-Java-Library
+Java-Shared-Library
 ====================
 
-Java library to connect to, control and read data from Tekdaqcs.
+Base Java library to connect to, control and read data from Tekdaqcs.
 
 Join [Intelligent Automation, Computer Interface, & DAQ Community](https://plus.google.com/u/0/communities/109351353187504550254) on [![DAQ Community on Google Plus](https://ssl.gstatic.com/images/icons/gplus-16.png)](https://plus.google.com/u/0/communities/109351353187504550254) to stay up-to-date on the latest news.
 

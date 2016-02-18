@@ -1,0 +1,27 @@
+group 'com.tenkiv.tekdaqc'
+version '1.0.0.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.7
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+if (version.endsWith('-SNAPSHOT')) {
+    status = 'integration'
+} else {
+    status = 'release'
+}
+
+
+
+dependencies {
+    compile 'com.intellij:annotations:+'
+    compile(group: 'commons-net', name: 'commons-net', version: '3.3', ext: 'jar')
+}
+
+apply from: '../maven_push.gradle'

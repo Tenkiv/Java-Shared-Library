@@ -1,2 +1,4 @@
-rootProject.name = 'Java-Shared'
+rootProject.name = 'Java-Shared-Library'
+include 'library'
+findProject(':library')?.name = 'shared-java-lib'
 
