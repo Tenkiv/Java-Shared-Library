@@ -28,10 +28,6 @@ allprojects {
     }
 }
 
-compileJava {
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
-}
 
 def isReleaseBuild() {
     return version.contains("SNAPSHOT") == false
