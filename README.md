@@ -1,7 +1,7 @@
-Java-Shared-Library
+Tekdaqc-Java-Core-Library
 ====================
 
-Base Java library containg the classes used by both the [Tekdaqc-Java-Library](https://github.com/Tenkiv/Tekdaqc-Java-Library) and the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library) for connectinga dn managing Tekdaqcs.
+Base Java library containg the Java classes used by both the [Tekdaqc-JVM-Library](https://github.com/Tenkiv/Tekdaqc-JVM-Library) and the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library) for connectinga dn managing Tekdaqcs.
 
 Join [Intelligent Automation, Computer Interface, & DAQ Community](https://plus.google.com/u/0/communities/109351353187504550254) on [![DAQ Community on Google Plus](https://ssl.gstatic.com/images/icons/gplus-16.png)](https://plus.google.com/u/0/communities/109351353187504550254) to stay up-to-date on the latest news.
 
@@ -15,14 +15,14 @@ Join [Intelligent Automation, Computer Interface, & DAQ Community](https://plus.
 
 1. Clone or download a copy of the Java-Shared-Library source code.
 2. Build library using Gradle.
-3. Upload to local Maven repo.
-4. It is now ready to use in the [Tekdaqc-Java-Library](https://github.com/Tenkiv/Tekdaqc-Java-Library), the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library), or for your own Tekdaqc control software.
+3. Upload to local Maven repository.
+4. It is now ready to use in the [Tekdaqc-Java-Library](https://github.com/Tenkiv/Tekdaqc-JVM-Library), the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library), or for your own Tekdaqc control software.
 
 ## More Information
 
 ### Other Tekdaqc GIT Repositories
+* [Tekdaqc-Java-Library](https://github.com/Tenkiv/Tekdaqc-JVM-Library)
 * [Tekdaqc Android Library](https://github.com/Tenkiv/Tekdaqc-Android-Library)
-* [Tekdaqc Android Manager](https://github.com/Tenkiv/Tekdaqc-Android-Manager)
 * [Tekdaqc Firmware](https://github.com/Tenkiv/Tekdaqc-Firmware)
 
 ### Tekdaqc Manual
