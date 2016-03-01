@@ -126,7 +126,7 @@ public final class Locator {
      * @param response {@link LocatorResponse} The response sent by the Tekdaqc.
      * @return {@link ATekdaqc} The constructed Tekdaqc.
      */
-    public static ATekdaqc createTekdaqc(final LocatorResponse response) {
+    protected static ATekdaqc createTekdaqc(final LocatorResponse response) {
         // This is here to allow for future backwards compatibility with
         // different board versions
         final ATekdaqc tekdaqc;

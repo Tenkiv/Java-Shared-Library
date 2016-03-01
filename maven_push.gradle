@@ -75,10 +75,4 @@ afterEvaluate { project ->
         archives javadocJar
         archives sourcesJar
     }
-
-    jar {
-        from {
-            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-        }
-    }
 }

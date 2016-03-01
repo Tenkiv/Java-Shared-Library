@@ -151,7 +151,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
         mCommandQueue = getCommandManager();
 
-        mParsingExecutor = new ASCIIParsingExecutor(1);
+        mParsingExecutor = getParingExecutor();
 
         mDigitalInputSampleTimer = new Timer(true);
     }
@@ -196,6 +196,10 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
             }
         }
         return builder.toString();
+    }
+
+    protected ASCIIParsingExecutor getParingExecutor() {
+        return new ASCIIParsingExecutor(1);
     }
 
     /**
