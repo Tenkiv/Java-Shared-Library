@@ -27,12 +27,12 @@ public class CalibrationQueueValue extends ABaseQueueVal {
     /**
      * The temperature index for the calibration.
      */
-    private float mCalTemp;
+    private int mCalTempIndex;
 
     /**
      * The value of the calibration.
      */
-    private int mCalValue;
+    private float mCalValueRatio;
 
     /**
      * The buffer state of the value in {@link Byte} ordinal.
@@ -69,19 +69,23 @@ public class CalibrationQueueValue extends ABaseQueueVal {
      * @param scaleVal  Scale of the value in {@link Byte} ordinal.
      */
     public CalibrationQueueValue(final byte command
-            , final float calTemp
-            , final int value
+            , final int calTemp
+            , final float value
             , final byte bufferVal
             , final byte rateVal
             , final byte gainVal
             , final byte scaleVal) {
         super(command);
-        mCalTemp = calTemp;
-        mCalValue = value;
+        mCalTempIndex = calTemp;
+        mCalValueRatio = value;
         mBufferVal = bufferVal;
         mRateVal = rateVal;
         mGainVal = gainVal;
         mScaleVal = scaleVal;
+    }
+
+    public CalibrationQueueValue(){
+        super();
     }
 
 
@@ -92,13 +96,19 @@ public class CalibrationQueueValue extends ABaseQueueVal {
                 QueueUtil.PARAMETER_FLAG +
                 Params.VALUE.name() +
                 QueueUtil.KEY_VALUE_SEPARATOR +
-                mCalValue +
+                mCalValueRatio +
 
                 QueueUtil.GENERAL_DELIMETER +
                 QueueUtil.PARAMETER_FLAG +
                 Params.BUFFER.name() +
                 QueueUtil.KEY_VALUE_SEPARATOR +
                 AnalogInput_RevD.BufferState.getValueFromOrdinal(mBufferVal) +
+
+                QueueUtil.GENERAL_DELIMETER +
+                QueueUtil.PARAMETER_FLAG +
+                Params.RATE.name() +
+                QueueUtil.KEY_VALUE_SEPARATOR +
+                AAnalogInput.Rate.getValueFromOrdinal(mRateVal) +
 
                 QueueUtil.GENERAL_DELIMETER +
                 QueueUtil.PARAMETER_FLAG +
@@ -114,9 +124,9 @@ public class CalibrationQueueValue extends ABaseQueueVal {
 
                 QueueUtil.GENERAL_DELIMETER +
                 QueueUtil.PARAMETER_FLAG +
-                Params.TEMPERATURE.name() +
+                Params.INDEX.name() +
                 QueueUtil.KEY_VALUE_SEPARATOR +
-                mCalTemp +
+                mCalTempIndex +
                 QueueUtil.COMMAND_EOF)
                 .getBytes();
     }
@@ -124,8 +134,8 @@ public class CalibrationQueueValue extends ABaseQueueVal {
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
-        out.writeFloat(mCalTemp);
-        out.writeInt(mCalValue);
+        out.writeInt(mCalTempIndex);
+        out.writeFloat(mCalValueRatio);
         out.writeByte(mBufferVal);
         out.writeByte(mRateVal);
         out.writeByte(mGainVal);
@@ -135,8 +145,8 @@ public class CalibrationQueueValue extends ABaseQueueVal {
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        mCalTemp = in.readFloat();
-        mCalValue = in.readInt();
+        mCalTempIndex = in.readInt();
+        mCalValueRatio = in.readFloat();
         mBufferVal = in.readByte();
         mRateVal = in.readByte();
         mGainVal = in.readByte();

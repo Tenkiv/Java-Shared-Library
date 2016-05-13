@@ -509,7 +509,7 @@ public final class CommandBuilder {
         return new CalibrationQueueValue(
                 (byte) Commands.WRITE_GAIN_CALIBRATION_VALUE.ordinal(),
                 temp,
-                (int) value,
+                value,
                 (byte) buffer.ordinal(),
                 (byte) rate.ordinal(),
                 (byte) gain.ordinal(),

@@ -19,7 +19,6 @@ if (version.endsWith('-SNAPSHOT')) {
 }
 
 dependencies {
-    /*compile 'com.intellij:annotations:+'*/
     compile(group: 'commons-net', name: 'commons-net', version: '3.3', ext: 'jar')
 }
 
