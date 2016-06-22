@@ -43,6 +43,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
      * The number of digital outputs present on the board.
      */
     public static final int DIGITAL_OUTPUT_COUNT = 16;
+
     private static final long serialVersionUID = 1L;
     /**
      * The value of the reference voltage on the Tekdaqc
@@ -91,6 +92,21 @@ public class Tekdaqc_RevD extends ATekdaqc {
     private static final List<AnalogScale> VALID_ANALOG_SCALEs = Arrays.asList(
             AnalogScale.ANALOG_SCALE_5V,
             AnalogScale.ANALOG_SCALE_400V);
+
+    @Override
+    protected int getAnalogInputCount() {
+        return ANALOG_INPUT_COUNT;
+    }
+
+    @Override
+    protected int getDigitalInputCount() {
+        return DIGITAL_INPUT_COUNT;
+    }
+
+    @Override
+    protected int getDigitalOutputCount() {
+        return DIGITAL_OUTPUT_COUNT;
+    }
 
     /**
      * Provided only to support serialization. User code should not use this
