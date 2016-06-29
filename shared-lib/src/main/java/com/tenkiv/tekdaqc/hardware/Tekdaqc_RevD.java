@@ -9,6 +9,7 @@ import com.tenkiv.tekdaqc.communication.data_points.AnalogInputData;
 import com.tenkiv.tekdaqc.communication.data_points.DataPoint;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
 import com.tenkiv.tekdaqc.communication.message.ABoardMessage;
+import com.tenkiv.tekdaqc.communication.message.MessageBroadcaster;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate;
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD.BufferState;
@@ -43,6 +44,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
      * The number of digital outputs present on the board.
      */
     public static final int DIGITAL_OUTPUT_COUNT = 16;
+
     private static final long serialVersionUID = 1L;
     /**
      * The value of the reference voltage on the Tekdaqc
@@ -52,6 +54,8 @@ public class Tekdaqc_RevD extends ATekdaqc {
      * The input number for the onboard cold junction sensor.
      */
     private static final int COLD_JUNCTION_PHYSICAL_INPUT = 36;
+
+    protected static MessageBroadcaster mMessageBroadcaster = messageBroadcaster;
 
     /**
      * List of valid configuration settings for the {@link AAnalogInput}s of
@@ -91,6 +95,21 @@ public class Tekdaqc_RevD extends ATekdaqc {
     private static final List<AnalogScale> VALID_ANALOG_SCALEs = Arrays.asList(
             AnalogScale.ANALOG_SCALE_5V,
             AnalogScale.ANALOG_SCALE_400V);
+
+    @Override
+    protected int getAnalogInputCount() {
+        return ANALOG_INPUT_COUNT;
+    }
+
+    @Override
+    protected int getDigitalInputCount() {
+        return DIGITAL_INPUT_COUNT;
+    }
+
+    @Override
+    protected int getDigitalOutputCount() {
+        return DIGITAL_OUTPUT_COUNT;
+    }
 
     /**
      * Provided only to support serialization. User code should not use this

@@ -98,6 +98,10 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     protected boolean keepAlivePacketSent = false;
     protected boolean isConnected = false;
 
+    abstract int getAnalogInputCount();
+    abstract int getDigitalInputCount();
+    abstract int getDigitalOutputCount();
+
     /**
      * A {@link TimerTask} to be executed when attempting to use throttled sampling.
      */
@@ -188,11 +192,13 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     protected String generateBinaryStringFromOutput() {
         StringBuilder builder = new StringBuilder();
 
+        for(int i=0; i< getDigitalOutputCount(); i++){
+            builder.append(0);
+        }
+
         for (int outputNumber : mDigitalOutputs.keySet()) {
             if (mDigitalOutputs.get(outputNumber).getCurrentState() == DigitalState.LOGIC_HIGH) {
-                builder.insert(outputNumber, "1");
-            } else {
-                builder.insert(outputNumber, "0");
+                builder.replace(outputNumber,outputNumber+1, "1");
             }
         }
         return builder.toString();
@@ -207,7 +213,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * Throttled sampling must be halted by calling haltThrottledDigitalInputReading().
      *
      * @param rateMillis Rate at which to read the digital inputs in samples/millisecond.
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException Exception thrown if specified rate is less them 0
      */
     public void readThrottledDigitalInput(int rateMillis) throws IllegalArgumentException {
         if (rateMillis > 0) {

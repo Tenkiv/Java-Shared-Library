@@ -35,6 +35,10 @@ public class ReadExecutor implements ITekdaqcExecutor {
 
     /**
      * Constructor.
+     *
+     * @param tekdaqc The Tekdaqc this read executor represents.
+     *
+     * @param callback The callback for detected messages.
      */
     public ReadExecutor(ATekdaqc tekdaqc, AParsingExecutor.IParsingListener callback) {
         if (callback == null) throw new IllegalArgumentException("Callback set cannot be null.");

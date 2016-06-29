@@ -439,6 +439,7 @@ public final class CommandBuilder {
     /**
      * Method to generate a {@link ABaseQueueVal} representing the command "SET_RTC" with the given parameters.
      *
+     * @param timestamp The current time to be set for the RTC.
      * @return The {@link ABaseQueueVal} of the command.
      */
     public static ABaseQueueVal setRTC(final long timestamp) {
@@ -509,7 +510,7 @@ public final class CommandBuilder {
         return new CalibrationQueueValue(
                 (byte) Commands.WRITE_GAIN_CALIBRATION_VALUE.ordinal(),
                 temp,
-                (int) value,
+                value,
                 (byte) buffer.ordinal(),
                 (byte) rate.ordinal(),
                 (byte) gain.ordinal(),

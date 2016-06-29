@@ -4,8 +4,6 @@ package com.tenkiv.tekdaqc.locator;
 
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 import com.tenkiv.tekdaqc.hardware.Tekdaqc_RevD;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
@@ -74,7 +72,7 @@ public final class Locator {
      * @param listener Listener to callback to once a Tekdaqc has been discovered.
      * @param params   Locator parameters to configure the UDP broadcasts.
      */
-    public Locator(@Nullable final LocatorParams params, final OnTekdaqcDiscovered listener) {
+    public Locator(final LocatorParams params, final OnTekdaqcDiscovered listener) {
 
         if (listener == null)
             throw new IllegalArgumentException();
