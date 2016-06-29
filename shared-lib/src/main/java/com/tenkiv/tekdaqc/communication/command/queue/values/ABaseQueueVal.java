@@ -25,7 +25,7 @@ public abstract class ABaseQueueVal implements IQueueObject {
     /**
      * Constructor specifying {@link Commands} which {@link ABaseQueueVal} represents.
      *
-     * @param command
+     * @param command Byte value of command to be parsed.
      */
     protected ABaseQueueVal(final byte command) {
         mCommandType = command;

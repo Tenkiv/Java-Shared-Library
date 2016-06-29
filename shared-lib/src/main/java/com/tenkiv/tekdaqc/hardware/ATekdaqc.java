@@ -213,7 +213,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * Throttled sampling must be halted by calling haltThrottledDigitalInputReading().
      *
      * @param rateMillis Rate at which to read the digital inputs in samples/millisecond.
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException Exception thrown if specified rate is less them 0
      */
     public void readThrottledDigitalInput(int rateMillis) throws IllegalArgumentException {
         if (rateMillis > 0) {

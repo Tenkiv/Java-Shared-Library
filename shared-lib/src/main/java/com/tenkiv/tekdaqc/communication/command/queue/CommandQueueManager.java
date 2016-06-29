@@ -48,7 +48,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     /**
      * Constructor for {@link CommandQueueManager} which assigns which {@link ATekdaqc} this class manages.
      *
-     * @param tekdaqc
+     * @param tekdaqc The Tekdaqc which is being managed by the command queue.
      */
     public CommandQueueManager(final ATekdaqc tekdaqc) {
         mTekdaqc = tekdaqc;

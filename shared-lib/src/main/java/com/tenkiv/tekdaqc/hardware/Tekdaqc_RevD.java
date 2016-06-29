@@ -9,6 +9,7 @@ import com.tenkiv.tekdaqc.communication.data_points.AnalogInputData;
 import com.tenkiv.tekdaqc.communication.data_points.DataPoint;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
 import com.tenkiv.tekdaqc.communication.message.ABoardMessage;
+import com.tenkiv.tekdaqc.communication.message.MessageBroadcaster;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate;
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD.BufferState;
@@ -53,6 +54,8 @@ public class Tekdaqc_RevD extends ATekdaqc {
      * The input number for the onboard cold junction sensor.
      */
     private static final int COLD_JUNCTION_PHYSICAL_INPUT = 36;
+
+    protected static MessageBroadcaster mMessageBroadcaster = messageBroadcaster;
 
     /**
      * List of valid configuration settings for the {@link AAnalogInput}s of
