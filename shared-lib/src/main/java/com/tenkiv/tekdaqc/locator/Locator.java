@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Class which is responsible for searching for any Tekdaqcs on the network
+ * Singleton class which is responsible for searching for any Tekdaqcs on the network
  * which match the parameters provided at construction.
  *
  * @author Tenkiv (software@tenkiv.com)
@@ -19,25 +19,46 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class Locator {
 
+    /**
+     * Lock ensuring thread safety of {@param activeTekdaqcMap}
+     */
     private static final ReadWriteLock tekdaqcMapLock = new ReentrantReadWriteLock();
+
+    /**
+     * List of all active tekdaqcs
+     */
     private static final Map<String, ATekdaqc> activeTekdaqcMap = new HashMap<String, ATekdaqc>();
+
     /**
      * Flag to enable/disable debug logging
      */
     private static boolean DEBUG = true;
+
     /**
      * The parameter set to use for the locator request
      */
-    private final LocatorParams mParams;
+    private LocatorParams mParams;
+
+    /**
+     * Lock ensuring thread safety of {@param mTempMapLock}
+     */
     private final ReadWriteLock mTempMapLock = new ReentrantReadWriteLock();
+
     /**
      * The list of tekdaqcs currently discovered.
      */
     private final Map<String, ATekdaqc> mTempTekdaqcMap = new HashMap<String, ATekdaqc>();
+
     /**
-     * The listener associated with the locator.
+     * The listeners associated with the locator.
      */
-    private final OnTekdaqcDiscovered mListener;
+    private final ArrayList<OnTekdaqcDiscovered> mListeners =
+            (ArrayList<OnTekdaqcDiscovered>) Collections.synchronizedList(new ArrayList<OnTekdaqcDiscovered>());
+
+    /**
+     * Instance of the Singleton.
+     */
+    private static Locator mInstance;
 
     /**
      * The timer run periodically to search for tekdaqcs on the local area network.
@@ -55,48 +76,76 @@ public final class Locator {
 
             try {
                 locate();
+
             } catch (SocketException e) {
                 e.printStackTrace();
+
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
-
         }
     };
-
 
     /**
      * Create a Tekdaqc locator which will search for Tekdaqcs matching
      * {@link LocatorParams}.
      *
-     * @param listener Listener to callback to once a Tekdaqc has been discovered.
-     * @param params   Locator parameters to configure the UDP broadcasts.
+     * @param params Locator parameters to configure the UDP broadcasts.
      */
-    public Locator(final LocatorParams params, final OnTekdaqcDiscovered listener) {
-
-        if (listener == null)
-            throw new IllegalArgumentException();
-
+    protected Locator(final LocatorParams params){
         if (params == null) {
             mParams = new LocatorParams.Builder().build();
         } else {
             mParams = params;
         }
+    }
 
-        mListener = listener;
+    /**
+     * Gets the instance of the singleton class {@link Locator}. To ensure safe execution of the {@link Locator}, there
+     * needs to be only a single instance of the class as it occupies a single designated port for a long duration.
+     * To get an unsafe instance use {@param createUnsafeInstance}
+     * @return
+     */
+    public static Locator getInstance(){
+        if(mInstance == null){
+            mInstance = new Locator(null);
+        }
+        return mInstance;
+    }
 
+    /**
+     * Sets new params for the {@link Locator}.
+     * Setting new params cancels execution of the current Locator if it is running, requiring it to be restarted.
+     *
+     *
+     * @param params The {@link LocatorParams} to be set for the {@link Locator}.
+     */
+    public void setLocatorParams(final LocatorParams params){
+        mUpdateTimer.cancel();
+
+        mParams = params;
 
     }
 
-    public Locator(final OnTekdaqcDiscovered listener) {
+    /**
+     * Creates an unsafe instance of the {@link Locator} class. If not properly configured, this locator will not
+     * function while another is active. Use {@link LocatorParams} to set a different port to search on, however this
+     * will only work if the Tekdaqc is programmed to respond to the new port.
+     *
+     * @param params The {@link LocatorParams} to be set for the {@link Locator}.
+     * @return An unsafe {@link Locator} instance.
+     */
+    public static Locator createUnsafeLocator(final LocatorParams params){
+        return new Locator(params);
+    }
 
-        if (listener == null)
-            throw new IllegalArgumentException();
-
-        mParams = new LocatorParams.Builder().build();
-
-
-        mListener = listener;
+    /**
+     * Method to add a {@link OnTekdaqcDiscovered} listener to be notified about {@link Locator} discoveries.
+     *
+     * @param listener The {@link OnTekdaqcDiscovered} locator to be added.
+     */
+    public void addLocatorListener(final OnTekdaqcDiscovered listener){
+        mListeners.add(listener);
     }
 
     /**
@@ -252,9 +301,14 @@ public final class Locator {
                     } else {
                         final ATekdaqc tekdaqc = createTekdaqc(response);
                         mTempTekdaqcMap.put(tekdaqc.getSerialNumber(), tekdaqc);
-                        mListener.onTekdaqcFirstLocated(tekdaqc);
+
+                        for(OnTekdaqcDiscovered listener: mListeners) {
+                            listener.onTekdaqcFirstLocated(tekdaqc);
+                        }
                     }
-                    mListener.onTekdaqcResponse(getTekdaqcForSerial(response.getSerial()));
+                    for(OnTekdaqcDiscovered listener: mListeners) {
+                        listener.onTekdaqcResponse(getTekdaqcForSerial(response.getSerial()));
+                    }
                     mTempMapLock.writeLock().unlock();
                 } else {
                     if (DEBUG) System.out.println("Invalid response received: ");
@@ -286,7 +340,9 @@ public final class Locator {
                 removeTekdaqcForSerial(questionableBoard.getKey());
                 tekdaqcMapLock.readLock().lock();
                 tekdaqcMapLock.writeLock().unlock();
-                mListener.onTekdaqcNoLongerLocated(questionableBoard.getValue());
+                for(OnTekdaqcDiscovered listener: mListeners) {
+                    listener.onTekdaqcNoLongerLocated(questionableBoard.getValue());
+                }
             }
             mTempMapLock.readLock().unlock();
         }
@@ -313,6 +369,7 @@ public final class Locator {
      * Method which halts the locator.
      */
     public void cancelLocator() {
+
         mUpdateTimer.cancel();
     }
 
@@ -323,6 +380,7 @@ public final class Locator {
      * @param period The period at which to run the locator as a {@link Long}.
      */
     public void searchForTekDAQCS(final long delay, final long period) {
+
         mUpdateTimer.scheduleAtFixedRate(mUpdateTask, delay, period);
     }
 }
