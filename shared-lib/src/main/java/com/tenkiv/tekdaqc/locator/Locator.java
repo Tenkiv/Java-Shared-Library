@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public final class Locator {
 
     /**
-     * Lock ensuring thread safety of {@param activeTekdaqcMap}
+     * Lock ensuring thread safety of {@link Locator#activeTekdaqcMap}
      */
     private static final ReadWriteLock tekdaqcMapLock = new ReentrantReadWriteLock();
 
@@ -40,7 +40,7 @@ public final class Locator {
     private LocatorParams mParams;
 
     /**
-     * Lock ensuring thread safety of {@param mTempMapLock}
+     * Lock ensuring thread safety of {@link Locator#mTempMapLock}
      */
     private final ReadWriteLock mTempMapLock = new ReentrantReadWriteLock();
 
@@ -103,7 +103,7 @@ public final class Locator {
     /**
      * Gets the instance of the singleton class {@link Locator}. To ensure safe execution of the {@link Locator}, there
      * needs to be only a single instance of the class as it occupies a single designated port for a long duration.
-     * To get an unsafe instance use {@param createUnsafeInstance}
+     * To get an unsafe instance use {@link Locator#createUnsafeLocator(LocatorParams)}
      * @return
      */
     public static Locator getInstance(){
