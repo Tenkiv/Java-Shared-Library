@@ -1,5 +1,8 @@
 package com.tenkiv.tekdaqc.hardware;
 
+import com.tenkiv.tekdaqc.communication.message.IAnalogChannelListener;
+import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener;
+
 /**
  * Container class for all data/settings of an digital input on the Tekdaqc.
  *
@@ -74,5 +77,14 @@ public class DigitalInput extends IInputOutputHardware {
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
+    }
+
+    /**
+     * Method to add a {@link IDigitalChannelListener} to listen for data on only this channel.
+     *
+     * @param listener The {@link IDigitalChannelListener} to add for callbacks.
+     */
+    public void addDigitalListener(IDigitalChannelListener listener) {
+        getTekdaqc().addDigitalChannelListener(listener, this);
     }
 }

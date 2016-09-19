@@ -2,6 +2,7 @@ package com.tenkiv.tekdaqc.locator;
 
 
 
+import com.sun.javafx.collections.UnmodifiableListSet;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 import com.tenkiv.tekdaqc.hardware.Tekdaqc_RevD;
 import java.io.IOException;
@@ -61,6 +62,21 @@ public final class Locator {
     private static Locator mInstance;
 
     /**
+     * The default delay on the {@link Locator} running.
+     */
+    private static final long DEFAULT_LOCATOR_DELAY = 0;
+
+    /**
+     * The default period of running the {@link Locator}.
+     */
+    private static final long DEFAULT_LOCATOR_PERIOD = 5000;
+
+    /**
+     * Boolean determining if the {@link Locator} is running.
+     */
+    private boolean mIsActive = false;
+
+    /**
      * The timer run periodically to search for tekdaqcs on the local area network.
      */
     private final Timer mUpdateTimer = new Timer();
@@ -104,7 +120,8 @@ public final class Locator {
      * Gets the instance of the singleton class {@link Locator}. To ensure safe execution of the {@link Locator}, there
      * needs to be only a single instance of the class as it occupies a single designated port for a long duration.
      * To get an unsafe instance use {@link Locator#createUnsafeLocator(LocatorParams)}
-     * @return
+     *
+     * @return The instance of the {@link Locator}.
      */
     public static Locator getInstance(){
         if(mInstance == null){
@@ -149,6 +166,15 @@ public final class Locator {
     }
 
     /**
+     * Method to remove a {@link OnTekdaqcDiscovered} listener from the {@link Locator} callbacks.
+     *
+     * @param listener The {@link OnTekdaqcDiscovered} listener to be removed.
+     */
+    public void removeLocatorListener(final OnTekdaqcDiscovered listener){
+        mListeners.remove(listener);
+    }
+
+    /**
      * Get the status of debug logging.
      *
      * @return boolean True if debug logging is enabled.
@@ -171,9 +197,12 @@ public final class Locator {
      * based on the response from the locator service.
      *
      * @param response {@link LocatorResponse} The response sent by the Tekdaqc.
+     * @param isSafeCreation If the {@link ATekdaqc} was found through reliable location instead of an automatically
+     *                       assumed preexisting IP address and MAC values.
+     *
      * @return {@link ATekdaqc} The constructed Tekdaqc.
      */
-    protected static ATekdaqc createTekdaqc(final LocatorResponse response) {
+    protected static ATekdaqc createTekdaqc(final LocatorResponse response, boolean isSafeCreation) {
         // This is here to allow for future backwards compatibility with
         // different board versions
         final ATekdaqc tekdaqc;
@@ -181,12 +210,78 @@ public final class Locator {
             case 'D':
             case 'E':
                 tekdaqc = new Tekdaqc_RevD(response);
-                addTekdaqctoMap(tekdaqc);
+
+                if(isSafeCreation) {
+                    addTekdaqctoMap(tekdaqc);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown Tekdaqc Revision: " + ((char) response.getType()));
         }
         return tekdaqc;
+    }
+
+    /**
+     * Method to connect to a discovered Tekdaqc of target serial number. Returns a CONNECTED {@link ATekdaqc}.
+     *
+     * @param serialNumber A {@link String} of the target {@link ATekdaqc}'s serial number.
+     * @return A {@link ATekdaqc} with an open connection.
+     */
+    public static ATekdaqc connectToTargetTekdaqc(String serialNumber){
+
+        Map<String,ATekdaqc> map = Locator.getActiveTekdaqcMap();
+
+        if(map.containsKey(serialNumber)){
+            ATekdaqc tekdaqc = map.get(serialNumber);
+            try {
+                tekdaqc.connect(ATekdaqc.CONNECTION_METHOD.ETHERNET);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return tekdaqc;
+
+        }else{
+            try {
+                throw new Exception("No Tekdaqc Found with serial number "+serialNumber);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Method to create a {@link ATekdaqc} from an assumed pre-known serial number, IP address, and board revision.
+     * Because this does not guarantee that the {@link ATekdaqc} actually exists, the {@link ATekdaqc} created in this
+     * manner will not be added to the global {@link Locator#getActiveTekdaqcMap()}.
+     *
+     * @param serialNumber The assumed serial number of the hypothetical {@link ATekdaqc}.
+     * @param hostIPAdress The assumed IP address of the hypothetical {@link ATekdaqc}.
+     * @param tekdaqcRevision The assumed revision of the hypothetical {@link ATekdaqc}.
+     *
+     * @return A {@link ATekdaqc} object that represents an un-located, hypothetical Tekdaqc on the network.
+     */
+    public static ATekdaqc connectToUnsafeTarget(String serialNumber, String hostIPAdress, char tekdaqcRevision){
+
+        LocatorResponse pseudoResponse = new LocatorResponse();
+
+        pseudoResponse.mHostIPAddress = hostIPAdress;
+
+        pseudoResponse.mType = tekdaqcRevision;
+
+        pseudoResponse.mSerial = serialNumber;
+
+        ATekdaqc tekdaqc = Locator.createTekdaqc(pseudoResponse, false);
+
+        try {
+            tekdaqc.connect(ATekdaqc.CONNECTION_METHOD.ETHERNET);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return tekdaqc;
+
     }
 
     /**
@@ -215,6 +310,12 @@ public final class Locator {
         tekdaqcMapLock.writeLock().unlock();
     }
 
+    /**
+     * Adds a {@link ATekdaqc} to the global map of {@link Locator#getActiveTekdaqcMap()}, This should only be done if
+     * you are certain the {@link ATekdaqc} exists. Adding unsafe {@link ATekdaqc}s may cause crashes or spooky behavior.
+     *
+     * @param tekdaqc The {@link ATekdaqc} to be added.
+     */
     protected static void addTekdaqctoMap(final ATekdaqc tekdaqc){
         tekdaqcMapLock.writeLock().lock();
         if (!activeTekdaqcMap.containsKey(tekdaqc.getSerialNumber())) {
@@ -299,7 +400,7 @@ public final class Locator {
                     if (isKnownTekdaqc(response.getSerial())) {
                         mTempTekdaqcMap.put(response.getSerial(), getTekdaqcForSerial(response.getSerial()));
                     } else {
-                        final ATekdaqc tekdaqc = createTekdaqc(response);
+                        final ATekdaqc tekdaqc = createTekdaqc(response, true);
                         mTempTekdaqcMap.put(tekdaqc.getSerialNumber(), tekdaqc);
 
                         for(OnTekdaqcDiscovered listener: mListeners) {
@@ -330,11 +431,8 @@ public final class Locator {
 
             mTempMapLock.readLock().lock();
 
-            System.out.println("Recent has "+questionableBoard.getKey()+"?: "+mTempTekdaqcMap.containsKey(questionableBoard.getKey())+" Is Connected?: "+questionableBoard.getValue().isConnected());
-
             if (!mTempTekdaqcMap.containsKey(questionableBoard.getKey()) && !questionableBoard.getValue().isConnected()) {
-                System.out.println("Is WriteLocked on current thread? "+((ReentrantReadWriteLock) tekdaqcMapLock).isWriteLockedByCurrentThread()+'\n'+
-                "Is WriteLocked total? "+((ReentrantReadWriteLock) tekdaqcMapLock).isWriteLocked());
+
                 tekdaqcMapLock.readLock().unlock();
                 tekdaqcMapLock.writeLock().lock();
                 removeTekdaqcForSerial(questionableBoard.getKey());
@@ -370,17 +468,176 @@ public final class Locator {
      */
     public void cancelLocator() {
 
+        mIsActive = false;
+
         mUpdateTimer.cancel();
     }
 
+    public boolean isActive(){
+        return mIsActive;
+    }
+
     /**
-     * Method which starts the locator at a given time and rate.
+     * Method which starts the locator at a given delay and period.
      *
      * @param delay  The delay at which to start the locator as a {@link Long}.
      * @param period The period at which to run the locator as a {@link Long}.
      */
-    public void searchForTekDAQCS(final long delay, final long period) {
+    public void searchForTekdaqcs(final long delay, final long period) {
+
+        mIsActive = true;
 
         mUpdateTimer.scheduleAtFixedRate(mUpdateTask, delay, period);
+    }
+
+    /**
+     * Method which starts the locator at the default delay and period.
+     */
+    public void searchForTekdaqcs(){
+
+        mIsActive = true;
+
+        mUpdateTimer.scheduleAtFixedRate(mUpdateTask, DEFAULT_LOCATOR_DELAY, DEFAULT_LOCATOR_PERIOD);
+    }
+
+    /**
+     * Convenience method to search for specific {@link ATekdaqc}s on the network. Note: this method will start the {@link Locator}'s
+     * default method ({@link Locator#searchForTekdaqcs()}), so other classes may also be notified of discovered {@link ATekdaqc}s.
+     *
+     * @param listener The {@link OnTargetTekdaqcFound} listener to be notified.
+     * @param timeoutDuration The maximum time to run before returning {@link OnTargetTekdaqcFound#onFailure(String, OnTargetTekdaqcFound.FailureFlag)}
+     * @param serials Variable arguments of the serial numbers of the {@link ATekdaqc} to find.
+     */
+    public void searchForSpecificTekdaqcs(final OnTargetTekdaqcFound listener, final long timeoutDuration, final String... serials){
+        searchForSpecificTekdaqcs(listener, timeoutDuration, false, serials);
+    }
+
+    /**
+     * Convenience method to search for specific {@link ATekdaqc}s on the network. Note: this method will start the {@link Locator}'s
+     * default method ({@link Locator#searchForTekdaqcs()}), so other classes may also be notified of discovered {@link ATekdaqc}s.
+     * Contains the option to automatically connect to the {@link ATekdaqc} so that the boards returned will not be taken by other
+     * listeners and will not need the {@link ATekdaqc#connect(ATekdaqc.CONNECTION_METHOD)} method called on them.
+     *
+     * @param listener The {@link OnTargetTekdaqcFound} listener to be notified.
+     * @param timeoutDuration The maximum time to run before returning {@link OnTargetTekdaqcFound#onFailure(String, OnTargetTekdaqcFound.FailureFlag)}
+     * @param autoConnect If the {@link Locator} should automatically connect to the {@link ATekdaqc} for you.
+     * @param serials Variable arguments of the serial numbers of the {@link ATekdaqc} to find.
+     */
+    public void searchForSpecificTekdaqcs(final OnTargetTekdaqcFound listener, final long timeoutDuration, final boolean autoConnect, final String... serials){
+
+        Map<String,ATekdaqc> previouslyLocated = getActiveTekdaqcMap();
+
+        ArrayList<String> serialList = new ArrayList<String>(Arrays.asList(serials));
+
+        for(String serial: serialList){
+            if(previouslyLocated.containsKey(serial)){
+                listener.onSuccess(previouslyLocated.get(serial));
+                serialList.remove(serial);
+            }
+        }
+
+        Timer searchTimer = new Timer();
+
+        searchTimer.schedule(new AwaitSpecifcTekdaqcTask(serialList,listener,autoConnect),timeoutDuration);
+
+    }
+
+    /**
+     * Internal class to handle waiting for the location of specific {@link ATekdaqc}s by the method
+     * {@link Locator#searchForSpecificTekdaqcs(OnTargetTekdaqcFound, long, boolean, String...)}
+     */
+    private class AwaitSpecifcTekdaqcTask extends TimerTask implements OnTekdaqcDiscovered{
+
+        /**
+         * The {@link List} of the serial numbers to find.
+         */
+        private List<String> mSerialList;
+
+        /**
+         * The list of {@link ATekdaqc}s which have been found.
+         */
+        private List<ATekdaqc> mTekdaqcList = new ArrayList<ATekdaqc>();
+
+        /**
+         * The {@link OnTargetTekdaqcFound} listener to be notified.
+         */
+        private OnTargetTekdaqcFound mListener;
+
+        /**
+         * If {@link ATekdaqc} should be automatically connected to.
+         */
+        private boolean mAutoConnect;
+
+        /**
+         * Constructor for the {@link AwaitSpecifcTekdaqcTask}.
+         *
+         * @param serialList The {@link List} of serial numbers.
+         * @param listener The {@link OnTargetTekdaqcFound} listener to be notified.
+         * @param autoConnect If the program should automatically connect.
+         */
+        private AwaitSpecifcTekdaqcTask(final List<String> serialList, final OnTargetTekdaqcFound listener, boolean autoConnect){
+
+            mSerialList = serialList;
+
+            mListener = listener;
+
+            mAutoConnect = autoConnect;
+
+            Locator.getInstance().addLocatorListener(this);
+
+            if(!Locator.getInstance().isActive()){
+                Locator.getInstance().searchForTekdaqcs();
+            }
+        }
+
+        @Override
+        public void onTekdaqcResponse(ATekdaqc board) {
+
+        }
+
+        @Override
+        public void onTekdaqcFirstLocated(ATekdaqc board) {
+
+            for(String serial: mSerialList){
+                if(board.getSerialNumber() == serial){
+
+                    if(mAutoConnect){
+                        try {
+                            board.connect(ATekdaqc.CONNECTION_METHOD.ETHERNET);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    mListener.onSuccess(board);
+
+                    mSerialList.remove(serial);
+
+                    mTekdaqcList.add(board);
+
+                    if(mSerialList.size() == 0){
+                        mListener.onAllTargetaFound(new UnmodifiableListSet<>(mTekdaqcList));
+                    }
+
+                }
+            }
+
+        }
+
+        @Override
+        public void onTekdaqcNoLongerLocated(ATekdaqc board) {
+
+        }
+
+        @Override
+        public void run() {
+
+            Locator.getInstance().removeLocatorListener(this);
+
+            for(String serial: mSerialList){
+                mListener.onFailure(serial, OnTargetTekdaqcFound.FailureFlag.TEKDAQC_NOT_LOCATED);
+            }
+
+        }
     }
 }

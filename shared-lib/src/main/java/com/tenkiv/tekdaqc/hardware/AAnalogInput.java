@@ -1,5 +1,7 @@
 package com.tenkiv.tekdaqc.hardware;
 
+import com.tenkiv.tekdaqc.communication.message.IAnalogChannelListener;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -161,6 +163,15 @@ public abstract class AAnalogInput extends IInputOutputHardware {
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
+    }
+
+    /**
+     * Method to add a {@link IAnalogChannelListener} to listen for data on only this channel.
+     *
+     * @param listener The {@link IAnalogChannelListener} to add for callbacks.
+     */
+    public void addListener(IAnalogChannelListener listener) {
+        getTekdaqc().addAnalogChannelListener(listener,this);
     }
 
     /**

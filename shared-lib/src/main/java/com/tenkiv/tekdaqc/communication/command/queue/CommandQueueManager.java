@@ -26,20 +26,31 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class CommandQueueManager implements ICommandManager, IMessageListener {
 
+    /**
+     * The locak ensuring therad safety.
+     */
     private final Lock mQueueLock = new ReentrantLock();
+
+    /**
+     * The lock condition.
+     */
     private final Condition mCommandCompletion = mQueueLock.newCondition();
+
     /**
      * The {@link ATekdaqc} which the {@link CommandQueueManager} is running for.
      */
     private final ATekdaqc mTekdaqc;
+
     /**
      * {@link ExecutorService} to handle threads.
      */
     private ExecutorService mExecutor;
+
     /**
      * {@link Queue} of {@link IQueueObject} to be turned into either callbacks or commands.
      */
     private Queue<IQueueObject> mCommandQueue;
+
     /**
      * {@link Boolean} representing the current state of executor.
      */
@@ -54,7 +65,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
         mTekdaqc = tekdaqc;
         mExecutor = Executors.newSingleThreadExecutor(new Factory());
         mCommandQueue = new LinkedBlockingQueue<IQueueObject>();
-        mTekdaqc.registerListener(this);
+        mTekdaqc.addListener(this);
     }
 
     @Override
