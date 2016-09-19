@@ -445,8 +445,8 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      *
      * @param listener Listener to be registered.
      */
-    public void registerListener(IMessageListener listener) {
-        messageBroadcaster.registerMessageListener(this, listener);
+    public void addListener(IMessageListener listener) {
+        messageBroadcaster.addMessageListener(this, listener);
     }
 
     /**
@@ -458,8 +458,8 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * @param listener {@link IAnalogChannelListener} Listener to be registered.
      * @param input    {@link AAnalogInput} Input to register to.
      */
-    public void registerAnalogChannelListener(IAnalogChannelListener listener, AAnalogInput input) {
-        messageBroadcaster.registerAnalogChannelListener(this, input, listener);
+    public void addAnalogChannelListener(IAnalogChannelListener listener, AAnalogInput input) {
+        messageBroadcaster.addAnalogChannelListener(this, input, listener);
     }
 
     /**
@@ -471,8 +471,8 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * @param listener {@link IDigitalChannelListener} Listener to be registered.
      * @param input    {@link DigitalInput} Input to register to.
      */
-    public void registerDigitalChannelListener(IDigitalChannelListener listener, DigitalInput input) {
-        messageBroadcaster.registerDigitalChannelListener(this, input, listener);
+    public void addDigitalChannelListener(IDigitalChannelListener listener, DigitalInput input) {
+        messageBroadcaster.addDigitalChannelListener(this, input, listener);
     }
 
     /**
@@ -480,8 +480,8 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      *
      * @param listener {@link IMessageListener} Listener to be unregistered.
      */
-    public void unregisterListener(IMessageListener listener) {
-        messageBroadcaster.unRegisterListener(this, listener);
+    public void removeListener(IMessageListener listener) {
+        messageBroadcaster.removeListener(this, listener);
     }
 
     /**
@@ -490,8 +490,8 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * @param listener {@link IAnalogChannelListener} The listener to be unregistered.
      * @param input    {@link AAnalogInput} The input to unregister from.
      */
-    public void unregisterAnalogChannelListener(AAnalogInput input, IAnalogChannelListener listener) {
-        messageBroadcaster.unRegisterAnalogChannelListener(this, input, listener);
+    public void removeAnalogChannelListener(AAnalogInput input, IAnalogChannelListener listener) {
+        messageBroadcaster.removeAnalogChannelListener(this, input, listener);
     }
 
     /**
@@ -500,8 +500,8 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * @param listener {@link IDigitalChannelListener} The listener to be unregistered.
      * @param input    {@link DataInput} The input to unregister from.
      */
-    public void unregisterDigitalChannelListener(DigitalInput input, IDigitalChannelListener listener) {
-        messageBroadcaster.unRegisterDigitalChannelListener(this, input, listener);
+    public void removeDigitalChannelListener(DigitalInput input, IDigitalChannelListener listener) {
+        messageBroadcaster.removeDigitalChannelListener(this, input, listener);
     }
 
     /**

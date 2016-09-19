@@ -52,7 +52,7 @@ public final class MessageBroadcaster {
      * @param tekdaqc  {@link ATekdaqc} The Tekdaqc to register for.
      * @param listener {@link IMessageListener} Listener instance to receive the broadcasts.
      */
-    public void registerMessageListener(final ATekdaqc tekdaqc, final IMessageListener listener) {
+    public void addMessageListener(final ATekdaqc tekdaqc, final IMessageListener listener) {
         final List<IMessageListener> listeners;
         if (mFullListeners.get(tekdaqc) != null) {
             listeners = mFullListeners.get(tekdaqc);
@@ -79,7 +79,7 @@ public final class MessageBroadcaster {
      * @param input    {@link AAnalogInput} Physical number of the channel to listen for.
      * @param listener {@link IAnalogChannelListener} Listener instance to receive the broadcasts.
      */
-    public void registerAnalogChannelListener(final ATekdaqc tekdaqc
+    public void addAnalogChannelListener(final ATekdaqc tekdaqc
             , final AAnalogInput input
             , final IAnalogChannelListener listener) {
         final Map<Integer, List<IAnalogChannelListener>> listeners;
@@ -112,7 +112,7 @@ public final class MessageBroadcaster {
      * @param input    {@link DigitalInput} Physical number of the channel to listen for.
      * @param listener {@link IDigitalChannelListener} Listener instance to receive the broadcasts.
      */
-    public void registerDigitalChannelListener(final ATekdaqc tekdaqc
+    public void addDigitalChannelListener(final ATekdaqc tekdaqc
             , final DigitalInput input
             , final IDigitalChannelListener listener) {
         final Map<Integer, List<IDigitalChannelListener>> listeners;
@@ -143,7 +143,7 @@ public final class MessageBroadcaster {
      * @param tekdaqc  {@link ATekdaqc} The Tekdaqc to un-register for.
      * @param listener {@link IMessageListener} Listener instance to remove from broadcasts.
      */
-    public void unRegisterListener(final ATekdaqc tekdaqc, final IMessageListener listener) {
+    public void removeListener(final ATekdaqc tekdaqc, final IMessageListener listener) {
         final List<IMessageListener> listeners = mFullListeners.get(tekdaqc);
         if (listeners != null) {
             synchronized (listeners) {
@@ -162,7 +162,7 @@ public final class MessageBroadcaster {
      * @param input    {@link AAnalogInput} The input to unregister from
      * @param listener {@link IAnalogChannelListener} Listener instance to remove from broadcasts.
      */
-    public void unRegisterAnalogChannelListener(final ATekdaqc tekdaqc
+    public void removeAnalogChannelListener(final ATekdaqc tekdaqc
             , final AAnalogInput input
             , final IAnalogChannelListener listener) {
         unregisterInputListener(tekdaqc, input, listener, mAnalogChannelListeners);
@@ -175,7 +175,7 @@ public final class MessageBroadcaster {
      * @param input    {@link DigitalInput} The input to unregister from
      * @param listener {@link IDigitalChannelListener} Listener instance to remove from broadcasts.
      */
-    public void unRegisterDigitalChannelListener(final ATekdaqc tekdaqc
+    public void removeDigitalChannelListener(final ATekdaqc tekdaqc
             , final DigitalInput input
             , final IDigitalChannelListener listener) {
         unregisterInputListener(tekdaqc, input, listener, mDigitalChannelListeners);

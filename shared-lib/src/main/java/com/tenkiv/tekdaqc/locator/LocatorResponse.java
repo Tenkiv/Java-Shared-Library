@@ -41,12 +41,12 @@ public final class LocatorResponse implements Externalizable {
     private static final int IDX_APPLICATION_TITLE_START = 50;
     private static final int IDX_APPLICATION_TITLE_LENGTH = 64;
 
-    private String mHostIPAddress;
-    private char mType; // Byte 3
-    private String mSerial; // Bytes 4-35
-    private String mMACAddress; // Bytes 40-45
-    private String mFirmwareVersion; // Bytes 46-49
-    private String mTitle; // Bytes 50-113
+    protected String mHostIPAddress;
+    protected char mType; // Byte 3
+    protected String mSerial; // Bytes 4-35
+    protected String mMACAddress; // Bytes 40-45
+    protected String mFirmwareVersion; // Bytes 46-49
+    protected String mTitle; // Bytes 50-113
 
     /**
      * Constructor provided for serialization. User code should not use this.
