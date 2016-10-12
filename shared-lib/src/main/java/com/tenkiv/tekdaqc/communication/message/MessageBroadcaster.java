@@ -1,17 +1,25 @@
 package com.tenkiv.tekdaqc.communication.message;
 
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIDigitalOutputDataMessage;
-import com.tenkiv.tekdaqc.communication.data_points.AnalogInputData;
+import com.tenkiv.tekdaqc.communication.data_points.ProtectedAnalogInputData;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 import com.tenkiv.tekdaqc.hardware.DigitalInput;
 import com.tenkiv.tekdaqc.hardware.IInputOutputHardware;
+import tec.uom.se.quantity.Quantities;
+import tec.uom.se.spi.Measurement;
+import tec.uom.se.unit.Units;
 
+import javax.measure.Quantity;
+import javax.measure.quantity.ElectricPotential;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Class responsible for broadcasting messages received from Tekdaqcs.
@@ -25,25 +33,36 @@ public final class MessageBroadcaster {
     /**
      * Map of all registered all-channel listeners.
      */
-    private final Map<ATekdaqc, List<IMessageListener>> mFullListeners;
+    private final Map<ATekdaqc, List<IMessageListener>> mFullListeners = new ConcurrentHashMap<ATekdaqc, List<IMessageListener>>();
 
     /**
-     * Map of all registered listeners.
+     * Map of all registered count listeners.
      */
-    private final Map<ATekdaqc, Map<Integer, List<IAnalogChannelListener>>> mAnalogChannelListeners;
+    private final Map<ATekdaqc, Map<Integer, List<ICountListener>>> mAnalogCountListeners = new ConcurrentHashMap<ATekdaqc, Map<Integer, List<ICountListener>>>();
 
     /**
-     * Map of all registered listeners.
+     * Map of all registered voltage listeners.
      */
-    private final Map<ATekdaqc, Map<Integer, List<IDigitalChannelListener>>> mDigitalChannelListeners;
+    private final Map<ATekdaqc, Map<Integer, List<IVoltageListener>>> mAnalogVoltageListeners = new ConcurrentHashMap<ATekdaqc, Map<Integer, List<IVoltageListener>>>();
 
     /**
-     * Default constructor.
+     * Map of all registered digital listeners.
      */
-    public MessageBroadcaster() {
-        mFullListeners = new ConcurrentHashMap<ATekdaqc, List<IMessageListener>>();
-        mAnalogChannelListeners = new ConcurrentHashMap<ATekdaqc, Map<Integer, List<IAnalogChannelListener>>>();
-        mDigitalChannelListeners = new ConcurrentHashMap<ATekdaqc, Map<Integer, List<IDigitalChannelListener>>>();
+    private final Map<ATekdaqc, Map<Integer, List<IDigitalChannelListener>>> mDigitalChannelListeners = new ConcurrentHashMap<ATekdaqc, Map<Integer, List<IDigitalChannelListener>>>();
+
+    /**
+     * Executor for handling callbacks to listeners.
+     */
+    private Executor mCallbackThreadpool = Executors.newFixedThreadPool(1);
+
+    /**
+     * Sets the {@link Executor} that manages callbacks to {@link IMessageListener}s, {@link ICountListener}s,
+     * and {@link IDigitalChannelListener}s.
+     *
+     * @param callbackExecutor The new {@link Executor}.
+     */
+    public void setCallbackExecutor(Executor callbackExecutor){
+        mCallbackThreadpool = callbackExecutor;
     }
 
     /**
@@ -69,7 +88,6 @@ public final class MessageBroadcaster {
                         + " has already been registered for serial: " + tekdaqc.getSerialNumber());
             }
         }
-
     }
 
     /**
@@ -77,24 +95,57 @@ public final class MessageBroadcaster {
      *
      * @param tekdaqc  {@link ATekdaqc} The Tekdaqc to register for.
      * @param input    {@link AAnalogInput} Physical number of the channel to listen for.
-     * @param listener {@link IAnalogChannelListener} Listener instance to receive the broadcasts.
+     * @param listener {@link ICountListener} Listener instance to receive the broadcasts.
      */
     public void addAnalogChannelListener(final ATekdaqc tekdaqc
             , final AAnalogInput input
-            , final IAnalogChannelListener listener) {
-        final Map<Integer, List<IAnalogChannelListener>> listeners;
-        if (mAnalogChannelListeners.get(tekdaqc) != null) {
-            listeners = mAnalogChannelListeners.get(tekdaqc);
+            , final ICountListener listener) {
+        final Map<Integer, List<ICountListener>> listeners;
+        if (mAnalogCountListeners.get(tekdaqc) != null) {
+            listeners = mAnalogCountListeners.get(tekdaqc);
         } else {
-            listeners = new ConcurrentHashMap<Integer, List<IAnalogChannelListener>>();
-            mAnalogChannelListeners.put(tekdaqc, listeners);
+            listeners = new ConcurrentHashMap<Integer, List<ICountListener>>();
+            mAnalogCountListeners.put(tekdaqc, listeners);
         }
 
         synchronized (listeners) {
             if (!listeners.containsKey(input.getChannelNumber())) {
-                listeners.put(input.getChannelNumber(), new ArrayList<IAnalogChannelListener>());
+                listeners.put(input.getChannelNumber(), new ArrayList<ICountListener>());
             }
-            ArrayList<IAnalogChannelListener> listenerList = (ArrayList<IAnalogChannelListener>) listeners
+            ArrayList<ICountListener> listenerList = (ArrayList<ICountListener>) listeners
+                    .get(input.getChannelNumber());
+            if (!listenerList.contains(listener)) {
+                listenerList.add(listener);
+            } else {
+                System.err.println("Listener " + listener + " has already been registered for serial: "
+                        + tekdaqc.getSerialNumber());
+            }
+        }
+    }
+
+    /**
+     * Register an object for message broadcasts for a specific channel on a particular Tekdaqc.
+     *
+     * @param tekdaqc  {@link ATekdaqc} The Tekdaqc to register for.
+     * @param input    {@link AAnalogInput} Physical number of the channel to listen for.
+     * @param listener {@link IVoltageListener} Listener instance to receive the broadcasts.
+     */
+    public void addAnalogVoltageListener(final ATekdaqc tekdaqc
+            , final AAnalogInput input
+            , final IVoltageListener listener) {
+        final Map<Integer, List<IVoltageListener>> listeners;
+        if (mAnalogVoltageListeners.get(tekdaqc) != null) {
+            listeners = mAnalogVoltageListeners.get(tekdaqc);
+        } else {
+            listeners = new ConcurrentHashMap<Integer, List<IVoltageListener>>();
+            mAnalogVoltageListeners.put(tekdaqc, listeners);
+        }
+
+        synchronized (listeners) {
+            if (!listeners.containsKey(input.getChannelNumber())) {
+                listeners.put(input.getChannelNumber(), new ArrayList<IVoltageListener>());
+            }
+            ArrayList<IVoltageListener> listenerList = (ArrayList<IVoltageListener>) listeners
                     .get(input.getChannelNumber());
             if (!listenerList.contains(listener)) {
                 listenerList.add(listener);
@@ -160,12 +211,25 @@ public final class MessageBroadcaster {
      *
      * @param tekdaqc  {@link ATekdaqc} The Tekdaqc to un-register for.
      * @param input    {@link AAnalogInput} The input to unregister from
-     * @param listener {@link IAnalogChannelListener} Listener instance to remove from broadcasts.
+     * @param listener {@link ICountListener} Listener instance to remove from broadcasts.
      */
-    public void removeAnalogChannelListener(final ATekdaqc tekdaqc
+    public void removeAnalogCountListener(final ATekdaqc tekdaqc
             , final AAnalogInput input
-            , final IAnalogChannelListener listener) {
-        unregisterInputListener(tekdaqc, input, listener, mAnalogChannelListeners);
+            , final ICountListener listener) {
+        unregisterInputListener(tekdaqc, input, listener, mAnalogCountListeners);
+    }
+
+    /**
+     * Un-register an object from message broadcasts for a particular Tekdaqc.
+     *
+     * @param tekdaqc  {@link ATekdaqc} The Tekdaqc to un-register for.
+     * @param input    {@link AAnalogInput} The input to unregister from
+     * @param listener {@link IVoltageListener} Listener instance to remove from broadcasts.
+     */
+    public void removeAnalogVoltageListener(final ATekdaqc tekdaqc
+            , final AAnalogInput input
+            , final IVoltageListener listener) {
+        unregisterInputListener(tekdaqc, input, listener, mAnalogVoltageListeners);
     }
 
     /**
@@ -205,60 +269,51 @@ public final class MessageBroadcaster {
      * @param message {@link ABoardMessage} The message to broadcast.
      */
     public void broadcastMessage(final ATekdaqc tekdaqc, final ABoardMessage message) {
-        final List<IMessageListener> listeners = mFullListeners.get(tekdaqc);
-        if (listeners != null) {
-            synchronized (listeners) {
-                for (final IMessageListener listener : listeners) {
-                    switch (message.getType()) {
-                        case DEBUG:
-                            listener.onDebugMessageReceived(tekdaqc, message);
-                            break;
-                        case STATUS:
-                            listener.onStatusMessageReceived(tekdaqc, message);
-                            break;
-                        case ERROR:
-                            listener.onErrorMessageReceived(tekdaqc, message);
-                            break;
-                        case COMMAND_DATA:
-                            listener.onCommandDataMessageReceived(tekdaqc, message);
-                            break;
-                        case DIGITAL_OUTPUT_DATA:
-                            listener.onDigitalOutputDataReceived(tekdaqc, (((ASCIIDigitalOutputDataMessage) message)
-                                    .getDigitalOutputArray()));
-                        default:
-                            System.err.println("Unknown message type with serial: " + tekdaqc.getSerialNumber());
-                            break;
-                    }
-                }
-            }
-        }
+
+        mCallbackThreadpool.execute(new BroadcastRunnable(tekdaqc,message));
+
     }
 
     /**
-     * Broadcast a single {@link AnalogInputData} point to all registered listeners for the specified Tekdaqc.
+     * Broadcast a single {@link ProtectedAnalogInputData} point to all registered listeners for the specified Tekdaqc.
      *
      * @param tekdaqc {@link ATekdaqc} The serial number string of the Tekdaqc to broadcast for.
-     * @param data    {@link AnalogInputData} The data point to broadcast.
+     * @param data    {@link ProtectedAnalogInputData} The data point to broadcast.
      */
-    public void broadcastAnalogInputDataPoint(final ATekdaqc tekdaqc, final AnalogInputData data) {
+    public void broadcastAnalogInputDataPoint(final ATekdaqc tekdaqc, final ProtectedAnalogInputData data) {
         final List<IMessageListener> listeners = mFullListeners.get(tekdaqc);
         if (listeners != null) {
             synchronized (listeners) {
                 for (final IMessageListener listener : listeners) {
-                    listener.onAnalogInputDataReceived(tekdaqc, data);
+                    listener.onAnalogInputDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), data.getData());
                 }
             }
         } else {
             System.out.println("No listeners for board: " + tekdaqc.getSerialNumber());
         }
 
-        if (mAnalogChannelListeners.containsKey(tekdaqc)) {
-            if (mAnalogChannelListeners.get(tekdaqc).containsKey(data.getPhysicalInput())) {
-                final List<IAnalogChannelListener> channelListeners = mAnalogChannelListeners
+        if (mAnalogCountListeners.containsKey(tekdaqc)) {
+            if (mAnalogCountListeners.get(tekdaqc).containsKey(data.getPhysicalInput())) {
+                final List<ICountListener> channelListeners = mAnalogCountListeners
                         .get(tekdaqc).get(data.getPhysicalInput());
                 synchronized (channelListeners) {
-                    for (final IAnalogChannelListener listener : channelListeners) {
-                        listener.onAnalogDataReceived(tekdaqc, data);
+                    for (final ICountListener listener : channelListeners) {
+                        listener.onAnalogDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), data.getData());
+                    }
+                }
+            }
+        }
+
+        if (mAnalogVoltageListeners.containsKey(tekdaqc)) {
+            if (mAnalogVoltageListeners.get(tekdaqc).containsKey(data.getPhysicalInput())) {
+                final List<IVoltageListener> channelListeners = mAnalogVoltageListeners
+                        .get(tekdaqc).get(data.getPhysicalInput());
+                synchronized (channelListeners) {
+
+                    Quantity<ElectricPotential> quant = Quantities.getQuantity(tekdaqc.convertAnalogInputDataToVoltage(data,tekdaqc.getAnalogInputScale()), Units.VOLT);
+
+                    for (final IVoltageListener listener : channelListeners) {
+                        listener.onVoltageDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), Measurement.of(quant, Instant.ofEpochSecond(data.getTimestamp())));
                     }
                 }
             }
@@ -289,6 +344,54 @@ public final class MessageBroadcaster {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Class that wraps callbacks from the {@link com.tenkiv.tekdaqc.communication.ascii.executors.ASCIIParsingExecutor}
+     * so that they are called back in a different thread.
+     */
+    private class BroadcastRunnable implements Runnable{
+
+        final ATekdaqc mTekdaqc;
+        final ABoardMessage mMessage;
+
+        protected BroadcastRunnable(final ATekdaqc tekdaqc, final ABoardMessage message){
+            mTekdaqc = tekdaqc;
+            mMessage = message;
+        }
+
+        @Override
+        public void run() {
+
+            final List<IMessageListener> listeners = mFullListeners.get(mTekdaqc);
+            if (listeners != null) {
+                synchronized (listeners) {
+                    for (final IMessageListener listener : listeners) {
+                        switch (mMessage.getType()) {
+                            case DEBUG:
+                                listener.onDebugMessageReceived(mTekdaqc, mMessage);
+                                break;
+                            case STATUS:
+                                listener.onStatusMessageReceived(mTekdaqc, mMessage);
+                                break;
+                            case ERROR:
+                                listener.onErrorMessageReceived(mTekdaqc, mMessage);
+                                break;
+                            case COMMAND_DATA:
+                                listener.onCommandDataMessageReceived(mTekdaqc, mMessage);
+                                break;
+                            case DIGITAL_OUTPUT_DATA:
+                                listener.onDigitalOutputDataReceived(mTekdaqc, (((ASCIIDigitalOutputDataMessage) mMessage)
+                                        .getDigitalOutputArray()));
+                            default:
+                                System.err.println("Unknown message type with serial: " + mTekdaqc.getSerialNumber());
+                                break;
+                        }
+                    }
+                }
+            }
+
         }
     }
 }

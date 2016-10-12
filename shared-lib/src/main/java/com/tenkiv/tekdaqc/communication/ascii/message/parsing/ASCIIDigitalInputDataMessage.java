@@ -3,7 +3,6 @@ package com.tenkiv.tekdaqc.communication.ascii.message.parsing;
 import com.tenkiv.tekdaqc.communication.data_points.DataPoint;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
 import com.tenkiv.tekdaqc.communication.data_points.IDataPointFactory;
-import com.tenkiv.tekdaqc.utility.DigitalState;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -23,7 +22,7 @@ public class ASCIIDigitalInputDataMessage extends AASCIIMessage implements IData
 
     protected String mTimestamps;
 
-    protected DigitalState mReadings;
+    protected boolean mReadings;
 
     /**
      * Constructor.
@@ -48,7 +47,7 @@ public class ASCIIDigitalInputDataMessage extends AASCIIMessage implements IData
         mName = null;
         mNumber = 0;
         mTimestamps = null;
-        mReadings = null;
+        mReadings = false;
     }
 
     @Override
@@ -86,9 +85,9 @@ public class ASCIIDigitalInputDataMessage extends AASCIIMessage implements IData
 
         final String state = (raw.substring(start, end));
         if (state.contains(ASCIIMessageUtils.HIGH_MARKER)) {
-            mReadings = DigitalState.LOGIC_HIGH;
+            mReadings = true;
         } else {
-            mReadings = DigitalState.LOGIC_LOW;
+            mReadings = false;
         }
     }
 
@@ -113,7 +112,7 @@ public class ASCIIDigitalInputDataMessage extends AASCIIMessage implements IData
         mName = (String) input.readObject();
         mNumber = input.readInt();
         mTimestamps = (String) input.readObject();
-        mReadings = (DigitalState) input.readObject();
+        mReadings = (boolean) input.readObject();
     }
 
     @Override

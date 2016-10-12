@@ -1,6 +1,7 @@
 package com.tenkiv.tekdaqc.hardware;
 
-import com.tenkiv.tekdaqc.utility.DigitalState;
+
+import com.tenkiv.tekdaqc.utility.ChannelType;
 
 /**
  * Container class for all data/settings of an digital output on the Tekdaqc.
@@ -18,7 +19,12 @@ public class DigitalOutput extends IInputOutputHardware {
     /**
      * The current output state.
      */
-    private volatile DigitalState mCurrentState;
+    private volatile boolean mIsOn;
+
+    @Override
+    public ChannelType getChannelType() {
+        return ChannelType.DIGITAL_OUTPUT;
+    }
 
     /**
      * Constructor
@@ -54,23 +60,23 @@ public class DigitalOutput extends IInputOutputHardware {
     }
 
     /**
-     * Retrieve the current {@link DigitalState} of this output.
+     * Retrieve the current {@link boolean} of this output.
      *
-     * @return {@link DigitalState} The current state of this output.
+     * @return {@link boolean} The current state of this output.
      */
-    public DigitalState getCurrentState() {
-        return mCurrentState;
+    public boolean getIsActivated() {
+        return mIsOn;
     }
 
-    protected void setCurrentState(final DigitalState currentState) {
-        mCurrentState = currentState;
+    protected void setIsActive(final boolean isOn) {
+        mIsOn = isOn;
     }
 
     @Override
     public void activate() {
         if (getTekdaqc().isConnected()) {
             isActivated = true;
-            mCurrentState = DigitalState.LOGIC_HIGH;
+            mIsOn = true;
             getTekdaqc().queueCommand(CommandBuilder.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
@@ -81,7 +87,7 @@ public class DigitalOutput extends IInputOutputHardware {
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
             isActivated = false;
-            mCurrentState = DigitalState.LOGIC_LOW;
+            mIsOn = false;
             getTekdaqc().queueCommand(CommandBuilder.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);

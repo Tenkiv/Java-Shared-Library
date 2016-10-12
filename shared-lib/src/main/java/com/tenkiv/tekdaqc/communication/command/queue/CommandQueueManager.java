@@ -1,11 +1,12 @@
 package com.tenkiv.tekdaqc.communication.command.queue;
 
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
-import com.tenkiv.tekdaqc.communication.data_points.AnalogInputData;
+import com.tenkiv.tekdaqc.communication.data_points.ProtectedAnalogInputData;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
 import com.tenkiv.tekdaqc.communication.message.ABoardMessage;
 import com.tenkiv.tekdaqc.communication.message.IMessageListener;
 import com.tenkiv.tekdaqc.communication.tasks.ITaskComplete;
+import com.tenkiv.tekdaqc.hardware.AAnalogInput;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 
 import java.io.BufferedOutputStream;
@@ -164,7 +165,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     }
 
     @Override
-    public void onAnalogInputDataReceived(final ATekdaqc tekdaqc, final AnalogInputData data) {
+    public void onAnalogInputDataReceived(AAnalogInput input, int count) {
 
     }
 

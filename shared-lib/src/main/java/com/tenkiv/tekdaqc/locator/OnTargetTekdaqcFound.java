@@ -28,7 +28,7 @@ public interface OnTargetTekdaqcFound {
      *
      * @param tekdaqc The located {@link ATekdaqc}.
      */
-    void onSuccess(ATekdaqc tekdaqc);
+    void onTargetFound(ATekdaqc tekdaqc);
 
     /**
      * Callback stating that the {@link Locator} encountered an error.
@@ -36,13 +36,13 @@ public interface OnTargetTekdaqcFound {
      * @param serial The {@link String} of the serial number of the the {@link ATekdaqc} which had the error.
      * @param flag The {@link FailureFlag} stating the reason of the failure.
      */
-    void onFailure(String serial, FailureFlag flag);
+    void onTargetFailure(String serial, FailureFlag flag);
 
     /**
      * Callback stating that all {@link ATekdaqc}s have been found with the designated serial numbers.
      *
      * @param tekdaqcs A {@link Set} of all the {@link ATekdaqc}s found with designated serial numbers.
      */
-    void onAllTargetaFound(Set<ATekdaqc> tekdaqcs);
+    void onAllTargetsFound(Set<ATekdaqc> tekdaqcs);
 
 }

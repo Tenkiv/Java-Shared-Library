@@ -1,7 +1,7 @@
 package com.tenkiv.tekdaqc.hardware;
 
-import com.tenkiv.tekdaqc.communication.message.IAnalogChannelListener;
 import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener;
+import com.tenkiv.tekdaqc.utility.ChannelType;
 
 /**
  * Container class for all data/settings of an digital input on the Tekdaqc.
@@ -16,6 +16,11 @@ public class DigitalInput extends IInputOutputHardware {
      * characters or less
      */
     private volatile String mName = null;
+
+    @Override
+    public ChannelType getChannelType() {
+        return ChannelType.DIGITAL_INPUT;
+    }
 
     /**
      * Constructor

@@ -2,7 +2,6 @@ package com.tenkiv.tekdaqc.communication.data_points;
 
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIMessageUtils;
 import com.tenkiv.tekdaqc.communication.message.ABoardMessage;
-import com.tenkiv.tekdaqc.utility.DigitalState;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -18,7 +17,7 @@ import java.math.BigInteger;
 public class DigitalOutputData extends ABoardMessage {
 
     /**
-     * The {@link DigitalState} of this data point.
+     * The {@link boolean} of this data point.
      */
     private boolean[] mDigitalState;
 
@@ -33,7 +32,7 @@ public class DigitalOutputData extends ABoardMessage {
      * Constructs an {@link DigitalOutputData} point from the provided parameters.
      *
      * @param timestamp {@link BigInteger} The timestamp of the sample.
-     * @param state     {@link DigitalState} The state of this data point.
+     * @param state     {@link boolean} The state of this data point.
      */
     public DigitalOutputData(final long timestamp, final boolean[] state) {
         mDigitalState = state;
@@ -46,7 +45,7 @@ public class DigitalOutputData extends ABoardMessage {
     /**
      * Retrieve the data for this data point.
      *
-     * @return {@link DigitalState} The data value.
+     * @return {@link boolean} The data value.
      */
     public boolean[] getState() {
         return mDigitalState;

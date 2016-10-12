@@ -5,13 +5,10 @@ import com.tenkiv.tekdaqc.communication.command.queue.CommandQueueManager;
 import com.tenkiv.tekdaqc.communication.command.queue.ICommandManager;
 import com.tenkiv.tekdaqc.communication.command.queue.IQueueObject;
 import com.tenkiv.tekdaqc.communication.command.queue.Task;
-import com.tenkiv.tekdaqc.communication.data_points.AnalogInputData;
+import com.tenkiv.tekdaqc.communication.data_points.ProtectedAnalogInputData;
 import com.tenkiv.tekdaqc.communication.executors.AParsingExecutor.IParsingListener;
 import com.tenkiv.tekdaqc.communication.executors.ReadExecutor;
-import com.tenkiv.tekdaqc.communication.message.IAnalogChannelListener;
-import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener;
-import com.tenkiv.tekdaqc.communication.message.IMessageListener;
-import com.tenkiv.tekdaqc.communication.message.MessageBroadcaster;
+import com.tenkiv.tekdaqc.communication.message.*;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate;
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD.BufferState;
@@ -20,10 +17,10 @@ import com.tenkiv.tekdaqc.telnet.client.EthernetTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.ITekdaqcTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.SerialTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection;
-import com.tenkiv.tekdaqc.utility.DigitalState;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Executor;
 
 /**
  * Class which contains information about a specific Tekdaqc and provides
@@ -61,6 +58,8 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      */
     protected ASCIIParsingExecutor mParsingExecutor;
     protected transient int mDigitalInputRate = 1000;
+
+    protected transient AnalogScale mAnalogScale;
 
     /**
      * The current {@link COMMUNICATION_ENCODING} used by the {@link ATekdaqc}.
@@ -172,6 +171,17 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         mResponse = response;
     }
 
+    /**
+     * Method to set {@link MessageBroadcaster}'s callback {@link Executor} to a new value. This should only be done if
+     * no messages are queued to be sent. It is recommended that this method only be called after the {@link ATekdaqc#halt()}
+     * command. This method is not for general use cases and can result in severe issues if used improperly.
+     *
+     * @param callbackExecutor The new {@link Executor} to be used for callbacks.
+     */
+    public void setMessageBroadcasterCallbackExecutor(Executor callbackExecutor){
+        messageBroadcaster.setCallbackExecutor(callbackExecutor);
+    }
+
     @Override
     public void onMessageDetetced(final String message) {
         if (keepAlivePacketSent) {
@@ -197,7 +207,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         }
 
         for (int outputNumber : mDigitalOutputs.keySet()) {
-            if (mDigitalOutputs.get(outputNumber).getCurrentState() == DigitalState.LOGIC_HIGH) {
+            if (mDigitalOutputs.get(outputNumber).getIsActivated()) {
                 builder.replace(outputNumber,outputNumber+1, "1");
             }
         }
@@ -455,11 +465,24 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * In cases where processing power is limited or where very low latency on data is imperative use
      * {@link IMessageListener} instead.
      *
-     * @param listener {@link IAnalogChannelListener} Listener to be registered.
+     * @param listener {@link ICountListener} Listener to be registered.
      * @param input    {@link AAnalogInput} Input to register to.
      */
-    public void addAnalogChannelListener(IAnalogChannelListener listener, AAnalogInput input) {
+    public void addAnalogCountListener(ICountListener listener, AAnalogInput input) {
         messageBroadcaster.addAnalogChannelListener(this, input, listener);
+    }
+
+    /**
+     * Convenience method for adding a listener to a particular channel.
+     * IMPORTANT NOTE: Specific channel listeners are less efficient then {@link IMessageListener}s.
+     * In cases where processing power is limited or where very low latency on data is imperative use
+     * {@link IMessageListener} instead.
+     *
+     * @param listener {@link ICountListener} Listener to be registered.
+     * @param input    {@link AAnalogInput} Input to register to.
+     */
+    public void addAnalogVoltageListener(IVoltageListener listener, AAnalogInput input) {
+        messageBroadcaster.addAnalogVoltageListener(this, input, listener);
     }
 
     /**
@@ -487,11 +510,21 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     /**
      * Convenience method for removing a listener from a channel on a tekdaqc.
      *
-     * @param listener {@link IAnalogChannelListener} The listener to be unregistered.
+     * @param listener {@link ICountListener} The listener to be unregistered.
      * @param input    {@link AAnalogInput} The input to unregister from.
      */
-    public void removeAnalogChannelListener(AAnalogInput input, IAnalogChannelListener listener) {
-        messageBroadcaster.removeAnalogChannelListener(this, input, listener);
+    public void removeAnalogCountListener(AAnalogInput input, ICountListener listener) {
+        messageBroadcaster.removeAnalogCountListener(this, input, listener);
+    }
+
+    /**
+     * Convenience method for removing a listener from a channel on a tekdaqc.
+     *
+     * @param listener {@link ICountListener} The listener to be unregistered.
+     * @param input    {@link AAnalogInput} The input to unregister from.
+     */
+    public void removeAnalogVoltageListener(AAnalogInput input, IVoltageListener listener) {
+        messageBroadcaster.removeAnalogVoltageListener(this, input, listener);
     }
 
     /**
@@ -508,10 +541,12 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * Connect to this Tekdaqc via Telnet using the specified connection method.
      *
      * @param method {@link CONNECTION_METHOD} The connection method to use.
+     * @param currentAnalogScale The current {@link ATekdaqc.AnalogScale} the board is set to.
+     *                     This should match the physical jumpers on the board.
      * @throws IOException Thrown if the underlying Telnet client fails
      *                     to connect.
      */
-    public void connect(CONNECTION_METHOD method) throws IOException {
+    public void connect(AnalogScale currentAnalogScale, CONNECTION_METHOD method) throws IOException {
         switch (method) {
             case ETHERNET:
                 mConnection = new EthernetTelnetConnection(mResponse.getHostIP(), EthernetTelnetConnection.TEKDAQC_TELNET_PORT);
@@ -529,6 +564,10 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         mReadExecutor = new ReadExecutor(this, this);
 
         mCommandQueue.tryCommand();
+
+        mCommandQueue.queueCommand(CommandBuilder.setAnalogInputScale(currentAnalogScale));
+
+        mAnalogScale = currentAnalogScale;
 
         isConnected = true;
         mWatchdogTimer.schedule(mWatchDogTimerTask, WATCHDOG_TIMER_INTERVAL, WATCHDOG_TIMER_INTERVAL);
@@ -805,15 +844,6 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     public abstract DigitalOutput toggleDigitalOutput(int outputNumber, boolean status);
 
     /**
-     * Toggles the {@link DigitalOutput} to the desired status.
-     *
-     * @param outputNumber The physical output number of the {@link DigitalOutput} to be changed.
-     * @param status       The desired {@link DigitalState} of the output.
-     * @return The toggled {@link DigitalOutput}.
-     */
-    public abstract DigitalOutput toggleDigitalOutput(int outputNumber, DigitalState status);
-
-    /**
      * Removes an analog input from this Tekdaqc.
      *
      * @param input {@link AAnalogInput} The input to remove from the board.
@@ -846,8 +876,12 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
     /**
      * Gets the analog input voltage scale on the Tekdaqc.
+     *
+     * @return The {@link AnalogScale} the software has been most recently notified about
      */
-    public abstract void getAnalogInputScale();
+    public AnalogScale getAnalogInputScale(){
+        return mAnalogScale;
+    }
 
     /**
      * Adds a specified {@link DigitalInput} to the Tekdaqc.
@@ -998,25 +1032,25 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     public abstract void writeCalibrationValid();
 
     /**
-     * Converts the provided {@link AnalogInputData} point into a voltage using
+     * Converts the provided {@link ProtectedAnalogInputData} point into a voltage using
      * the parameters of the data point and the specific Tekdaqc board.
      *
-     * @param data         {@link AnalogInputData} The data point to convert.
+     * @param data         {@link ProtectedAnalogInputData} The data point to convert.
      * @param currentScale {@link AnalogScale} The current analog scale to use in the conversion.
      * @return double The reference voltage value.
      */
-    public abstract double convertAnalogInputDataToVoltage(AnalogInputData data, AnalogScale currentScale);
+    public abstract double convertAnalogInputDataToVoltage(ProtectedAnalogInputData data, AnalogScale currentScale);
 
     /**
-     * Converts the provided {@link AnalogInputData} point into a temperature
+     * Converts the provided {@link ProtectedAnalogInputData} point into a temperature
      * using the parameters of the data point and the specific Tekdaqc board.
      * This will assume that the data point came from the input specified by
      * {@link #getColdJunctionInputNumber()}, but does not enforce it.
      *
-     * @param data {@link AnalogInputData} The data point to convert.
+     * @param data {@link ProtectedAnalogInputData} The data point to convert.
      * @return double The reference voltage value.
      */
-    public abstract double convertAnalogInputDataToTemperature(AnalogInputData data);
+    public abstract double convertAnalogInputDataToTemperature(ProtectedAnalogInputData data);
 
     /**
      * Retrieves the physical input number for the cold junction channel this

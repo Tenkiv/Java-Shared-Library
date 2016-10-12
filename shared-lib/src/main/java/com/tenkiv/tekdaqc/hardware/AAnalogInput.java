@@ -1,6 +1,7 @@
 package com.tenkiv.tekdaqc.hardware;
 
-import com.tenkiv.tekdaqc.communication.message.IAnalogChannelListener;
+import com.tenkiv.tekdaqc.communication.message.ICountListener;
+import com.tenkiv.tekdaqc.communication.message.IVoltageListener;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -166,12 +167,21 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     }
 
     /**
-     * Method to add a {@link IAnalogChannelListener} to listen for data on only this channel.
+     * Method to add a {@link ICountListener} to listen for data on only this channel.
      *
-     * @param listener The {@link IAnalogChannelListener} to add for callbacks.
+     * @param listener The {@link ICountListener} to add for callbacks.
      */
-    public void addListener(IAnalogChannelListener listener) {
-        getTekdaqc().addAnalogChannelListener(listener,this);
+    public void addCountListener(ICountListener listener) {
+        getTekdaqc().addAnalogCountListener(listener,this);
+    }
+
+    /**
+     * Method to add a {@link IVoltageListener} to listen for data on only this channel.
+     *
+     * @param listener The {@link IVoltageListener} to add for callbacks.
+     */
+    public void addVoltageListener(IVoltageListener listener) {
+        getTekdaqc().addAnalogVoltageListener(listener,this);
     }
 
     /**

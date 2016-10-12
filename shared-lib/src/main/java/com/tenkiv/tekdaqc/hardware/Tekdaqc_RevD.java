@@ -5,7 +5,7 @@ import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIDigitalInputD
 import com.tenkiv.tekdaqc.communication.command.queue.Commands;
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
 import com.tenkiv.tekdaqc.communication.command.queue.values.BlankQueueValue;
-import com.tenkiv.tekdaqc.communication.data_points.AnalogInputData;
+import com.tenkiv.tekdaqc.communication.data_points.ProtectedAnalogInputData;
 import com.tenkiv.tekdaqc.communication.data_points.DataPoint;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
 import com.tenkiv.tekdaqc.communication.message.ABoardMessage;
@@ -15,7 +15,6 @@ import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate;
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD.BufferState;
 import com.tenkiv.tekdaqc.locator.LocatorResponse;
 import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities;
-import com.tenkiv.tekdaqc.utility.DigitalState;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -130,8 +129,8 @@ public class Tekdaqc_RevD extends ATekdaqc {
     }
 
     @Override
-    public void connect(CONNECTION_METHOD method) throws IOException {
-        super.connect(method);
+    public void connect(AnalogScale analogScale, CONNECTION_METHOD method) throws IOException {
+        super.connect(analogScale, method);
     }
 
     @Override
@@ -223,20 +222,9 @@ public class Tekdaqc_RevD extends ATekdaqc {
     }
 
     @Override
-    public DigitalOutput toggleDigitalOutput(int outputNumber, boolean status) {
+    public DigitalOutput toggleDigitalOutput(int outputNumber, boolean isOn) {
         DigitalOutput output = getDigitalOutput(outputNumber);
-        if (status) {
-            output.activate();
-        } else {
-            output.deactivate();
-        }
-        return output;
-    }
-
-    @Override
-    public DigitalOutput toggleDigitalOutput(int outputNumber, DigitalState status) {
-        DigitalOutput output = getDigitalOutput(outputNumber);
-        if (status == DigitalState.LOGIC_HIGH) {
+        if (isOn) {
             output.activate();
         } else {
             output.deactivate();
@@ -248,9 +236,9 @@ public class Tekdaqc_RevD extends ATekdaqc {
     public void setDigitalOutput(String binaryString) {
         for (DigitalOutput output : mDigitalOutputs.values()) {
             if (binaryString.charAt(output.getChannelNumber()) == '1') {
-                output.setCurrentState(DigitalState.LOGIC_HIGH);
+                output.setIsActive(true);
             } else {
-                output.setCurrentState(DigitalState.LOGIC_LOW);
+                output.setIsActive(false);
             }
         }
         mCommandQueue.queueCommand(CommandBuilder.setDigitalOutputByBinaryString(binaryString));
@@ -261,9 +249,9 @@ public class Tekdaqc_RevD extends ATekdaqc {
         for (DigitalOutput output : mDigitalOutputs.values()) {
             if (DigitalOutputUtilities.hex_to_binary(hex)
                     .charAt(output.getChannelNumber()) == '1') {
-                output.setCurrentState(DigitalState.LOGIC_HIGH);
+                output.setIsActive(true);
             } else {
-                output.setCurrentState(DigitalState.LOGIC_LOW);
+                output.setIsActive(false);
             }
         }
         mCommandQueue.queueCommand(CommandBuilder.setDigitalOutputByHex(hex));
@@ -273,9 +261,9 @@ public class Tekdaqc_RevD extends ATekdaqc {
     public void setDigitalOutput(boolean[] digitalOutputState) {
         for (DigitalOutput output : mDigitalOutputs.values()) {
             if (digitalOutputState[output.getChannelNumber()]) {
-                output.setCurrentState(DigitalState.LOGIC_HIGH);
+                output.setIsActive(true);
             } else {
-                output.setCurrentState(DigitalState.LOGIC_LOW);
+                output.setIsActive(false);
             }
         }
         mCommandQueue.queueCommand(CommandBuilder.setDigitalOutput(digitalOutputState));
@@ -331,12 +319,8 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     public void setAnalogInputScale(AnalogScale scale) {
+        mAnalogScale = scale;
         mCommandQueue.queueCommand(CommandBuilder.setAnalogInputScale(scale));
-    }
-
-    @Override
-    public void getAnalogInputScale() {
-        mCommandQueue.queueCommand(CommandBuilder.getAnalogInputScale());
     }
 
     @Override
@@ -430,7 +414,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
     }
 
     @Override
-    public double convertAnalogInputDataToVoltage(AnalogInputData data, AnalogScale scale) {
+    public double convertAnalogInputDataToVoltage(ProtectedAnalogInputData data, AnalogScale scale) {
         AAnalogInput analogInput = getAnalogInput(data.getPhysicalInput());
         double ratio = (data.getData() / 8388607.0);
         double gainDivisor = 1.0 / Integer.valueOf(analogInput.getGain().toString());
@@ -440,7 +424,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
     }
 
     @Override
-    public double convertAnalogInputDataToTemperature(AnalogInputData data) {
+    public double convertAnalogInputDataToTemperature(ProtectedAnalogInputData data) {
         final double voltage = convertAnalogInputDataToVoltage(data, AnalogScale.ANALOG_SCALE_5V);
         return (voltage / 0.010); // LM35 output is 10mV/Deg C
     }
@@ -520,7 +504,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
                 break;
             case ANALOG_INPUT_DATA:
                 final DataPoint analogInputData = ((ASCIIAnalogInputDataMessage) message).toDataPoints();
-                messageBroadcaster.broadcastAnalogInputDataPoint(this, (AnalogInputData) analogInputData);
+                messageBroadcaster.broadcastAnalogInputDataPoint(this, (ProtectedAnalogInputData) analogInputData);
                     /*ASCIIMessageUtils.returnMessage((AASCIIMessage) message);*/
                 break;
             case DIGITAL_INPUT_DATA:
