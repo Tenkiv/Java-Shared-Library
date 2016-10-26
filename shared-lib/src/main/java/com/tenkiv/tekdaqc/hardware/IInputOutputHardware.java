@@ -1,30 +1,51 @@
 package com.tenkiv.tekdaqc.hardware;
 
+import com.tenkiv.tekdaqc.utility.ChannelType;
+
 /**
- * Abstract class detailing the basic behavior for inputs and output classesin  the tekdaqc java library.
+ * Abstract class detailing the basic behavior for inputs and output classes in  the tekdaqc java library.
  *
  * @author Tenkiv (software@tenkiv.com)
  * @since 2.1.0.0
  */
 public abstract class IInputOutputHardware {
 
+    /**
+     * Method to return the channel type of the channel.
+     *
+     * @return The {@link ChannelType} of the channel.
+     */
+    public abstract ChannelType getChannelType();
+
+    /**
+     * The default exception text.
+     */
     public static final String TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT
+
             = "Unable to preform operation. Tekdaqc is not connected.";
     /**
      * The physical channel. This is unique to a type of channel, there will be repeats for different channel type,
      * i.e. analog inputs and digital inputs.
      */
     protected final int mChannelNumber;
+
     /**
      * The {@link ATekdaqc} the input is associated with.
      */
     private transient final ATekdaqc mTekdaqc;
+
     /**
      * Boolean flag for determining if the input is activated or not.
      * Internally, this is represented by the input being added or the output being powered.
      */
     protected boolean isActivated = false;
 
+    /**
+     * The deafaul constructor for {@link IInputOutputHardware}
+     *
+     * @param mTekdaqc The controlling {@link ATekdaqc}.
+     * @param channelNumber The physical channel number.
+     */
     public IInputOutputHardware(final ATekdaqc mTekdaqc, final int channelNumber) {
         this.mTekdaqc = mTekdaqc;
         mChannelNumber = channelNumber;
@@ -56,6 +77,11 @@ public abstract class IInputOutputHardware {
         return isActivated;
     }
 
+    /**
+     * Method to get the {@link ATekdaqc} which owns this {@link IInputOutputHardware}
+     *
+     * @return The controlling {@link ATekdaqc}.
+     */
     public ATekdaqc getTekdaqc() {
         return mTekdaqc;
     }

@@ -8,8 +8,7 @@ import com.tenkiv.tekdaqc.hardware.Tekdaqc_RevD;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.*;
 
 /**
  * Singleton class which is responsible for searching for any Tekdaqcs on the network
@@ -33,7 +32,7 @@ public final class Locator {
     /**
      * Flag to enable/disable debug logging
      */
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
 
     /**
      * The parameter set to use for the locator request
@@ -53,8 +52,7 @@ public final class Locator {
     /**
      * The listeners associated with the locator.
      */
-    private final ArrayList<OnTekdaqcDiscovered> mListeners =
-            (ArrayList<OnTekdaqcDiscovered>) Collections.synchronizedList(new ArrayList<OnTekdaqcDiscovered>());
+    private final List<OnTekdaqcDiscovered> mListeners = Collections.synchronizedList(new ArrayList<OnTekdaqcDiscovered>());
 
     /**
      * Instance of the Singleton.
@@ -77,6 +75,16 @@ public final class Locator {
     private boolean mIsActive = false;
 
     /**
+     * Time remaining on the locator timer, if it is running.
+     */
+    private long mTimeRemaining = -1;
+
+    /**
+     * Boolean for if the locator is on a timer.
+     */
+    private boolean mIsTimed = false;
+
+    /**
      * The timer run periodically to search for tekdaqcs on the local area network.
      */
     private final Timer mUpdateTimer = new Timer();
@@ -85,9 +93,9 @@ public final class Locator {
      * The timer task run at interval, which updates the {@link List} of known {@link ATekdaqc}
      */
     private final TimerTask mUpdateTask = new TimerTask() {
+
         @Override
         public void run() {
-
             updateKnownTekdaqcs();
 
             try {
@@ -98,6 +106,15 @@ public final class Locator {
 
             } catch (UnknownHostException e) {
                 e.printStackTrace();
+            }
+
+            if(mIsTimed) {
+                mTimeRemaining = mTimeRemaining - DEFAULT_LOCATOR_PERIOD;
+
+                if(mTimeRemaining<1){
+                    mIsTimed = false;
+                    cancelLocator();
+                }
             }
         }
     };
@@ -123,7 +140,7 @@ public final class Locator {
      *
      * @return The instance of the {@link Locator}.
      */
-    public static Locator getInstance(){
+    public static Locator get(){
         if(mInstance == null){
             mInstance = new Locator(null);
         }
@@ -225,16 +242,19 @@ public final class Locator {
      * Method to connect to a discovered Tekdaqc of target serial number. Returns a CONNECTED {@link ATekdaqc}.
      *
      * @param serialNumber A {@link String} of the target {@link ATekdaqc}'s serial number.
+     * @param defaultScale The current {@link ATekdaqc.AnalogScale} the board is set to.
+     *                     This should match the physical jumpers on the board.
+     *
      * @return A {@link ATekdaqc} with an open connection.
      */
-    public static ATekdaqc connectToTargetTekdaqc(String serialNumber){
+    public static ATekdaqc connectToTargetTekdaqc(String serialNumber, ATekdaqc.AnalogScale defaultScale){
 
         Map<String,ATekdaqc> map = Locator.getActiveTekdaqcMap();
 
         if(map.containsKey(serialNumber)){
             ATekdaqc tekdaqc = map.get(serialNumber);
             try {
-                tekdaqc.connect(ATekdaqc.CONNECTION_METHOD.ETHERNET);
+                tekdaqc.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -259,10 +279,12 @@ public final class Locator {
      * @param serialNumber The assumed serial number of the hypothetical {@link ATekdaqc}.
      * @param hostIPAdress The assumed IP address of the hypothetical {@link ATekdaqc}.
      * @param tekdaqcRevision The assumed revision of the hypothetical {@link ATekdaqc}.
+     * @param defaultScale The current {@link ATekdaqc.AnalogScale} the board is set to.
+     *                     This should match the physical jumpers on the board.
      *
      * @return A {@link ATekdaqc} object that represents an un-located, hypothetical Tekdaqc on the network.
      */
-    public static ATekdaqc connectToUnsafeTarget(String serialNumber, String hostIPAdress, char tekdaqcRevision){
+    public static ATekdaqc connectToUnsafeTarget(String serialNumber, String hostIPAdress, char tekdaqcRevision, ATekdaqc.AnalogScale defaultScale){
 
         LocatorResponse pseudoResponse = new LocatorResponse();
 
@@ -275,7 +297,7 @@ public final class Locator {
         ATekdaqc tekdaqc = Locator.createTekdaqc(pseudoResponse, false);
 
         try {
-            tekdaqc.connect(ATekdaqc.CONNECTION_METHOD.ETHERNET);
+            tekdaqc.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -394,6 +416,7 @@ public final class Locator {
                     System.out.println("Waiting for return packet...");
                 socket.receive(packet);
                 final LocatorResponse response = new LocatorResponse(packet.getAddress().getHostAddress(), packet.getData());
+                System.out.println("Response: "+response.isValid(mParams)+" "+response.toString());
                 if (response.isValid(mParams)) {
 
                     mTempMapLock.writeLock().lock();
@@ -467,12 +490,21 @@ public final class Locator {
      * Method which halts the locator.
      */
     public void cancelLocator() {
-
         mIsActive = false;
 
+        mIsTimed = false;
+
+        mTimeRemaining = -1;
+
+        mUpdateTimer.purge();
         mUpdateTimer.cancel();
     }
 
+    /**
+     * Method that returns if the {@link Locator} is active.
+     *
+     * @return Boolean if the {@link Locator} is active.
+     */
     public boolean isActive(){
         return mIsActive;
     }
@@ -480,14 +512,30 @@ public final class Locator {
     /**
      * Method which starts the locator at a given delay and period.
      *
-     * @param delay  The delay at which to start the locator as a {@link Long}.
-     * @param period The period at which to run the locator as a {@link Long}.
+     * @param delay  The delay at which to start the locator in milliseconds as a {@link Long}.
+     * @param period The period at which to run the locator in milliseconds as a {@link Long}.
      */
     public void searchForTekdaqcs(final long delay, final long period) {
 
         mIsActive = true;
 
         mUpdateTimer.scheduleAtFixedRate(mUpdateTask, delay, period);
+    }
+
+    /**
+     * Method that activates the locator for a given duration
+     *
+     * @param totalTimeMillis Total time in milliseconds.
+     */
+    public void searchForTekdaqcsForDuration(final long totalTimeMillis){
+        mTimeRemaining = totalTimeMillis;
+
+        if(isActive()){
+            cancelLocator();
+            mIsActive = true;
+        }
+
+        searchForTekdaqcs();
     }
 
     /**
@@ -505,25 +553,27 @@ public final class Locator {
      * default method ({@link Locator#searchForTekdaqcs()}), so other classes may also be notified of discovered {@link ATekdaqc}s.
      *
      * @param listener The {@link OnTargetTekdaqcFound} listener to be notified.
-     * @param timeoutDuration The maximum time to run before returning {@link OnTargetTekdaqcFound#onFailure(String, OnTargetTekdaqcFound.FailureFlag)}
+     * @param timeoutDuration The maximum time to run before returning {@link OnTargetTekdaqcFound#onTargetFailure(String, OnTargetTekdaqcFound.FailureFlag)}
      * @param serials Variable arguments of the serial numbers of the {@link ATekdaqc} to find.
      */
     public void searchForSpecificTekdaqcs(final OnTargetTekdaqcFound listener, final long timeoutDuration, final String... serials){
-        searchForSpecificTekdaqcs(listener, timeoutDuration, false, serials);
+        searchForSpecificTekdaqcs(listener, timeoutDuration, false, null,serials);
     }
 
     /**
      * Convenience method to search for specific {@link ATekdaqc}s on the network. Note: this method will start the {@link Locator}'s
      * default method ({@link Locator#searchForTekdaqcs()}), so other classes may also be notified of discovered {@link ATekdaqc}s.
      * Contains the option to automatically connect to the {@link ATekdaqc} so that the boards returned will not be taken by other
-     * listeners and will not need the {@link ATekdaqc#connect(ATekdaqc.CONNECTION_METHOD)} method called on them.
+     * listeners and will not need the {@link ATekdaqc#connect(ATekdaqc.AnalogScale,ATekdaqc.CONNECTION_METHOD)} method called on them.
      *
      * @param listener The {@link OnTargetTekdaqcFound} listener to be notified.
-     * @param timeoutDuration The maximum time to run before returning {@link OnTargetTekdaqcFound#onFailure(String, OnTargetTekdaqcFound.FailureFlag)}
+     * @param timeoutMillis The maximum time to run before returning {@link OnTargetTekdaqcFound#onTargetFailure(String, OnTargetTekdaqcFound.FailureFlag)}
      * @param autoConnect If the {@link Locator} should automatically connect to the {@link ATekdaqc} for you.
+     * @param autoConnectDefaultScale The current {@link ATekdaqc.AnalogScale} the board is set to.
+     *                     This should match the physical jumpers on the board.
      * @param serials Variable arguments of the serial numbers of the {@link ATekdaqc} to find.
      */
-    public void searchForSpecificTekdaqcs(final OnTargetTekdaqcFound listener, final long timeoutDuration, final boolean autoConnect, final String... serials){
+    public void searchForSpecificTekdaqcs(final OnTargetTekdaqcFound listener, final long timeoutMillis, final boolean autoConnect, final ATekdaqc.AnalogScale autoConnectDefaultScale, final String... serials){
 
         Map<String,ATekdaqc> previouslyLocated = getActiveTekdaqcMap();
 
@@ -531,22 +581,167 @@ public final class Locator {
 
         for(String serial: serialList){
             if(previouslyLocated.containsKey(serial)){
-                listener.onSuccess(previouslyLocated.get(serial));
+                listener.onTargetFound(previouslyLocated.get(serial));
                 serialList.remove(serial);
             }
         }
 
         Timer searchTimer = new Timer();
 
-        searchTimer.schedule(new AwaitSpecifcTekdaqcTask(serialList,listener,autoConnect),timeoutDuration);
+        searchTimer.schedule(new AwaitSpecificTekdaqcTask(serialList,listener,autoConnect,autoConnectDefaultScale),timeoutMillis);
 
     }
 
     /**
-     * Internal class to handle waiting for the location of specific {@link ATekdaqc}s by the method
-     * {@link Locator#searchForSpecificTekdaqcs(OnTargetTekdaqcFound, long, boolean, String...)}
+     * Method which runs the locator while blocking the current thread to look for specific Tekdaqcs.
+     *
+     * @param timeoutMillis The maximum time to search for {@link ATekdaqc}s.
+     * @param serials The serial numbers of {@link ATekdaqc}s to search for.
+     * @return A list of {@link ATekdaqc}s found during the timeout with the listed serial numbers.
      */
-    private class AwaitSpecifcTekdaqcTask extends TimerTask implements OnTekdaqcDiscovered{
+    public List<ATekdaqc> blockingSearchForSpecificTekdaqcs(long timeoutMillis, final String... serials){
+        return blockingSearchForSpecificTekdaqcs(timeoutMillis,new ReentrantLock(), false, null ,serials);
+    }
+
+    /**
+     * Method which runs the locator while blocking the current thread to look for specific Tekdaqcs.
+     *
+     * @param timeoutMillis The maximum time to search for {@link ATekdaqc}s.
+     * @param lock The lock to be used. This should be implemented where custom threading libraries or concurrency is being used.
+     * @param serials The serial numbers of {@link ATekdaqc}s to search for.
+     * @return A list of {@link ATekdaqc}s found during the timeout with the listed serial numbers.
+     */
+    public List<ATekdaqc> blockingSearchForSpecificTekdaqcs(long timeoutMillis, final Lock lock, final String... serials){
+        return blockingSearchForSpecificTekdaqcs(timeoutMillis,lock, false, null ,serials);
+    }
+
+    /**
+     * Method which runs the locator while blocking the current thread to look for specific Tekdaqcs.
+     *
+     * @param timeoutMillis The maximum time to search for {@link ATekdaqc}s.
+     * @param autoConnect If {@link ATekdaqc}s should be automatically connected to.
+     * @param autoConnectDefaultScale The scale of the {@link ATekdaqc}s that are auto-connected to.
+     *                                THIS MUST BE NON-NULL IN ORDER TO AUTOMATICALLY CONNECT.
+     * @param serials The serial numbers of {@link ATekdaqc}s to search for.
+     * @return A list of {@link ATekdaqc}s found during the timeout with the listed serial numbers.
+     */
+    public List<ATekdaqc> blockingSearchForSpecificTekdaqcs(long timeoutMillis, boolean autoConnect, ATekdaqc.AnalogScale autoConnectDefaultScale, final String... serials){
+        return blockingSearchForSpecificTekdaqcs(timeoutMillis,new ReentrantLock(), autoConnect, autoConnectDefaultScale ,serials);
+    }
+
+    /**
+     * Method which runs the locator while blocking the current thread to look for specific Tekdaqcs.
+     *
+     * @param timeoutMillis The maximum time to search for {@link ATekdaqc}s.
+     * @param lock The lock to be used. This should be implemented where custom threading libraries or concurrency is being used.
+     * @param autoConnect If {@link ATekdaqc}s should be automatically connected to.
+     * @param autoConnectDefaultScale The scale of the {@link ATekdaqc}s that are auto-connected to.
+     *                                THIS MUST BE NON-NULL IN ORDER TO AUTOMATICALLY CONNECT.
+     * @param serials The serial numbers of {@link ATekdaqc}s to search for.
+     * @return A list of {@link ATekdaqc}s found during the timeout with the listed serial numbers.
+     */
+    public List<ATekdaqc> blockingSearchForSpecificTekdaqcs(long timeoutMillis, final Lock lock, final boolean autoConnect, ATekdaqc.AnalogScale autoConnectDefaultScale, final String... serials){
+        final ArrayList<ATekdaqc> discoveredTekdaqcs = new ArrayList<ATekdaqc>();
+        final Condition condition = lock.newCondition();
+
+        final Timer timer = new Timer();
+
+        timer.schedule(new BlockingWakeTask(lock,condition),timeoutMillis);
+
+        addLocatorListener(new OnTekdaqcDiscovered() {
+            @Override
+            public void onTekdaqcResponse(ATekdaqc board) {
+                for(String serial: serials){
+                    if(serial.equals(board.getSerialNumber()) && !discoveredTekdaqcs.contains(board)){
+
+                        if(autoConnect && autoConnectDefaultScale != null){
+                            try {
+                                board.connect(autoConnectDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        discoveredTekdaqcs.add(board);
+
+                        if(discoveredTekdaqcs.size() == serials.length){
+
+                            timer.purge();
+                            timer.cancel();
+
+
+                            lock.lock();
+                            condition.signalAll();
+                            lock.unlock();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onTekdaqcFirstLocated(ATekdaqc board) {
+
+            }
+
+            @Override
+            public void onTekdaqcNoLongerLocated(ATekdaqc board) {
+
+            }
+        });
+
+        searchForTekdaqcs();
+
+        lock.lock();
+
+        try {
+            condition.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+
+        timer.purge();
+        timer.cancel();
+
+        cancelLocator();
+
+        return discoveredTekdaqcs;
+
+    }
+
+    /**
+     * Internal class used for {@link Locator#blockingSearchForSpecificTekdaqcs(long, boolean, ATekdaqc.AnalogScale, String...)}
+     * and similar methods.
+     */
+    private class BlockingWakeTask extends TimerTask {
+
+        private Lock mLock;
+
+        private Condition mCondition;
+
+        private BlockingWakeTask(Lock lock, Condition condition){
+            mLock = lock;
+
+            mCondition = condition;
+
+        }
+
+        @Override
+        public void run() {
+            mLock.lock();
+
+            mCondition.signalAll();
+
+            mLock.unlock();
+        }
+    }
+
+
+    /**
+     * Internal class to handle waiting for the location of specific {@link ATekdaqc}s
+     */
+    private class AwaitSpecificTekdaqcTask extends TimerTask implements OnTekdaqcDiscovered{
 
         /**
          * The {@link List} of the serial numbers to find.
@@ -569,13 +764,18 @@ public final class Locator {
         private boolean mAutoConnect;
 
         /**
-         * Constructor for the {@link AwaitSpecifcTekdaqcTask}.
+         * The default {@link ATekdaqc.AnalogScale} for autoconnect.
+         */
+        private ATekdaqc.AnalogScale mDefaultScale;
+
+        /**
+         * Constructor for the {@link AwaitSpecificTekdaqcTask}.
          *
          * @param serialList The {@link List} of serial numbers.
          * @param listener The {@link OnTargetTekdaqcFound} listener to be notified.
          * @param autoConnect If the program should automatically connect.
          */
-        private AwaitSpecifcTekdaqcTask(final List<String> serialList, final OnTargetTekdaqcFound listener, boolean autoConnect){
+        private AwaitSpecificTekdaqcTask(final List<String> serialList, final OnTargetTekdaqcFound listener, final boolean autoConnect, final ATekdaqc.AnalogScale defaultScale){
 
             mSerialList = serialList;
 
@@ -583,10 +783,12 @@ public final class Locator {
 
             mAutoConnect = autoConnect;
 
-            Locator.getInstance().addLocatorListener(this);
+            mDefaultScale = defaultScale;
 
-            if(!Locator.getInstance().isActive()){
-                Locator.getInstance().searchForTekdaqcs();
+            Locator.get().addLocatorListener(this);
+
+            if(!Locator.get().isActive()){
+                Locator.get().searchForTekdaqcs();
             }
         }
 
@@ -603,20 +805,20 @@ public final class Locator {
 
                     if(mAutoConnect){
                         try {
-                            board.connect(ATekdaqc.CONNECTION_METHOD.ETHERNET);
+                            board.connect(mDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
 
-                    mListener.onSuccess(board);
+                    mListener.onTargetFound(board);
 
                     mSerialList.remove(serial);
 
                     mTekdaqcList.add(board);
 
                     if(mSerialList.size() == 0){
-                        mListener.onAllTargetaFound(new UnmodifiableListSet<>(mTekdaqcList));
+                        mListener.onAllTargetsFound(new UnmodifiableListSet<>(mTekdaqcList));
                     }
 
                 }
@@ -632,10 +834,10 @@ public final class Locator {
         @Override
         public void run() {
 
-            Locator.getInstance().removeLocatorListener(this);
+            Locator.get().removeLocatorListener(this);
 
             for(String serial: mSerialList){
-                mListener.onFailure(serial, OnTargetTekdaqcFound.FailureFlag.TEKDAQC_NOT_LOCATED);
+                mListener.onTargetFailure(serial, OnTargetTekdaqcFound.FailureFlag.TEKDAQC_NOT_LOCATED);
             }
 
         }

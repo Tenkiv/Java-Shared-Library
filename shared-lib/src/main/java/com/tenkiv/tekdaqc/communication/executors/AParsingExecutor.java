@@ -1,5 +1,6 @@
 package com.tenkiv.tekdaqc.communication.executors;
 
+import com.tenkiv.tekdaqc.communication.ascii.executors.ThrowableExecutor;
 import com.tenkiv.tekdaqc.communication.message.ABoardMessage;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 
@@ -37,7 +38,7 @@ public abstract class AParsingExecutor implements ITekdaqcExecutor {
      * @param numThreads int The number of threads to use in the parsing pool.
      */
     public AParsingExecutor(final int numThreads) {
-        mExecutor = Executors.newFixedThreadPool(numThreads, new Factory());
+        mExecutor = new ThrowableExecutor(numThreads, new Factory());
     }
 
     @Override

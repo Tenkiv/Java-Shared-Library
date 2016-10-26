@@ -11,6 +11,10 @@ targetCompatibility = 1.8
 repositories {
     jcenter()
     mavenCentral()
+
+    maven{
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
 }
 
 if (version.endsWith('-SNAPSHOT')) {
@@ -23,4 +27,6 @@ dependencies {
     compile(group: 'commons-net', name: 'commons-net', version: '3.3', ext: 'jar')
 
     compile 'tec.uom:uom-se:1.0'
+
+    compile 'com.tenkiv.coral:coral:0.7.0.3-SNAPSHOT'
 }

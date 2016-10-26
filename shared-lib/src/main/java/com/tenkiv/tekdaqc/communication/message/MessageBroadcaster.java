@@ -7,6 +7,7 @@ import com.tenkiv.tekdaqc.hardware.AAnalogInput;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 import com.tenkiv.tekdaqc.hardware.DigitalInput;
 import com.tenkiv.tekdaqc.hardware.IInputOutputHardware;
+import tec.uom.se.ComparableQuantity;
 import tec.uom.se.quantity.Quantities;
 import tec.uom.se.spi.Measurement;
 import tec.uom.se.unit.Units;
@@ -285,7 +286,11 @@ public final class MessageBroadcaster {
         if (listeners != null) {
             synchronized (listeners) {
                 for (final IMessageListener listener : listeners) {
-                    listener.onAnalogInputDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), data.getData());
+                    try {
+                        listener.onAnalogInputDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), data.getData());
+                    }catch (Exception e){
+                        throw e;
+                    }
                 }
             }
         } else {
@@ -297,8 +302,10 @@ public final class MessageBroadcaster {
                 final List<ICountListener> channelListeners = mAnalogCountListeners
                         .get(tekdaqc).get(data.getPhysicalInput());
                 synchronized (channelListeners) {
-                    for (final ICountListener listener : channelListeners) {
-                        listener.onAnalogDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), data.getData());
+                    try {
+                        channelListeners.forEach(listener -> listener.onAnalogDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), data.getData()));
+                    }catch (Exception e){
+                        throw e;
                     }
                 }
             }
@@ -310,10 +317,19 @@ public final class MessageBroadcaster {
                         .get(tekdaqc).get(data.getPhysicalInput());
                 synchronized (channelListeners) {
 
-                    Quantity<ElectricPotential> quant = Quantities.getQuantity(tekdaqc.convertAnalogInputDataToVoltage(data,tekdaqc.getAnalogInputScale()), Units.VOLT);
+                    Quantity<ElectricPotential> quant = Quantities.getQuantity(tekdaqc.convertAnalogInputDataToVoltage(data, tekdaqc.getAnalogInputScale()), Units.VOLT);
 
-                    for (final IVoltageListener listener : channelListeners) {
-                        listener.onVoltageDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), Measurement.of(quant, Instant.ofEpochSecond(data.getTimestamp())));
+                    try {
+                        channelListeners.forEach(
+                                listener ->
+                                        listener.onVoltageDataReceived(
+                                                tekdaqc.getAnalogInput(data.getPhysicalInput()),
+                                                new PLACEHOLDER_MEASUREMENT(
+                                                        (ComparableQuantity) quant,
+                                                        Instant.ofEpochSecond(data.getTimestamp()))));
+
+                    }catch(Exception e){
+                        throw e;
                     }
                 }
             }
@@ -339,9 +355,7 @@ public final class MessageBroadcaster {
                 final List<IDigitalChannelListener> channelListeners = mDigitalChannelListeners
                         .get(tekdaqc).get(data.getPhysicalInput());
                 synchronized (channelListeners) {
-                    for (final IDigitalChannelListener listener : channelListeners) {
-                        listener.onDigitalDataReceived(tekdaqc, data);
-                    }
+                    channelListeners.forEach(listener -> listener.onDigitalDataReceived(tekdaqc.getDigitalInput(data.getPhysicalInput()), data));
                 }
             }
         }

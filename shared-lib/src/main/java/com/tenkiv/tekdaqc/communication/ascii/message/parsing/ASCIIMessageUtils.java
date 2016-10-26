@@ -127,6 +127,7 @@ public class ASCIIMessageUtils {
                 message = null;
             }
         } catch (final Exception e) {
+            /*System.err.println("ERROR MESSAGE: "+messageData);*/
 			/*System.err.println("Detected exception parsing message ("
 					+ e.getClass().getSimpleName() + "). Message Data:");
 			System.err.println(messageData);

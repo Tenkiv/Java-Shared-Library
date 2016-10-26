@@ -232,13 +232,15 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @since v1.0.0.0
      */
     public enum Gain {
-        X1("1"), X2("2"), X4("4"), X8("8"), X16("16"), X32("32"), X64("64");
+        X1(1), X2(2), X4(4), X8(8), X16(16), X32(32), X64(64);
 
         private static Gain[] mValueArray = Gain.values();
-        public final String gain;
+        public final int gain;
+
+        Gain(final int gain){this.gain = gain;}
 
         Gain(final String gain) {
-            this.gain = gain;
+            this.gain = Integer.valueOf(gain);
         }
 
         public static Gain getValueFromOrdinal(final byte ordinal) {
@@ -247,7 +249,17 @@ public abstract class AAnalogInput extends IInputOutputHardware {
 
         public static Gain fromString(final String gain) {
             for (Gain g : values()) {
-                if (g.gain.equals(gain)) {
+
+                if (g.toString().equals(gain)) {
+                    return g;
+                }
+            }
+            return null;
+        }
+
+        public static Gain fromInt(final int gain) {
+            for (Gain g : values()) {
+                if (g.gain == gain) {
                     return g;
                 }
             }
@@ -256,7 +268,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
 
         @Override
         public String toString() {
-            return gain;
+            return String.valueOf(gain);
         }
     }
 

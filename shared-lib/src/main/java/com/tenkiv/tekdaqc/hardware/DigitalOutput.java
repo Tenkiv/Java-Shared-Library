@@ -3,6 +3,8 @@ package com.tenkiv.tekdaqc.hardware;
 
 import com.tenkiv.tekdaqc.utility.ChannelType;
 
+import java.security.InvalidParameterException;
+
 /**
  * Container class for all data/settings of an digital output on the Tekdaqc.
  *
@@ -20,6 +22,16 @@ public class DigitalOutput extends IInputOutputHardware {
      * The current output state.
      */
     private volatile boolean mIsOn;
+
+    /**
+     * Uptime for this output's PWM.
+     */
+    private volatile float mPWMPercentage = 1;
+
+    /**
+     * Threshold for activating this output for PWM.
+     */
+    private volatile float mPWMThreshold = 0;
 
     @Override
     public ChannelType getChannelType() {
@@ -68,6 +80,11 @@ public class DigitalOutput extends IInputOutputHardware {
         return mIsOn;
     }
 
+    /**
+     * Updates the state of the output's activity boolean.
+     *
+     * @param isOn The revised state.
+     */
     protected void setIsActive(final boolean isOn) {
         mIsOn = isOn;
     }
@@ -76,6 +93,8 @@ public class DigitalOutput extends IInputOutputHardware {
     public void activate() {
         if (getTekdaqc().isConnected()) {
             isActivated = true;
+            mPWMPercentage = 1;
+            mPWMThreshold = 0;
             mIsOn = true;
             getTekdaqc().queueCommand(CommandBuilder.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
@@ -87,10 +106,42 @@ public class DigitalOutput extends IInputOutputHardware {
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
             isActivated = false;
+            mPWMPercentage = 0;
+            mPWMThreshold = 0;
             mIsOn = false;
             getTekdaqc().queueCommand(CommandBuilder.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
+        }
+    }
+
+    /**
+     * Activates pulse width modulation on a digital output; allowing the user to set the percentage of the time
+     * the digital output will be active.
+     *
+     * @param uptime A float value 0 and 1 to set as the uptime percentage.
+     */
+    public void setPulseWidthModulation(final float uptime){
+        if(uptime < 0 || uptime > 1){
+            throw new InvalidParameterException("Uptime must be a value between 0 and 1");
+        }
+        mPWMThreshold = 0;
+        mPWMPercentage = uptime;
+    }
+
+    /**
+     * Adds to threshold and checks to see if it is at triggerable levels.
+     *
+     * @return If output should be activated for this tick.
+     */
+    protected boolean isTriggerableThreshold(){
+        mPWMThreshold += mPWMPercentage;
+
+        if(mPWMThreshold >= 1){
+            mPWMThreshold -= 1;
+            return true;
+        }else{
+            return false;
         }
     }
 

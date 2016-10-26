@@ -28,4 +28,16 @@ public interface ICommandManager {
      * Attempt to poll an {@link IQueueObject} from the {@link Queue} and process it.
      */
     void tryCommand();
+
+    /**
+     * Purge all queued {@link IQueueObject}s.
+     */
+    void purge();
+
+    /**
+     * Returns the current number of queued commands.
+     *
+     * @return The number of commands.
+     */
+    int getNumberQueued();
 }

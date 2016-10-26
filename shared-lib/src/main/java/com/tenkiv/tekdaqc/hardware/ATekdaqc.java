@@ -5,18 +5,23 @@ import com.tenkiv.tekdaqc.communication.command.queue.CommandQueueManager;
 import com.tenkiv.tekdaqc.communication.command.queue.ICommandManager;
 import com.tenkiv.tekdaqc.communication.command.queue.IQueueObject;
 import com.tenkiv.tekdaqc.communication.command.queue.Task;
+import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
 import com.tenkiv.tekdaqc.communication.data_points.ProtectedAnalogInputData;
 import com.tenkiv.tekdaqc.communication.executors.AParsingExecutor.IParsingListener;
 import com.tenkiv.tekdaqc.communication.executors.ReadExecutor;
 import com.tenkiv.tekdaqc.communication.message.*;
+import com.tenkiv.tekdaqc.communication.tasks.ITaskComplete;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate;
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD.BufferState;
+import com.tenkiv.tekdaqc.locator.Locator;
 import com.tenkiv.tekdaqc.locator.LocatorResponse;
 import com.tenkiv.tekdaqc.telnet.client.EthernetTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.ITekdaqcTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.SerialTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection;
+import com.tenkiv.tekdaqc.utility.CriticalErrorListener;
+import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError;
 
 import java.io.*;
 import java.util.*;
@@ -35,30 +40,42 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * Maximum length of a channel name.
      */
     public static final int MAX_NAME_LENGTH = 24;
+
     /**
      * The singleton instance.
      */
     protected final static MessageBroadcaster messageBroadcaster = new MessageBroadcaster();
+
     /**
      * Required for serialization
      */
     private static final long serialVersionUID = 1L;
+
     /**
      * Maps of inputs/outputs
      */
     protected final Map<Integer, AAnalogInput> mAnalogInputs;
     protected final Map<Integer, DigitalInput> mDigitalInputs;
     protected final Map<Integer, DigitalOutput> mDigitalOutputs;
+
     /**
      * The executor responsible for reading the input stream of the Tekdaqc
      */
     protected ReadExecutor mReadExecutor;
+
     /**
      * The executor responsible for parsing split messages
      */
     protected ASCIIParsingExecutor mParsingExecutor;
+
+    /**
+     * The digital input rate for throttled sampling.
+     */
     protected transient int mDigitalInputRate = 1000;
 
+    /**
+     * The current {@link AnalogScale}
+     */
     protected transient AnalogScale mAnalogScale;
 
     /**
@@ -77,9 +94,19 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      */
     protected transient ICommandManager mCommandQueue;
 
-    /* The following are declared transient to re-enforce the intention */
+    /**
+     * The Telnet connection.
+     */
     protected transient ITekdaqcTelnetConnection mConnection;
+
+    /**
+     * The read stream for the telnet connection.
+     */
     protected transient InputStream mReadStream;
+
+    /**
+     * The write stream for the telnet connection.
+     */
     protected transient OutputStream mWriteStream;
 
     /**
@@ -88,23 +115,93 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     protected Timer mDigitalInputSampleTimer;
 
     /**
+     * The list of {@link CriticalErrorListener}s.
+     */
+    private List<CriticalErrorListener> mCriticalErrorListener = new ArrayList<>();
+
+    /**
      * The number of samples currently taken by throttled sampling.
      */
     protected volatile int mThrottledSamples = -1;
 
-    protected static final int WATCHDOG_TIMER_INTERVAL = 5000;
+    /**
+     * Interval of the watchdog timer.
+     */
+    protected static final int HEARTBEAT_TIMER_INTERVAL = 5000;
+
+    /**
+     * Interval of the PWM timer.
+     */
+    protected static final int PWM_TIMER_INTERVAL = 1000;
+
+    /**
+     * Boolean for if the tekdaqc is connected in the current tick.
+     */
     protected boolean tenativeIsConnected = false;
+
+    /**
+     * If the keep alive packet was sent.
+     */
     protected boolean keepAlivePacketSent = false;
+
+    /**
+     * If the tekdaqc is connected.
+     */
     protected boolean isConnected = false;
 
+    /**
+     * Method to get the total number of analog inputs, not including the board's temperature sensor.
+     *
+     * @return The number of analog inputs.
+     */
     abstract int getAnalogInputCount();
+
+    /**
+     * Method to gte the total number of digital inputs.
+     *
+     * @return The number of digital inputs.
+     */
     abstract int getDigitalInputCount();
+
+    /**
+     * Method to gte the number of digital outputs.
+     *
+     * @return The number of digital outputs.
+     */
     abstract int getDigitalOutputCount();
+
+    /**
+     * Method to return the channel number of the tekdaqc's temperature sensor.
+     *
+     * @return The channel number of the tekdaqc's temperature sensor.
+     */
+    abstract int getAnalogTemperatureSensorChannel();
+
+    /**
+     * The {@link TimerTask} for setting pulse width modulation on digital outputs.
+     */
+    private TimerTask mPWMActivationTask =  new TimerTask() {
+        @Override
+        public void run() {
+            boolean[] outputStatus = new boolean[getDigitalOutputCount()];
+
+            mDigitalOutputs.values().forEach(output -> {
+                outputStatus[output.getChannelNumber()] = output.isTriggerableThreshold();
+            });
+
+            setDigitalOutput(outputStatus);
+        }
+    };
+
+    /**
+     * Pulse width modulation timer for update intervals.
+     */
+    private final Timer mPWMTimer = new Timer();
 
     /**
      * A {@link TimerTask} to be executed when attempting to use throttled sampling.
      */
-    protected TimerTask mDigitalActivationTask = new TimerTask() {
+    protected TimerTask mDigitalInputActivationTask = new TimerTask() {
 
         @Override
         public void run() {
@@ -118,18 +215,24 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
                     mDigitalInputSampleTimer.cancel();
                     mDigitalInputSampleTimer.purge();
                 }
-
             }
         }
     };
 
-    protected final Timer mWatchdogTimer = new Timer();
+    /**
+     * Heartbeat timer to check for disconnection from the tekdaqc.
+     */
+    protected final Timer mHeartbeatTimer = new Timer();
 
-    protected TimerTask mWatchDogTimerTask = new TimerTask() {
+    /**
+     * A {@link TimerTask} to be executed for checking to see if the Tekdaqc connection is active.
+     */
+    protected TimerTask mHeartbeatTimerTask = new TimerTask() {
         @Override
         public void run() {
             if (keepAlivePacketSent && !tenativeIsConnected) {
                 isConnected = false;
+                criticalErrorNotification(TekdaqcCriticalError.TERMINAL_CONNECTION_DISRUPTION);
             } else if (!keepAlivePacketSent && !tenativeIsConnected) {
                 keepAlivePacketSent = true;
                 queueCommand(CommandBuilder.none());
@@ -142,7 +245,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
 
     /**
-     * This constructor provided solely to support serialization.F User code
+     * This constructor provided solely to support serialization. User code
      * should never utilize it.
      */
     public ATekdaqc() {
@@ -154,11 +257,37 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
         mCommandQueue = getCommandManager();
 
-        mParsingExecutor = getParingExecutor();
+        mParsingExecutor = getParsingExecutor();
 
         mDigitalInputSampleTimer = new Timer(true);
     }
 
+    /**
+     * Adds a new {@link CriticalErrorListener} to be notified of any catastrophic events.
+     *
+     * @param listener The listener to be added.
+     */
+    public void addCriticalFailureListener(CriticalErrorListener listener){
+        mCriticalErrorListener.add(listener);
+    }
+
+    /**
+     * Removes a {@link CriticalErrorListener} from being notified of events.
+     *
+     * @param listener The listener to be removed.
+     */
+    public void removeCriticalFailureListener(CriticalErrorListener listener){
+        mCriticalErrorListener.remove(listener);
+    }
+
+    /**
+     * Notifies all {@link CriticalErrorListener}s of something awful happening.
+     *
+     * @param error The {@link TekdaqcCriticalError} which has caused such a problem.
+     */
+    public void criticalErrorNotification(TekdaqcCriticalError error){
+        mCriticalErrorListener.forEach(it -> it.onTekdaqcCriticalError(error));
+    }
 
     /**
      * Creates a Tekdaqc board object from the information provided by the
@@ -190,6 +319,11 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         tenativeIsConnected = true;
     }
 
+    /**
+     * Gets the {@link ICommandManager} for this {@link ATekdaqc}.
+     *
+     * @return The {@link ICommandManager} for the {@link ATekdaqc}.
+     */
     protected ICommandManager getCommandManager(){
         return new CommandQueueManager(this);
     }
@@ -214,7 +348,12 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         return builder.toString();
     }
 
-    protected ASCIIParsingExecutor getParingExecutor() {
+    /**
+     * Method to return the {@link ATekdaqc}'s parsing executor.
+     *
+     * @return The {@link ASCIIParsingExecutor} the tekdaqc owns.
+     */
+    protected ASCIIParsingExecutor getParsingExecutor() {
         return new ASCIIParsingExecutor(1);
     }
 
@@ -230,10 +369,70 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
             mDigitalInputRate = rateMillis;
             mDigitalInputSampleTimer.cancel();
             mDigitalInputSampleTimer.purge();
-            mDigitalInputSampleTimer.schedule(mDigitalActivationTask, mDigitalInputRate);
+            mDigitalInputSampleTimer.schedule(mDigitalInputActivationTask, mDigitalInputRate);
 
         } else {
             throw new IllegalArgumentException("Specified rate must be greater then 0.");
+        }
+    }
+
+    /**
+     * Attempts disconnect and reconnect to the Tekdaqc in the case of a critical failure. Can attempt to restore
+     * the state of all {@link AAnalogInput}s and {@link DigitalInput}s. Throws {@link CriticalErrorListener}s if it is
+     * unable to successfully do so.
+     *
+     * @param millisTimeout Time to wait for reconnection in milliseconds,
+     * @param reactivateChannels If channels should be reactivated after reconnection.
+     */
+    public void restoreTekdaqc(final long millisTimeout, final boolean reactivateChannels){
+        try {
+            mCommandQueue.purge();
+
+            mConnection.disconnect();
+
+            mReadStream = null;
+            mWriteStream = null;
+
+            Locator.get()
+                    .blockingSearchForSpecificTekdaqcs(millisTimeout,getSerialNumber())
+                    .get(0).connect(mAnalogScale,CONNECTION_METHOD.ETHERNET);
+
+
+            List<ABaseQueueVal> commands = new ArrayList<ABaseQueueVal>();
+
+            commands.addAll(CommandBuilder.deactivateAllAnalogInputs());
+
+            commands.addAll(CommandBuilder.deactivateAllDigitalInputs());
+
+            if(reactivateChannels) {
+                mAnalogInputs.forEach((num, input) -> {
+                    if (input.isActivated) {
+                        commands.add(CommandBuilder.addAnalogInput(input));
+                    }
+                });
+
+                mDigitalInputs.forEach((num, input) -> {
+                    if (input.isActivated) {
+                        commands.add(CommandBuilder.addDigitalInput(input));
+                    }
+                });
+            }
+
+            queueTask(new Task(new ITaskComplete() {
+                @Override
+                public void onTaskSuccess(ATekdaqc tekdaqc) {
+
+                }
+
+                @Override
+                public void onTaskFailed(ATekdaqc tekdaqc) {
+                    criticalErrorNotification(TekdaqcCriticalError.FAILED_TO_REINITIALIZE);
+                }
+            },commands));
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -367,6 +566,17 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      */
     public DigitalOutput getDigitalOutput(int output) {
         return mDigitalOutputs.get(output);
+    }
+
+    /**
+     * Activates pulse width modulation on a digital output; allowing the user to set the percentage of the time
+     * the digital output will be active.
+     *
+     * @param output Output to set.
+     * @param uptime A float value 0 and 1 to set as the uptime percentage.
+     */
+    public void setPulseWidthModulation(int output, float uptime){
+        mDigitalOutputs.get(output).setPulseWidthModulation(uptime);
     }
 
     /**
@@ -570,7 +780,8 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         mAnalogScale = currentAnalogScale;
 
         isConnected = true;
-        mWatchdogTimer.schedule(mWatchDogTimerTask, WATCHDOG_TIMER_INTERVAL, WATCHDOG_TIMER_INTERVAL);
+        mHeartbeatTimer.schedule(mHeartbeatTimerTask, HEARTBEAT_TIMER_INTERVAL, HEARTBEAT_TIMER_INTERVAL);
+        mPWMTimer.scheduleAtFixedRate(mPWMActivationTask, 0, PWM_TIMER_INTERVAL);
     }
 
     /**
@@ -588,21 +799,21 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         mConnection.disconnect();
 
         isConnected = false;
-        mWatchdogTimer.purge();
-        mWatchdogTimer.cancel();
+        mHeartbeatTimer.purge();
+        mHeartbeatTimer.cancel();
     }
 
     /**
      * Disconnect from this Tekdaqc's Telnet server cleanly (issue the command).
-     * It is the responsibilty of the calling application to ensure that the
+     * It is the responsibility of the calling application to ensure that the
      * connection's stream resources are properly cleaned up.
      */
     public void disconnectCleanly() {
         mCommandQueue.queueCommand(CommandBuilder.disconnect());
 
         isConnected = false;
-        mWatchdogTimer.purge();
-        mWatchdogTimer.cancel();
+        mHeartbeatTimer.purge();
+        mHeartbeatTimer.cancel();
     }
 
     /**
@@ -625,7 +836,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     /**
      * Instructs the Tekdaqc to exit calibration mode. WARNING: This command
      * must be used with caution. When executed, the Tekdaqc will lock the
-     * calibration table, requireing a complete erasure prior to being able to
+     * calibration table, requiring a complete erasure prior to being able to
      * write any new data.
      */
     public void exitCalibrationMode() {
