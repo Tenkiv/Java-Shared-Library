@@ -12,6 +12,10 @@ public class ThrowableExecutor extends ThreadPoolExecutor {
         super(1, numThreads, 0, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), factory);
     }
 
+    public ThrowableExecutor(final int numThreads){
+        super(1,numThreads,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>());
+    }
+
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
         super.afterExecute(r, t);

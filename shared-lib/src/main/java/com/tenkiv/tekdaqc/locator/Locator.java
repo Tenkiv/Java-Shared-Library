@@ -87,7 +87,7 @@ public final class Locator {
     /**
      * The timer run periodically to search for tekdaqcs on the local area network.
      */
-    private final Timer mUpdateTimer = new Timer();
+    private final Timer mUpdateTimer = new Timer("Update Timer", false);
 
     /**
      * The timer task run at interval, which updates the {@link List} of known {@link ATekdaqc}
@@ -249,10 +249,10 @@ public final class Locator {
      */
     public static ATekdaqc connectToTargetTekdaqc(String serialNumber, ATekdaqc.AnalogScale defaultScale){
 
-        Map<String,ATekdaqc> map = Locator.getActiveTekdaqcMap();
+        final Map<String,ATekdaqc> map = Locator.getActiveTekdaqcMap();
 
         if(map.containsKey(serialNumber)){
-            ATekdaqc tekdaqc = map.get(serialNumber);
+            final ATekdaqc tekdaqc = map.get(serialNumber);
             try {
                 tekdaqc.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET);
             } catch (IOException e) {
@@ -286,7 +286,7 @@ public final class Locator {
      */
     public static ATekdaqc connectToUnsafeTarget(String serialNumber, String hostIPAdress, char tekdaqcRevision, ATekdaqc.AnalogScale defaultScale){
 
-        LocatorResponse pseudoResponse = new LocatorResponse();
+        final LocatorResponse pseudoResponse = new LocatorResponse();
 
         pseudoResponse.mHostIPAddress = hostIPAdress;
 
@@ -294,7 +294,7 @@ public final class Locator {
 
         pseudoResponse.mSerial = serialNumber;
 
-        ATekdaqc tekdaqc = Locator.createTekdaqc(pseudoResponse, false);
+        final ATekdaqc tekdaqc = Locator.createTekdaqc(pseudoResponse, false);
 
         try {
             tekdaqc.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET);
@@ -416,7 +416,7 @@ public final class Locator {
                     System.out.println("Waiting for return packet...");
                 socket.receive(packet);
                 final LocatorResponse response = new LocatorResponse(packet.getAddress().getHostAddress(), packet.getData());
-                System.out.println("Response: "+response.isValid(mParams)+" "+response.toString());
+
                 if (response.isValid(mParams)) {
 
                     mTempMapLock.writeLock().lock();
@@ -450,7 +450,8 @@ public final class Locator {
      */
     private void updateKnownTekdaqcs() {
         tekdaqcMapLock.readLock().lock();
-        for (final Map.Entry<String, ATekdaqc> questionableBoard : getActiveTekdaqcMap().entrySet()) {
+
+        getActiveTekdaqcMap().entrySet().forEach(questionableBoard -> {
 
             mTempMapLock.readLock().lock();
 
@@ -461,12 +462,14 @@ public final class Locator {
                 removeTekdaqcForSerial(questionableBoard.getKey());
                 tekdaqcMapLock.readLock().lock();
                 tekdaqcMapLock.writeLock().unlock();
-                for(OnTekdaqcDiscovered listener: mListeners) {
+
+                mListeners.forEach(listener -> {
                     listener.onTekdaqcNoLongerLocated(questionableBoard.getValue());
-                }
+                });
             }
             mTempMapLock.readLock().unlock();
-        }
+        });
+
         tekdaqcMapLock.readLock().unlock();
         mTempTekdaqcMap.clear();
     }
@@ -575,18 +578,16 @@ public final class Locator {
      */
     public void searchForSpecificTekdaqcs(final OnTargetTekdaqcFound listener, final long timeoutMillis, final boolean autoConnect, final ATekdaqc.AnalogScale autoConnectDefaultScale, final String... serials){
 
-        Map<String,ATekdaqc> previouslyLocated = getActiveTekdaqcMap();
+        final Map<String,ATekdaqc> previouslyLocated = getActiveTekdaqcMap();
 
-        ArrayList<String> serialList = new ArrayList<String>(Arrays.asList(serials));
+        final List<String> serialList = new ArrayList<String>(Arrays.asList(serials));
 
-        for(String serial: serialList){
-            if(previouslyLocated.containsKey(serial)){
-                listener.onTargetFound(previouslyLocated.get(serial));
-                serialList.remove(serial);
-            }
-        }
+        serialList.forEach(serial -> {
+            listener.onTargetFound(previouslyLocated.get(serial));
+            serialList.remove(serial);
+        });
 
-        Timer searchTimer = new Timer();
+        final Timer searchTimer = new Timer("Specific Tekdaqc Search Timer", false);
 
         searchTimer.schedule(new AwaitSpecificTekdaqcTask(serialList,listener,autoConnect,autoConnectDefaultScale),timeoutMillis);
 
@@ -644,7 +645,7 @@ public final class Locator {
         final ArrayList<ATekdaqc> discoveredTekdaqcs = new ArrayList<ATekdaqc>();
         final Condition condition = lock.newCondition();
 
-        final Timer timer = new Timer();
+        final Timer timer = new Timer("Blocking Search for Specific Tekdaqcs", false);
 
         timer.schedule(new BlockingWakeTask(lock,condition),timeoutMillis);
 
@@ -716,9 +717,9 @@ public final class Locator {
      */
     private class BlockingWakeTask extends TimerTask {
 
-        private Lock mLock;
+        private final Lock mLock;
 
-        private Condition mCondition;
+        private final Condition mCondition;
 
         private BlockingWakeTask(Lock lock, Condition condition){
             mLock = lock;
@@ -746,27 +747,27 @@ public final class Locator {
         /**
          * The {@link List} of the serial numbers to find.
          */
-        private List<String> mSerialList;
+        private final List<String> mSerialList;
 
         /**
          * The list of {@link ATekdaqc}s which have been found.
          */
-        private List<ATekdaqc> mTekdaqcList = new ArrayList<ATekdaqc>();
+        private final List<ATekdaqc> mTekdaqcList = new ArrayList<ATekdaqc>();
 
         /**
          * The {@link OnTargetTekdaqcFound} listener to be notified.
          */
-        private OnTargetTekdaqcFound mListener;
+        private final OnTargetTekdaqcFound mListener;
 
         /**
          * If {@link ATekdaqc} should be automatically connected to.
          */
-        private boolean mAutoConnect;
+        private final boolean mAutoConnect;
 
         /**
          * The default {@link ATekdaqc.AnalogScale} for autoconnect.
          */
-        private ATekdaqc.AnalogScale mDefaultScale;
+        private final ATekdaqc.AnalogScale mDefaultScale;
 
         /**
          * Constructor for the {@link AwaitSpecificTekdaqcTask}.
@@ -800,29 +801,27 @@ public final class Locator {
         @Override
         public void onTekdaqcFirstLocated(ATekdaqc board) {
 
-            for(String serial: mSerialList){
-                if(board.getSerialNumber() == serial){
+            mSerialList.forEach(serial -> {
 
-                    if(mAutoConnect){
-                        try {
-                            board.connect(mDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                if (mAutoConnect) {
+                    try {
+                        board.connect(mDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-
-                    mListener.onTargetFound(board);
-
-                    mSerialList.remove(serial);
-
-                    mTekdaqcList.add(board);
-
-                    if(mSerialList.size() == 0){
-                        mListener.onAllTargetsFound(new UnmodifiableListSet<>(mTekdaqcList));
-                    }
-
                 }
-            }
+
+                mListener.onTargetFound(board);
+
+                mSerialList.remove(serial);
+
+                mTekdaqcList.add(board);
+
+                if (mSerialList.size() == 0) {
+                    mListener.onAllTargetsFound(new UnmodifiableListSet<>(mTekdaqcList));
+                }
+
+            });
 
         }
 
@@ -836,9 +835,9 @@ public final class Locator {
 
             Locator.get().removeLocatorListener(this);
 
-            for(String serial: mSerialList){
+            mSerialList.forEach(serial -> {
                 mListener.onTargetFailure(serial, OnTargetTekdaqcFound.FailureFlag.TEKDAQC_NOT_LOCATED);
-            }
+            });
 
         }
     }

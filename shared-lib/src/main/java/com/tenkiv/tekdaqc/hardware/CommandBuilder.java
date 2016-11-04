@@ -121,7 +121,7 @@ public final class CommandBuilder {
     public static ABaseQueueVal readDigitalInputSet(final Set<Integer> inputs, final int number) {
 
         final StringBuilder inputBuilder = new StringBuilder();
-        for (Integer input : inputs) {
+        for (final Integer input : inputs) {
             inputBuilder.append(input).append(',');
         }
         inputBuilder.deleteCharAt(inputBuilder.length());
@@ -240,7 +240,7 @@ public final class CommandBuilder {
      * @return The {@link List} of {@link ABaseQueueVal} representing the commands.
      */
     static List<ABaseQueueVal> removeMappedAnalogInputs(final Map<Integer, AAnalogInput> inputs) {
-        ArrayList<ABaseQueueVal> queueVals = new ArrayList<ABaseQueueVal>();
+        final ArrayList<ABaseQueueVal> queueVals = new ArrayList<ABaseQueueVal>();
         final Set<Integer> keys = inputs.keySet();
         for (final Integer i : keys) {
             final AAnalogInput input = inputs.get(i);
@@ -302,7 +302,7 @@ public final class CommandBuilder {
     public static List<ABaseQueueVal> deactivateAllDigitalInputs() {
         final ArrayList<ABaseQueueVal> queueVals = new ArrayList<ABaseQueueVal>();
         for (int count = 0; count < Tekdaqc_RevD.DIGITAL_INPUT_COUNT; count++) {
-            ParamQueueValue queueValue = new ParamQueueValue(Commands.REMOVE_DIGITAL_INPUT);
+            final ParamQueueValue queueValue = new ParamQueueValue(Commands.REMOVE_DIGITAL_INPUT);
             queueValue.addParamValue(Params.INPUT, (byte) count);
             queueVals.add(queueValue);
         }
@@ -390,7 +390,7 @@ public final class CommandBuilder {
     public static ABaseQueueVal readSelfGainCalibration(final AAnalogInput.Gain gain
             , final AAnalogInput.Rate rate
             , final AnalogInput_RevD.BufferState buffer) {
-        ParamQueueValue queueValue = new ParamQueueValue(Commands.READ_SELF_GCAL);
+        final ParamQueueValue queueValue = new ParamQueueValue(Commands.READ_SELF_GCAL);
         queueValue.addParamValue(Params.GAIN, (byte) gain.ordinal());
         queueValue.addParamValue(Params.RATE, (byte) rate.ordinal());
         queueValue.addParamValue(Params.BUFFER, (byte) buffer.ordinal());
@@ -422,7 +422,7 @@ public final class CommandBuilder {
      * @return The {@link ABaseQueueVal} of the command.
      */
     public static ABaseQueueVal sample(final int number) {
-        ParamQueueValue queueValue = new ParamQueueValue(Commands.SAMPLE);
+        final ParamQueueValue queueValue = new ParamQueueValue(Commands.SAMPLE);
         queueValue.addParamValue(Params.NUMBER, (byte) number);
         return queueValue;
     }

@@ -1,10 +1,7 @@
 package com.tenkiv.tekdaqc.hardware;
 
 import com.tenkiv.tekdaqc.communication.ascii.executors.ASCIIParsingExecutor;
-import com.tenkiv.tekdaqc.communication.command.queue.CommandQueueManager;
-import com.tenkiv.tekdaqc.communication.command.queue.ICommandManager;
-import com.tenkiv.tekdaqc.communication.command.queue.IQueueObject;
-import com.tenkiv.tekdaqc.communication.command.queue.Task;
+import com.tenkiv.tekdaqc.communication.command.queue.*;
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
 import com.tenkiv.tekdaqc.communication.data_points.ProtectedAnalogInputData;
 import com.tenkiv.tekdaqc.communication.executors.AParsingExecutor.IParsingListener;
@@ -22,7 +19,10 @@ import com.tenkiv.tekdaqc.telnet.client.SerialTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection;
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener;
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError;
+import tec.uom.se.unit.Units;
 
+import javax.measure.Quantity;
+import javax.measure.quantity.Dimensionless;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.Executor;
@@ -132,12 +132,12 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     /**
      * Interval of the PWM timer.
      */
-    protected static final int PWM_TIMER_INTERVAL = 1000;
+    protected static final int PWM_TIMER_INTERVAL = 100;
 
     /**
      * Boolean for if the tekdaqc is connected in the current tick.
      */
-    protected boolean tenativeIsConnected = false;
+    protected boolean tentativeIsConnected = false;
 
     /**
      * If the keep alive packet was sent.
@@ -196,7 +196,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     /**
      * Pulse width modulation timer for update intervals.
      */
-    private final Timer mPWMTimer = new Timer();
+    private final Timer mPWMTimer = new Timer("Pulse Width Modulation Timer", true);
 
     /**
      * A {@link TimerTask} to be executed when attempting to use throttled sampling.
@@ -222,7 +222,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     /**
      * Heartbeat timer to check for disconnection from the tekdaqc.
      */
-    protected final Timer mHeartbeatTimer = new Timer();
+    protected final Timer mHeartbeatTimer = new Timer("Tekdaqc Heartbeat Timer",true);
 
     /**
      * A {@link TimerTask} to be executed for checking to see if the Tekdaqc connection is active.
@@ -230,15 +230,15 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     protected TimerTask mHeartbeatTimerTask = new TimerTask() {
         @Override
         public void run() {
-            if (keepAlivePacketSent && !tenativeIsConnected) {
+            if (keepAlivePacketSent && !tentativeIsConnected) {
                 isConnected = false;
                 criticalErrorNotification(TekdaqcCriticalError.TERMINAL_CONNECTION_DISRUPTION);
-            } else if (!keepAlivePacketSent && !tenativeIsConnected) {
+            } else if (!keepAlivePacketSent && !tentativeIsConnected) {
                 keepAlivePacketSent = true;
                 queueCommand(CommandBuilder.none());
-            } else if (tenativeIsConnected) {
+            } else if (tentativeIsConnected) {
                 isConnected = true;
-                tenativeIsConnected = false;
+                tentativeIsConnected = false;
             }
         }
     };
@@ -259,7 +259,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
         mParsingExecutor = getParsingExecutor();
 
-        mDigitalInputSampleTimer = new Timer(true);
+        mDigitalInputSampleTimer = new Timer("Digital Input Sample Timer",true);
     }
 
     /**
@@ -316,7 +316,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         if (keepAlivePacketSent) {
             keepAlivePacketSent = false;
         }
-        tenativeIsConnected = true;
+        tentativeIsConnected = true;
     }
 
     /**
@@ -386,7 +386,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      */
     public void restoreTekdaqc(final long millisTimeout, final boolean reactivateChannels){
         try {
-            mCommandQueue.purge();
+            mCommandQueue.purge(false);
 
             mConnection.disconnect();
 
@@ -577,6 +577,28 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      */
     public void setPulseWidthModulation(int output, float uptime){
         mDigitalOutputs.get(output).setPulseWidthModulation(uptime);
+    }
+
+    /**
+     * Activates pulse width modulation on a digital output; allowing the user to set the percentage of the time
+     * the digital output will be active.
+     *
+     * @param output Output to set.
+     * @param percentUptime A {@link Quantity} that should contain a value in {@link Units#PERCENT}.
+     */
+    public void setPulseWidthModulation(int output, Quantity<Dimensionless> percentUptime){
+        mDigitalOutputs.get(output).setPulseWidthModulation(percentUptime);
+    }
+
+    /**
+     * Sets the interval at which to run the pulse width modulation.
+     *
+     * @param timeMillis The interval for the update pulses.
+     */
+    public void setPulseWidthModulationRate(final int timeMillis){
+        mPWMTimer.cancel();
+
+        mPWMTimer.scheduleAtFixedRate(mPWMActivationTask,0,timeMillis);
     }
 
     /**
@@ -796,11 +818,17 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         mReadExecutor.shutdown();
         mParsingExecutor.shutdown();
 
+        mCommandQueue.purge(true);
+
         mConnection.disconnect();
 
         isConnected = false;
+
         mHeartbeatTimer.purge();
         mHeartbeatTimer.cancel();
+
+        mPWMTimer.purge();
+        mPWMTimer.cancel();
     }
 
     /**
@@ -809,11 +837,30 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * connection's stream resources are properly cleaned up.
      */
     public void disconnectCleanly() {
+
         mCommandQueue.queueCommand(CommandBuilder.disconnect());
 
-        isConnected = false;
+        mCommandQueue.queueCommand(new QueueCallback(new ITaskComplete() {
+            @Override
+            public void onTaskSuccess(ATekdaqc tekdaqc) {
+                try {
+                    disconnect();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onTaskFailed(ATekdaqc tekdaqc) {
+                criticalErrorNotification(TekdaqcCriticalError.IMPARTIAL_DISCONNECTION);
+            }
+        }));
+
         mHeartbeatTimer.purge();
         mHeartbeatTimer.cancel();
+
+        mPWMTimer.purge();
+        mPWMTimer.cancel();
     }
 
     /**
@@ -1359,7 +1406,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     public static enum AnalogScale {
         ANALOG_SCALE_5V("ANALOG_SCALE_5V"), ANALOG_SCALE_400V("ANALOG_SCALE_400V");
 
-        private static AnalogScale[] mValueArray = AnalogScale.values();
+        private static final AnalogScale[] mValueArray = AnalogScale.values();
         public final String scale;
 
         AnalogScale(String scale) {
@@ -1371,7 +1418,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         }
 
         public static AnalogScale fromString(String scale) {
-            for (AnalogScale s : values()) {
+            for (final AnalogScale s : values()) {
                 if (s.scale.equals(scale)) {
                     return s;
                 }

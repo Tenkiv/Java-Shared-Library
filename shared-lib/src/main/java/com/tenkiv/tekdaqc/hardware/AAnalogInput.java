@@ -234,7 +234,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public enum Gain {
         X1(1), X2(2), X4(4), X8(8), X16(16), X32(32), X64(64);
 
-        private static Gain[] mValueArray = Gain.values();
+        private static final Gain[] mValueArray = Gain.values();
         public final int gain;
 
         Gain(final int gain){this.gain = gain;}
@@ -248,7 +248,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
         }
 
         public static Gain fromString(final String gain) {
-            for (Gain g : values()) {
+            for (final Gain g : values()) {
 
                 if (g.toString().equals(gain)) {
                     return g;
@@ -258,7 +258,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
         }
 
         public static Gain fromInt(final int gain) {
-            for (Gain g : values()) {
+            for (final Gain g : values()) {
                 if (g.gain == gain) {
                     return g;
                 }
@@ -283,7 +283,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
                 "500"), SPS_100("100"), SPS_60("60"), SPS_50("50"), SPS_30("30"), SPS_25("25"), SPS_15("15"), SPS_10(
                 "10"), SPS_5("5"), SPS_2_5("2.5");
 
-        private static Rate[] mValueArray = Rate.values();
+        private static final Rate[] mValueArray = Rate.values();
         public final String rate;
 
         Rate(final String rate) {
@@ -318,7 +318,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public enum SensorCurrent {
         _10uA("10"), _2uA("2"), _0_5uA("0.5"), OFF("0");
 
-        private static SensorCurrent[] mValueArray = SensorCurrent.values();
+        private static final SensorCurrent[] mValueArray = SensorCurrent.values();
         public final String mCurrent;
 
         SensorCurrent(final String current) {

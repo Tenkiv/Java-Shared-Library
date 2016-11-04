@@ -113,7 +113,7 @@ public final class MessageBroadcaster {
             if (!listeners.containsKey(input.getChannelNumber())) {
                 listeners.put(input.getChannelNumber(), new ArrayList<ICountListener>());
             }
-            ArrayList<ICountListener> listenerList = (ArrayList<ICountListener>) listeners
+            final ArrayList<ICountListener> listenerList = (ArrayList<ICountListener>) listeners
                     .get(input.getChannelNumber());
             if (!listenerList.contains(listener)) {
                 listenerList.add(listener);
@@ -146,7 +146,7 @@ public final class MessageBroadcaster {
             if (!listeners.containsKey(input.getChannelNumber())) {
                 listeners.put(input.getChannelNumber(), new ArrayList<IVoltageListener>());
             }
-            ArrayList<IVoltageListener> listenerList = (ArrayList<IVoltageListener>) listeners
+            final ArrayList<IVoltageListener> listenerList = (ArrayList<IVoltageListener>) listeners
                     .get(input.getChannelNumber());
             if (!listenerList.contains(listener)) {
                 listenerList.add(listener);
@@ -178,7 +178,7 @@ public final class MessageBroadcaster {
             if (!listeners.containsKey(input.getChannelNumber())) {
                 listeners.put(input.getChannelNumber(), new ArrayList<IDigitalChannelListener>());
             }
-            ArrayList<IDigitalChannelListener> listenerList = (ArrayList<IDigitalChannelListener>) listeners
+            final ArrayList<IDigitalChannelListener> listenerList = (ArrayList<IDigitalChannelListener>) listeners
                     .get(input.getChannelNumber());
             if (!listenerList.contains(listener)) {
                 listenerList.add(listener);
@@ -285,13 +285,13 @@ public final class MessageBroadcaster {
         final List<IMessageListener> listeners = mFullListeners.get(tekdaqc);
         if (listeners != null) {
             synchronized (listeners) {
-                for (final IMessageListener listener : listeners) {
+                listeners.forEach(listener -> {
                     try {
                         listener.onAnalogInputDataReceived(tekdaqc.getAnalogInput(data.getPhysicalInput()), data.getData());
                     }catch (Exception e){
                         throw e;
                     }
-                }
+                });
             }
         } else {
             System.out.println("No listeners for board: " + tekdaqc.getSerialNumber());

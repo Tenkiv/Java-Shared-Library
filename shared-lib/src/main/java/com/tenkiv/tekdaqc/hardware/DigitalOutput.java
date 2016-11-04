@@ -2,7 +2,11 @@ package com.tenkiv.tekdaqc.hardware;
 
 
 import com.tenkiv.tekdaqc.utility.ChannelType;
+import sun.tools.jconsole.Plotter;
+import tec.uom.se.unit.Units;
 
+import javax.measure.Quantity;
+import javax.measure.quantity.Dimensionless;
 import java.security.InvalidParameterException;
 
 /**
@@ -26,7 +30,7 @@ public class DigitalOutput extends IInputOutputHardware {
     /**
      * Uptime for this output's PWM.
      */
-    private volatile float mPWMPercentage = 1;
+    private volatile float mPWMPercentage = 0;
 
     /**
      * Threshold for activating this output for PWM.
@@ -127,6 +131,23 @@ public class DigitalOutput extends IInputOutputHardware {
         }
         mPWMThreshold = 0;
         mPWMPercentage = uptime;
+
+    }
+
+    /**
+     * Activates pulse width modulation on a digital output; allowing the user to set the percentage of the time
+     * the digital output will be active.
+     *
+     * @param percentUptime A {@link Quantity} that should contain a value in {@link Units#PERCENT}.
+     */
+    public void setPulseWidthModulation(final Quantity<Dimensionless> percentUptime){
+        float fUptime = percentUptime.to(Units.PERCENT).getValue().floatValue();
+
+        if(fUptime < 0 || fUptime > 1){
+            throw new InvalidParameterException("Uptime must be a value between 0 and 1");
+        }
+        mPWMThreshold = 0;
+        mPWMPercentage = fUptime;
     }
 
     /**

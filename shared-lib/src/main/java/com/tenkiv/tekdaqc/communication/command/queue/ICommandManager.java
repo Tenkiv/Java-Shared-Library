@@ -31,8 +31,10 @@ public interface ICommandManager {
 
     /**
      * Purge all queued {@link IQueueObject}s.
+     *
+     * @param forShutdown Flag for safely shutting down the command queue after purge.
      */
-    void purge();
+    void purge(boolean forShutdown);
 
     /**
      * Returns the current number of queued commands.

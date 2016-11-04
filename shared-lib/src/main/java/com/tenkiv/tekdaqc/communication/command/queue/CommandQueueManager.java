@@ -55,14 +55,26 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     /**
      * {@link Boolean} representing the current state of executor.
      */
-    private AtomicBoolean isTaskExecuting = new AtomicBoolean(false);
+    private final AtomicBoolean isTaskExecuting = new AtomicBoolean(false);
 
-    private AtomicBoolean didTaskTimeout = new AtomicBoolean(true);
+    /**
+     * If the last command sent timed out.
+     */
+    private final AtomicBoolean didTaskTimeout = new AtomicBoolean(true);
 
-    private AtomicInteger mFailureCount = new AtomicInteger(0);
+    /**
+     * The number of times a command has been attempted, but failed to get a response.
+     */
+    private final AtomicInteger mFailureCount = new AtomicInteger(0);
 
-    private static final int MAX_ALLOWABLE_FAULRES = 3;
+    /**
+     * The total number of allowable failures for a single command before a {@link TekdaqcCriticalError} is thrown.
+     */
+    private static final int MAX_ALLOWABLE_FAILURES = 3;
 
+    /**
+     * The last command sent to the Tekdaqc.
+     */
     private ABaseQueueVal mLastCommand;
 
     /**
@@ -70,7 +82,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
      *
      * @param tekdaqc The Tekdaqc which is being managed by the command queue.
      */
-    public CommandQueueManager(final ATekdaqc tekdaqc) {
+    public CommandQueueManager(ATekdaqc tekdaqc) {
         mTekdaqc = tekdaqc;
         mExecutor = Executors.newSingleThreadExecutor(new Factory());
         mCommandDeque = new LinkedBlockingDeque<>();
@@ -78,7 +90,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     }
 
     @Override
-    public void queueCommand(final IQueueObject command) {
+    public void queueCommand(IQueueObject command) {
         mCommandDeque.addLast(command);
         mCommandDeque.addLast(new QueueCallback(true));
         tryCommand();
@@ -95,25 +107,35 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
      * {@link QueueCallback} to be called back to as notification.
      */
     private void executeCommand(){
+        //Update the fact that we're executing a command.
         isTaskExecuting.set(true);
+        //If its a command we should execute it.
         if (mCommandDeque.peek() instanceof ABaseQueueVal) {
+            //Set last command in case we need to resend it.
             mLastCommand = (ABaseQueueVal) mCommandDeque.peek();
-            System.out.println("Command: "+new String(mLastCommand.generateCommandBytes()));
+            //Submit new writing thread to send command.
             mExecutor.submit(new CommandWriterThread());
-
+            //Lock the queue so we don't send more.
             mQueueLock.lock();
             try{
+                //Max wait time for the lock.
                 mCommandCondition.await(3, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                if(didTaskTimeout.get()){
+                //If task timed out and we're still connected, attempt to send the command again.
+                if(didTaskTimeout.get() && mTekdaqc.isConnected()){
                     System.out.println("Interrupt Hit. Not Woken in time");
-                    if(mFailureCount.get() < MAX_ALLOWABLE_FAULRES) {
+                    //If failures is less then total failure count, resend.
+                    if(mFailureCount.get() < MAX_ALLOWABLE_FAILURES) {
+                        //Get and increment failure count.
                         mFailureCount.getAndIncrement();
+                        //Re-add the last command.
                         mCommandDeque.addFirst(mLastCommand);
+                        //Update the fact that we're not executing a command.
                         isTaskExecuting.set(false);
                     }else{
+                        //Throw a critical error if we run aout of attempts.
                         mTekdaqc.criticalErrorNotification(TekdaqcCriticalError.FAILED_MAJOR_COMMAND);
                     }
                 }
@@ -121,7 +143,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
                 mQueueLock.unlock();
                 tryCommand();
             }
-
+        //If its a call back we should update the listener.
         } else if (mCommandDeque.peek() instanceof QueueCallback) {
             ((QueueCallback) mCommandDeque.poll()).success(mTekdaqc);
             isTaskExecuting.set(false);
@@ -130,8 +152,26 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     }
 
     @Override
-    public void purge(){
-        mCommandDeque.clear();
+    public void purge(boolean forShutdown){
+        mQueueLock.lock();
+        if(forShutdown){
+            didTaskTimeout.set(false);
+        }
+        try {
+            mCommandDeque.clear();
+        }finally {
+            mQueueLock.unlock();
+        }
+    }
+
+    @Override
+    public int getNumberQueued() {
+        mQueueLock.lock();
+        try {
+            return mCommandDeque.size();
+        } finally {
+            mQueueLock.unlock();
+        }
     }
 
     /**
@@ -155,7 +195,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     private void cullQueueUntilCallback() {
         if (mCommandDeque.size() > 0) {
             if (mCommandDeque.peek() instanceof QueueCallback) {
-                QueueCallback callback = (QueueCallback) mCommandDeque.poll();
+                final QueueCallback callback = (QueueCallback) mCommandDeque.poll();
                 if (!callback.isInternalDelimiter()) {
                     callback.failure(mTekdaqc);
                 }
@@ -167,7 +207,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     }
 
     @Override
-    public void onErrorMessageReceived(final ATekdaqc tekdaqc, final ABoardMessage message) {
+    public void onErrorMessageReceived(ATekdaqc tekdaqc, ABoardMessage message) {
 
         mQueueLock.lock();
         try {
@@ -188,7 +228,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     }
 
     @Override
-    public void onStatusMessageReceived(final ATekdaqc tekdaqc, final ABoardMessage message) {
+    public void onStatusMessageReceived(ATekdaqc tekdaqc, ABoardMessage message) {
         mQueueLock.lock();
         try {
             mFailureCount.lazySet(0);
@@ -289,17 +329,4 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
             out.flush();
         }
     }
-
-     /*catch (InterruptedException e) {
-        System.out.println("Unanticipated delay when executing Task:"
-                +command.toString());
-
-        if(mFailureCount.incrementAndGet()<2){
-            writeToStream(command);
-        }else{
-            System.out.println("Failed to execute "+command.toString()+"\n Moving on.");
-            tryCommand();
-        }
-
-    }*/
 }

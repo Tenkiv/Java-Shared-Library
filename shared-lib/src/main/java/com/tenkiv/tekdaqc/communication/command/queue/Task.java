@@ -129,7 +129,7 @@ public class Task {
      * @return The {@link List} of {@link IQueueObject} that is currently added to this task.
      */
     public List<IQueueObject> getCommandList() {
-        List<IQueueObject> fullList = new ArrayList<>();
+        final List<IQueueObject> fullList = new ArrayList<>();
         fullList.addAll(mCommands);
         fullList.add(new QueueCallback(mListeners));
         return fullList;

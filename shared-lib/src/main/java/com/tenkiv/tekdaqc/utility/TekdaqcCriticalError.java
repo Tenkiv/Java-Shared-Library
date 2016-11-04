@@ -6,5 +6,6 @@ package com.tenkiv.tekdaqc.utility;
 public enum TekdaqcCriticalError{
     FAILED_TO_REINITIALIZE,
     FAILED_MAJOR_COMMAND,
-    TERMINAL_CONNECTION_DISRUPTION
+    TERMINAL_CONNECTION_DISRUPTION,
+    IMPARTIAL_DISCONNECTION
 }
