@@ -2,7 +2,6 @@ package com.tenkiv.tekdaqc.hardware;
 
 
 import com.tenkiv.tekdaqc.utility.ChannelType;
-import sun.tools.jconsole.Plotter;
 import tec.uom.se.unit.Units;
 
 import javax.measure.Quantity;

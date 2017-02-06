@@ -21,6 +21,7 @@ public class ASCIIMessageUtils {
     public static final String STATUS_MESSAGE_HEADER = "Status Message";
     public static final String COMMAND_MESSAGE_HEADER = "Command Data Message";
     public static final String ERROR_MESSAGE_HEADER = "Error Message";
+    public static final String NETWORK_ERROR_FLAG = "[NETWORK]";
     public static final String MESSAGE_TAG = "Message: ";
     public static final String NAME_TAG = "Name: ";
     public static final String PHYSICAL_INPUT_TAG = "Physical Input: ";

@@ -221,7 +221,6 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
             System.out.println("Error Task Response - " + message);
 
         } finally {
-
             mCommandCondition.signal();
             mQueueLock.unlock();
         }

@@ -19,6 +19,7 @@ import com.tenkiv.tekdaqc.telnet.client.SerialTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection;
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener;
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError;
+import sun.net.TelnetProtocolException;
 import tec.uom.se.unit.Units;
 
 import javax.measure.Quantity;
@@ -692,6 +693,15 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     }
 
     /**
+     * Convenience method for adding a network listener to a tekdaqc.
+     *
+     * @param listener Network listener to be registered.
+     */
+    public void addNetworkListener(INetworkListener listener) {
+        messageBroadcaster.addNetworkListener(this, listener);
+    }
+
+    /**
      * Convenience method for adding a listener to a particular channel.
      * IMPORTANT NOTE: Specific channel listeners are less efficient then {@link IMessageListener}s.
      * In cases where processing power is limited or where very low latency on data is imperative use
@@ -779,6 +789,9 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      *                     to connect.
      */
     public void connect(AnalogScale currentAnalogScale, CONNECTION_METHOD method) throws IOException {
+        if(isConnected()){
+            throw new TelnetProtocolException("Tekdaqc Already Connected");
+        }
         switch (method) {
             case ETHERNET:
                 mConnection = new EthernetTelnetConnection(mResponse.getHostIP(), EthernetTelnetConnection.TEKDAQC_TELNET_PORT);

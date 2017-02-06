@@ -19,6 +19,8 @@ public class ASCIIErrorMessage extends ASCIIReadableMessage {
         super();
     }
 
+    public boolean isNetworkError = false;
+
     /**
      * Constructor.
      *
@@ -27,6 +29,9 @@ public class ASCIIErrorMessage extends ASCIIReadableMessage {
     public ASCIIErrorMessage(final String raw) {
         super();
         parse(raw);
+        if(raw.contains(ASCIIMessageUtils.NETWORK_ERROR_FLAG)){
+            isNetworkError = true;
+        }
     }
 
     @Override
@@ -42,10 +47,12 @@ public class ASCIIErrorMessage extends ASCIIReadableMessage {
     @Override
     protected void readIn(final ObjectInput input) throws IOException, ClassNotFoundException {
         super.readIn(input);
+        isNetworkError = input.readBoolean();
     }
 
     @Override
     protected void writeOut(final ObjectOutput output) throws IOException {
         super.writeOut(output);
+        output.writeBoolean(isNetworkError);
     }
 }

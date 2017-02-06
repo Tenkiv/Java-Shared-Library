@@ -2,6 +2,7 @@ package com.tenkiv.tekdaqc.hardware;
 
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIAnalogInputDataMessage;
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIDigitalInputDataMessage;
+import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIErrorMessage;
 import com.tenkiv.tekdaqc.communication.command.queue.Commands;
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
 import com.tenkiv.tekdaqc.communication.command.queue.values.BlankQueueValue;
@@ -524,9 +525,14 @@ public class Tekdaqc_RevD extends ATekdaqc {
         switch (message.getType()) {
             case DEBUG: // Fall through for all message types
             case STATUS:
-            case ERROR:
             case COMMAND_DATA:
             case DIGITAL_OUTPUT_DATA:
+                messageBroadcaster.broadcastMessage(this, message);
+                break;
+            case ERROR:
+                if(((ASCIIErrorMessage)message).isNetworkError){
+                    messageBroadcaster.broadcastNetworkError(this, message);
+                }
                 messageBroadcaster.broadcastMessage(this, message);
                 break;
             case ANALOG_INPUT_DATA:
