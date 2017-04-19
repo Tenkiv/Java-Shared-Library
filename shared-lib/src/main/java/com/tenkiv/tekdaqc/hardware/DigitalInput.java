@@ -35,8 +35,8 @@ public class DigitalInput extends IInputOutputHardware {
     @Override
     protected void queueStatusChange() {
         if (getTekdaqc().isConnected() && isActivated) {
-            getTekdaqc().queueCommand(CommandBuilder.removeDigitalInputByNumber(mChannelNumber));
-            getTekdaqc().queueCommand(CommandBuilder.addDigitalInput(this));
+            getTekdaqc().queueCommand(CommandBuilderKt.removeDigitalInputByNumber(mChannelNumber));
+            getTekdaqc().queueCommand(CommandBuilderKt.addDigitalInput(this));
         }
     }
 
@@ -69,7 +69,7 @@ public class DigitalInput extends IInputOutputHardware {
     @Override
     public void activate() {
         if (getTekdaqc().isConnected()) {
-            getTekdaqc().queueCommand(CommandBuilder.addDigitalInput(this));
+            getTekdaqc().queueCommand(CommandBuilderKt.addDigitalInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -78,7 +78,7 @@ public class DigitalInput extends IInputOutputHardware {
     @Override
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
-            getTekdaqc().queueCommand(CommandBuilder.removeDigitalInput(this));
+            getTekdaqc().queueCommand(CommandBuilderKt.removeDigitalInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }

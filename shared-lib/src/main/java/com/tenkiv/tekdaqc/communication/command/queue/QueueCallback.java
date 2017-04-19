@@ -1,5 +1,6 @@
 package com.tenkiv.tekdaqc.communication.command.queue;
 
+import com.tenkiv.tekdaqc.communication.command.queue.values.IQueueObject;
 import com.tenkiv.tekdaqc.communication.tasks.ITaskComplete;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 

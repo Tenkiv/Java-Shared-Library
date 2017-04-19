@@ -1,6 +1,8 @@
 package com.tenkiv.tekdaqc.communication.command.queue;
 
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
+import com.tenkiv.tekdaqc.communication.command.queue.values.IQueueObject;
+import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
 import com.tenkiv.tekdaqc.communication.message.ABoardMessage;
 import com.tenkiv.tekdaqc.communication.message.IMessageListener;
@@ -113,9 +115,14 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
         if (mCommandDeque.peek() instanceof ABaseQueueVal) {
             //Set last command in case we need to resend it.
             mLastCommand = (ABaseQueueVal) mCommandDeque.peek();
+
+            System.out.println("Command Queued: "+new String(mLastCommand.generateCommandBytes()));
+
             //Submit new writing thread to send command.
             mExecutor.submit(new CommandWriterThread());
             //Lock the queue so we don't send more.
+            System.out.println("Current Thread for Lock"+ Thread.currentThread().getName());
+
             mQueueLock.lock();
             try{
                 //Max wait time for the lock.
@@ -183,7 +190,13 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
         if (!isTaskExecuting.get()
                 && mCommandDeque.size() > 0
                 && mTekdaqc.isConnected()) {
-            executeCommand();
+            new Thread(){
+                @Override
+                public void run() {
+                    executeCommand();
+                }
+            }.start();
+
         }
     }
 
@@ -251,7 +264,7 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
     }
 
     @Override
-    public void onAnalogInputDataReceived(final AAnalogInput input, int count) {
+    public void onAnalogInputDataReceived(final ATekdaqc tekdaqc, final AnalogInputCountData countData) {
 
     }
 

@@ -126,6 +126,11 @@ public enum Commands {
     SET_DIGITAL_OUTPUT,
 
     /**
+     * Sets the pulse width modulation to digital outputs specific hex values.
+     */
+    SET_PWM_OUTPUT,
+
+    /**
      * Reads current state of the digital outputs.
      */
     READ_DIGITAL_OUTPUT,

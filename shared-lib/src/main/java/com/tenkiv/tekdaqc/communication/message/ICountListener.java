@@ -1,8 +1,6 @@
 package com.tenkiv.tekdaqc.communication.message;
 
-import com.tenkiv.tekdaqc.communication.data_points.ProtectedAnalogInputData;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput;
-import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 
 /**
  * Interface defining methods for receiving broadcasts of a single analog input channel.

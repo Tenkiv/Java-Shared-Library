@@ -75,7 +75,12 @@ public enum Params {
     /**
      * Constant for defining all. Not currently implemented.
      */
-    ALL;
+    ALL,
+
+    /**
+     * The duty cycle of the digital output's pulse width modulation.
+     */
+    DUTYCYCLE;
 
 
     /**

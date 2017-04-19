@@ -1,8 +1,11 @@
 package com.tenkiv.tekdaqc.communication.message;
 
 import com.tenkiv.tekdaqc.hardware.AAnalogInput;
+import org.tenkiv.coral.ValueInstant;
+import tec.uom.se.ComparableQuantity;
 import tec.uom.se.spi.Measurement;
 
+import javax.measure.Quantity;
 import javax.measure.quantity.ElectricPotential;
 
 /**
@@ -18,7 +21,7 @@ public interface IVoltageListener {
      * Called when a voltage is received for the given input channel.
      *
      * @param input The {@link AAnalogInput} which has received the data.
-     * @param measurement The {@link Measurement} of the Voltage received by the ADC.
+     * @param value The {@link ValueInstant} of the Voltage received by the ADC.
      */
-    void onVoltageDataReceived(AAnalogInput input, PLACEHOLDER_MEASUREMENT<ElectricPotential> measurement);
+    void onVoltageDataReceived(AAnalogInput input, ValueInstant<ComparableQuantity<ElectricPotential>> value);
 }

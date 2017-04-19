@@ -3,7 +3,8 @@ package com.tenkiv.tekdaqc.hardware;
 import com.tenkiv.tekdaqc.communication.ascii.executors.ASCIIParsingExecutor;
 import com.tenkiv.tekdaqc.communication.command.queue.*;
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
-import com.tenkiv.tekdaqc.communication.data_points.ProtectedAnalogInputData;
+import com.tenkiv.tekdaqc.communication.command.queue.values.IQueueObject;
+import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData;
 import com.tenkiv.tekdaqc.communication.executors.AParsingExecutor.IParsingListener;
 import com.tenkiv.tekdaqc.communication.executors.ReadExecutor;
 import com.tenkiv.tekdaqc.communication.message.*;
@@ -19,7 +20,7 @@ import com.tenkiv.tekdaqc.telnet.client.SerialTelnetConnection;
 import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection;
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener;
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError;
-import sun.net.TelnetProtocolException;
+import com.tenkiv.tekdaqc.utility.UtilityKt;
 import tec.uom.se.unit.Units;
 
 import javax.measure.Quantity;
@@ -27,6 +28,7 @@ import javax.measure.quantity.Dimensionless;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class which contains information about a specific Tekdaqc and provides
@@ -131,11 +133,6 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     protected static final int HEARTBEAT_TIMER_INTERVAL = 5000;
 
     /**
-     * Interval of the PWM timer.
-     */
-    protected static final int PWM_TIMER_INTERVAL = 100;
-
-    /**
      * Boolean for if the tekdaqc is connected in the current tick.
      */
     protected boolean tentativeIsConnected = false;
@@ -179,27 +176,6 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     abstract int getAnalogTemperatureSensorChannel();
 
     /**
-     * The {@link TimerTask} for setting pulse width modulation on digital outputs.
-     */
-    private TimerTask mPWMActivationTask =  new TimerTask() {
-        @Override
-        public void run() {
-            boolean[] outputStatus = new boolean[getDigitalOutputCount()];
-
-            mDigitalOutputs.values().forEach(output -> {
-                outputStatus[output.getChannelNumber()] = output.isTriggerableThreshold();
-            });
-
-            setDigitalOutput(outputStatus);
-        }
-    };
-
-    /**
-     * Pulse width modulation timer for update intervals.
-     */
-    private final Timer mPWMTimer = new Timer("Pulse Width Modulation Timer", true);
-
-    /**
      * A {@link TimerTask} to be executed when attempting to use throttled sampling.
      */
     protected TimerTask mDigitalInputActivationTask = new TimerTask() {
@@ -207,14 +183,13 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
         @Override
         public void run() {
             if (mConnection.isConnected()) {
-                mCommandQueue.queueCommand(CommandBuilder.readAllDigitalInput(1));
+                mCommandQueue.queueCommand(CommandBuilderKt.readAllDigitalInput(1));
 
                 if (mThrottledSamples > 0) {
                     mThrottledSamples--;
 
                 } else if (mThrottledSamples == 0) {
-                    mDigitalInputSampleTimer.cancel();
-                    mDigitalInputSampleTimer.purge();
+                    mDigitalInputSampleTimer = UtilityKt.reprepare(mDigitalInputSampleTimer);
                 }
             }
         }
@@ -223,7 +198,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     /**
      * Heartbeat timer to check for disconnection from the tekdaqc.
      */
-    protected final Timer mHeartbeatTimer = new Timer("Tekdaqc Heartbeat Timer",true);
+    protected Timer mHeartbeatTimer = new Timer("Tekdaqc Heartbeat Timer",true);
 
     /**
      * A {@link TimerTask} to be executed for checking to see if the Tekdaqc connection is active.
@@ -236,7 +211,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
                 criticalErrorNotification(TekdaqcCriticalError.TERMINAL_CONNECTION_DISRUPTION);
             } else if (!keepAlivePacketSent && !tentativeIsConnected) {
                 keepAlivePacketSent = true;
-                queueCommand(CommandBuilder.none());
+                queueCommand(CommandBuilderKt.none());
             } else if (tentativeIsConnected) {
                 isConnected = true;
                 tentativeIsConnected = false;
@@ -287,7 +262,9 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * @param error The {@link TekdaqcCriticalError} which has caused such a problem.
      */
     public void criticalErrorNotification(TekdaqcCriticalError error){
-        mCriticalErrorListener.forEach(it -> it.onTekdaqcCriticalError(error));
+        for(CriticalErrorListener listener: mCriticalErrorListener){
+            listener.onTekdaqcCriticalError(error);
+        }
     }
 
     /**
@@ -368,8 +345,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     public void readThrottledDigitalInput(int rateMillis) throws IllegalArgumentException {
         if (rateMillis > 0) {
             mDigitalInputRate = rateMillis;
-            mDigitalInputSampleTimer.cancel();
-            mDigitalInputSampleTimer.purge();
+            mDigitalInputSampleTimer = UtilityKt.reprepare(mDigitalInputSampleTimer);
             mDigitalInputSampleTimer.schedule(mDigitalInputActivationTask, mDigitalInputRate);
 
         } else {
@@ -394,29 +370,35 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
             mReadStream = null;
             mWriteStream = null;
 
-            Locator.get()
-                    .blockingSearchForSpecificTekdaqcs(millisTimeout,getSerialNumber())
+            Locator.Companion.getInstance()
+                    .blockingSearchForSpecificTekdaqcs(
+                            millisTimeout,
+                            new ReentrantLock(),
+                            false,
+                            null,
+                            getSerialNumber())
                     .get(0).connect(mAnalogScale,CONNECTION_METHOD.ETHERNET);
 
 
             List<ABaseQueueVal> commands = new ArrayList<ABaseQueueVal>();
 
-            commands.addAll(CommandBuilder.deactivateAllAnalogInputs());
+            commands.addAll(CommandBuilderKt.deactivateAllAnalogInputs());
 
-            commands.addAll(CommandBuilder.deactivateAllDigitalInputs());
+            commands.addAll(CommandBuilderKt.deactivateAllDigitalInputs());
 
             if(reactivateChannels) {
-                mAnalogInputs.forEach((num, input) -> {
-                    if (input.isActivated) {
-                        commands.add(CommandBuilder.addAnalogInput(input));
-                    }
-                });
 
-                mDigitalInputs.forEach((num, input) -> {
+                for(AAnalogInput input: mAnalogInputs.values()){
                     if (input.isActivated) {
-                        commands.add(CommandBuilder.addDigitalInput(input));
+                        commands.add(CommandBuilderKt.addAnalogInput(input));
                     }
-                });
+                }
+
+                for(DigitalInput input: mDigitalInputs.values()){
+                    if (input.isActivated) {
+                        commands.add(CommandBuilderKt.addDigitalInput(input));
+                    }
+                }
             }
 
             queueTask(new Task(new ITaskComplete() {
@@ -454,8 +436,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * Method to halt the throttled sampling of the digital inputs.
      */
     public void haltThrottedDigitalInputReading() {
-        mDigitalInputSampleTimer.cancel();
-        mDigitalInputSampleTimer.purge();
+        mDigitalInputSampleTimer = UtilityKt.reprepare(mDigitalInputSampleTimer);
     }
 
     /**
@@ -574,10 +555,10 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * the digital output will be active.
      *
      * @param output Output to set.
-     * @param uptime A float value 0 and 1 to set as the uptime percentage.
+     * @param dutyCycle A float value 0 and 1 to set as the uptime percentage.
      */
-    public void setPulseWidthModulation(int output, float uptime){
-        mDigitalOutputs.get(output).setPulseWidthModulation(uptime);
+    public void setPulseWidthModulation(int output, int dutyCycle){
+        mDigitalOutputs.get(output).setPulseWidthModulation(dutyCycle);
     }
 
     /**
@@ -585,21 +566,10 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * the digital output will be active.
      *
      * @param output Output to set.
-     * @param percentUptime A {@link Quantity} that should contain a value in {@link Units#PERCENT}.
+     * @param dutyCycle A {@link Quantity} that should contain a value in {@link Units#PERCENT}.
      */
-    public void setPulseWidthModulation(int output, Quantity<Dimensionless> percentUptime){
-        mDigitalOutputs.get(output).setPulseWidthModulation(percentUptime);
-    }
-
-    /**
-     * Sets the interval at which to run the pulse width modulation.
-     *
-     * @param timeMillis The interval for the update pulses.
-     */
-    public void setPulseWidthModulationRate(final int timeMillis){
-        mPWMTimer.cancel();
-
-        mPWMTimer.scheduleAtFixedRate(mPWMActivationTask,0,timeMillis);
+    public void setPulseWidthModulation(int output, Quantity<Dimensionless> dutyCycle){
+        mDigitalOutputs.get(output).setPulseWidthModulation(dutyCycle);
     }
 
     /**
@@ -648,21 +618,21 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * Instruct the Tekdaqc to return a list of all it's added analog inputs.
      */
     public void listAnalogInputs() {
-        mCommandQueue.queueCommand(CommandBuilder.listAnalogInputs());
+        mCommandQueue.queueCommand(CommandBuilderKt.listAnalogInputs());
     }
 
     /**
      * Instruct the Tekdaqc to initiate a system calibration.
      */
     public void systemCalibrate() {
-        mCommandQueue.queueCommand(CommandBuilder.systemCalibrate());
+        mCommandQueue.queueCommand(CommandBuilderKt.systemCalibrate());
     }
 
     /**
      * Retrieve the command string to instruct the Tekdaqc to do nothing.
      */
     public void none() {
-        mCommandQueue.queueCommand(CommandBuilder.none());
+        mCommandQueue.queueCommand(CommandBuilderKt.none());
     }
 
     /**
@@ -790,7 +760,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      */
     public void connect(AnalogScale currentAnalogScale, CONNECTION_METHOD method) throws IOException {
         if(isConnected()){
-            throw new TelnetProtocolException("Tekdaqc Already Connected");
+            throw new IOException("Tekdaqc Already Connected");
         }
         switch (method) {
             case ETHERNET:
@@ -810,13 +780,12 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
         mCommandQueue.tryCommand();
 
-        mCommandQueue.queueCommand(CommandBuilder.setAnalogInputScale(currentAnalogScale));
+        mCommandQueue.queueCommand(CommandBuilderKt.setAnalogInputScale(currentAnalogScale));
 
         mAnalogScale = currentAnalogScale;
 
         isConnected = true;
         mHeartbeatTimer.schedule(mHeartbeatTimerTask, HEARTBEAT_TIMER_INTERVAL, HEARTBEAT_TIMER_INTERVAL);
-        mPWMTimer.scheduleAtFixedRate(mPWMActivationTask, 0, PWM_TIMER_INTERVAL);
     }
 
     /**
@@ -837,11 +806,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
         isConnected = false;
 
-        mHeartbeatTimer.purge();
-        mHeartbeatTimer.cancel();
-
-        mPWMTimer.purge();
-        mPWMTimer.cancel();
+        mHeartbeatTimer = UtilityKt.reprepare(mHeartbeatTimer);
     }
 
     /**
@@ -851,7 +816,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      */
     public void disconnectCleanly() {
 
-        mCommandQueue.queueCommand(CommandBuilder.disconnect());
+        mCommandQueue.queueCommand(CommandBuilderKt.disconnect());
 
         mCommandQueue.queueCommand(new QueueCallback(new ITaskComplete() {
             @Override
@@ -869,18 +834,14 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
             }
         }));
 
-        mHeartbeatTimer.purge();
-        mHeartbeatTimer.cancel();
-
-        mPWMTimer.purge();
-        mPWMTimer.cancel();
+        mHeartbeatTimer = UtilityKt.reprepare(mHeartbeatTimer);
     }
 
     /**
      * Instructs the Tekdaqc to read the current state of the digital outputs.
      */
     public void readDigitalOutput() {
-        mCommandQueue.queueCommand(CommandBuilder.readDigitalOutput());
+        mCommandQueue.queueCommand(CommandBuilderKt.readDigitalOutput());
     }
 
     /**
@@ -890,7 +851,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * data.
      */
     public void enterCalibrationMode() {
-        mCommandQueue.queueCommand(CommandBuilder.enterCalibrationMode());
+        mCommandQueue.queueCommand(CommandBuilderKt.enterCalibrationMode());
     }
 
     /**
@@ -900,7 +861,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * write any new data.
      */
     public void exitCalibrationMode() {
-        mCommandQueue.queueCommand(CommandBuilder.exitCalibrationMode());
+        mCommandQueue.queueCommand(CommandBuilderKt.exitCalibrationMode());
     }
 
     /**
@@ -909,7 +870,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * @param serial {@link String} The serial number value.
      */
     public void writeSerialNumber(String serial) {
-        mCommandQueue.queueCommand(CommandBuilder.writeSerialNumber(serial));
+        mCommandQueue.queueCommand(CommandBuilderKt.writeSerialNumber(serial));
     }
 
     /**
@@ -918,7 +879,7 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
      * @param mac {@code long} The factory MAC address value.
      */
     public void writeFactoryMacAddress(long mac) {
-        mCommandQueue.queueCommand(CommandBuilder.writeFactoryMacAddress(mac));
+        mCommandQueue.queueCommand(CommandBuilderKt.writeFactoryMacAddress(mac));
     }
 
     /**
@@ -1303,25 +1264,25 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
     public abstract void writeCalibrationValid();
 
     /**
-     * Converts the provided {@link ProtectedAnalogInputData} point into a voltage using
+     * Converts the provided {@link AnalogInputCountData} point into a voltage using
      * the parameters of the data point and the specific Tekdaqc board.
      *
-     * @param data         {@link ProtectedAnalogInputData} The data point to convert.
+     * @param data         {@link AnalogInputCountData} The data point to convert.
      * @param currentScale {@link AnalogScale} The current analog scale to use in the conversion.
      * @return double The reference voltage value.
      */
-    public abstract double convertAnalogInputDataToVoltage(ProtectedAnalogInputData data, AnalogScale currentScale);
+    public abstract double convertAnalogInputDataToVoltage(AnalogInputCountData data, AnalogScale currentScale);
 
     /**
-     * Converts the provided {@link ProtectedAnalogInputData} point into a temperature
+     * Converts the provided {@link AnalogInputCountData} point into a temperature
      * using the parameters of the data point and the specific Tekdaqc board.
      * This will assume that the data point came from the input specified by
      * {@link #getColdJunctionInputNumber()}, but does not enforce it.
      *
-     * @param data {@link ProtectedAnalogInputData} The data point to convert.
+     * @param data {@link AnalogInputCountData} The data point to convert.
      * @return double The reference voltage value.
      */
-    public abstract double convertAnalogInputDataToTemperature(ProtectedAnalogInputData data);
+    public abstract double convertAnalogInputDataToTemperature(AnalogInputCountData data);
 
     /**
      * Retrieves the physical input number for the cold junction channel this

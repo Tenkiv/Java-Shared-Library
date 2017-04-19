@@ -1,5 +1,7 @@
 package com.tenkiv.tekdaqc.communication.command.queue;
 
+import com.tenkiv.tekdaqc.communication.command.queue.values.IQueueObject;
+
 import java.util.Queue;
 
 /**

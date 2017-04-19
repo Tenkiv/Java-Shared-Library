@@ -2,6 +2,7 @@ package com.tenkiv.tekdaqc.hardware;
 
 
 import com.tenkiv.tekdaqc.utility.ChannelType;
+import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities;
 import tec.uom.se.unit.Units;
 
 import javax.measure.Quantity;
@@ -29,12 +30,7 @@ public class DigitalOutput extends IInputOutputHardware {
     /**
      * Uptime for this output's PWM.
      */
-    private volatile float mPWMPercentage = 0;
-
-    /**
-     * Threshold for activating this output for PWM.
-     */
-    private volatile float mPWMThreshold = 0;
+    private volatile int mPulseWidthModulationDutyCycle = -1;
 
     @Override
     public ChannelType getChannelType() {
@@ -83,6 +79,10 @@ public class DigitalOutput extends IInputOutputHardware {
         return mIsOn;
     }
 
+    public int getPulseWidthModulationDutyCycle() {
+        return mPulseWidthModulationDutyCycle;
+    }
+
     /**
      * Updates the state of the output's activity boolean.
      *
@@ -96,10 +96,9 @@ public class DigitalOutput extends IInputOutputHardware {
     public void activate() {
         if (getTekdaqc().isConnected()) {
             isActivated = true;
-            mPWMPercentage = 1;
-            mPWMThreshold = 0;
+            mPulseWidthModulationDutyCycle = -1;
             mIsOn = true;
-            getTekdaqc().queueCommand(CommandBuilder.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
+            getTekdaqc().queueCommand(CommandBuilderKt.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -109,10 +108,9 @@ public class DigitalOutput extends IInputOutputHardware {
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
             isActivated = false;
-            mPWMPercentage = 0;
-            mPWMThreshold = 0;
+            mPulseWidthModulationDutyCycle = -1;
             mIsOn = false;
-            getTekdaqc().queueCommand(CommandBuilder.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
+            getTekdaqc().queueCommand(CommandBuilderKt.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -122,14 +120,15 @@ public class DigitalOutput extends IInputOutputHardware {
      * Activates pulse width modulation on a digital output; allowing the user to set the percentage of the time
      * the digital output will be active.
      *
-     * @param uptime A float value 0 and 1 to set as the uptime percentage.
+     * @param dutyCycle A int value between 0 and 100 to set as the uptime percentage.
      */
-    public void setPulseWidthModulation(final float uptime){
-        if(uptime < 0 || uptime > 1){
-            throw new InvalidParameterException("Uptime must be a value between 0 and 1");
+    public void setPulseWidthModulation(final int dutyCycle){
+        if(dutyCycle < 0 || dutyCycle > 100){
+            throw new InvalidParameterException("Uptime must be a value between 0 and 100");
         }
-        mPWMThreshold = 0;
-        mPWMPercentage = uptime;
+        isActivated = true;
+        getTekdaqc().queueCommand(CommandBuilderKt.setDigitalOutputPulseWidthModulation
+                        (DigitalOutputUtilities.intToHex(getChannelNumber()),dutyCycle));
 
     }
 
@@ -137,32 +136,12 @@ public class DigitalOutput extends IInputOutputHardware {
      * Activates pulse width modulation on a digital output; allowing the user to set the percentage of the time
      * the digital output will be active.
      *
-     * @param percentUptime A {@link Quantity} that should contain a value in {@link Units#PERCENT}.
+     * @param dutyCycle A {@link Quantity} that should contain a value in {@link Units#PERCENT}.
      */
-    public void setPulseWidthModulation(final Quantity<Dimensionless> percentUptime){
-        float fUptime = percentUptime.to(Units.PERCENT).getValue().floatValue();
+    public void setPulseWidthModulation(final Quantity<Dimensionless> dutyCycle){
+        int iUptime = dutyCycle.to(Units.PERCENT).getValue().intValue();
 
-        if(fUptime < 0 || fUptime > 1){
-            throw new InvalidParameterException("Uptime must be a value between 0 and 1");
-        }
-        mPWMThreshold = 0;
-        mPWMPercentage = fUptime;
-    }
-
-    /**
-     * Adds to threshold and checks to see if it is at triggerable levels.
-     *
-     * @return If output should be activated for this tick.
-     */
-    protected boolean isTriggerableThreshold(){
-        mPWMThreshold += mPWMPercentage;
-
-        if(mPWMThreshold >= 1){
-            mPWMThreshold -= 1;
-            return true;
-        }else{
-            return false;
-        }
+        setPulseWidthModulation(iUptime);
     }
 
     @Override

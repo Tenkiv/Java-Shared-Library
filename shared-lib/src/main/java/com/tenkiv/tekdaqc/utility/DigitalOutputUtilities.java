@@ -6,6 +6,10 @@ package com.tenkiv.tekdaqc.utility;
 public class DigitalOutputUtilities {
 
 
+    public static String intToHex(int num){
+        return String.format("%04X", num & 0xFFFFF);
+    }
+
     /**
      * Converts a binary string to hexadecimal. Hexadecimal is used in communication with the tekdaqc
      * for setting and reading the digital outputs.

@@ -40,8 +40,8 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     @Override
     protected void queueStatusChange() {
         if (getTekdaqc().isConnected() && isActivated) {
-            getTekdaqc().queueCommand(CommandBuilder.removeAnalogInputByNumber(mChannelNumber));
-            getTekdaqc().queueCommand(CommandBuilder.addAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilderKt.removeAnalogInputByNumber(mChannelNumber));
+            getTekdaqc().queueCommand(CommandBuilderKt.addAnalogInput(this));
         }
     }
 
@@ -94,6 +94,42 @@ public abstract class AAnalogInput extends IInputOutputHardware {
         mGain = gain;
         queueStatusChange();
         return this;
+    }
+
+    /**
+     * Sets the gain of the input by the maximum voltage for easier use.
+     *
+     * @param maxVoltage The maximum voltage the channel is reading.
+     */
+    public void setGainByMaxVoltage(double maxVoltage) {
+        ATekdaqc tekdaqc = this.getTekdaqc();
+        double scaleDivisor;
+        if(tekdaqc.getAnalogInputScale() == ATekdaqc.AnalogScale.ANALOG_SCALE_5V) {
+            if(maxVoltage > 5.0D || maxVoltage < 0.0D) {
+                throw new IllegalArgumentException("Max Voltage Can Only Be Between 0.0 and 5.0 for 5V Scale");
+            }
+
+            scaleDivisor = 5.0D;
+        } else {
+            if(maxVoltage > 400.0D || maxVoltage < 0.0D) {
+                throw new IllegalArgumentException("Max Voltage Can Only Be Between 0.0 and 5.0 for 5V Scale");
+            }
+
+            scaleDivisor = 400.0D;
+        }
+
+        int distance = Math.abs((int)(scaleDivisor / (double)AAnalogInput.Gain.values()[0].gain - maxVoltage));
+        int idx = 0;
+
+        for(int i = 1; i < AAnalogInput.Gain.values().length; ++i) {
+            int cdistance = Math.abs((int)(scaleDivisor / (double)AAnalogInput.Gain.values()[0].gain - maxVoltage));
+            if(cdistance < distance) {
+                idx = i;
+                distance = cdistance;
+            }
+        }
+
+        this.setGain(AAnalogInput.Gain.values()[idx]);
     }
 
     /**
@@ -150,7 +186,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public void activate() {
         if (getTekdaqc().isConnected()) {
             isActivated = true;
-            getTekdaqc().queueCommand(CommandBuilder.addAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilderKt.addAnalogInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -160,7 +196,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
             isActivated = false;
-            getTekdaqc().queueCommand(CommandBuilder.removeAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilderKt.removeAnalogInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }

@@ -1,7 +1,6 @@
 package com.tenkiv.tekdaqc.communication.command.queue.values;
 
 import com.tenkiv.tekdaqc.communication.command.queue.Commands;
-import com.tenkiv.tekdaqc.communication.command.queue.IQueueObject;
 import com.tenkiv.tekdaqc.communication.command.queue.Params;
 
 import java.io.IOException;
