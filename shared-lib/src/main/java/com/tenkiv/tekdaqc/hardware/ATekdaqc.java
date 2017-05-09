@@ -673,9 +673,6 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
     /**
      * Convenience method for adding a listener to a particular channel.
-     * IMPORTANT NOTE: Specific channel listeners are less efficient then {@link IMessageListener}s.
-     * In cases where processing power is limited or where very low latency on data is imperative use
-     * {@link IMessageListener} instead.
      *
      * @param listener {@link ICountListener} Listener to be registered.
      * @param input    {@link AAnalogInput} Input to register to.
@@ -686,9 +683,6 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
     /**
      * Convenience method for adding a listener to a particular channel.
-     * IMPORTANT NOTE: Specific channel listeners are less efficient then {@link IMessageListener}s.
-     * In cases where processing power is limited or where very low latency on data is imperative use
-     * {@link IMessageListener} instead.
      *
      * @param listener {@link ICountListener} Listener to be registered.
      * @param input    {@link AAnalogInput} Input to register to.
@@ -699,15 +693,31 @@ public abstract class ATekdaqc implements Externalizable, IParsingListener {
 
     /**
      * Convenience method for adding a listener to a particular channel.
-     * IMPORTANT NOTE: Specific channel listeners are less efficient then {@link IMessageListener}s.
-     * In cases where processing power is limited or where very low latency on data is imperative use
-     * {@link IMessageListener} instead.
      *
      * @param listener {@link IDigitalChannelListener} Listener to be registered.
      * @param input    {@link DigitalInput} Input to register to.
      */
     public void addDigitalChannelListener(IDigitalChannelListener listener, DigitalInput input) {
         messageBroadcaster.addDigitalChannelListener(this, input, listener);
+    }
+
+    /**
+     * Convenience method for adding a listener to a particular channel.
+     *
+     * @param listener {@link IPWMChannelListener} Listener to be registered.
+     * @param input    {@link DigitalInput} Input to register to.
+     */
+    public void addPWMChannelListener(IPWMChannelListener listener, DigitalInput input) {
+        messageBroadcaster.addPWMChannelListener(this, input, listener);
+    }
+
+    /**
+     * Convenience method for removing a listener from a tekdaqc.
+     *
+     * @param listener {@link IPWMChannelListener} Listener to be unregistered.
+     */
+    public void removePWMChannelListener(IPWMChannelListener listener, DigitalInput input) {
+        messageBroadcaster.removePWMChannelListener(this, input, listener);
     }
 
     /**

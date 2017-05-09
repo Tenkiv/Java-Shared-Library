@@ -369,8 +369,6 @@ class Locator private constructor(params: LocatorParams){
         mSocket.broadcast = true
         mSocket.soTimeout = params.getTimeout()
 
-        println("Broadcast on addr: ${address.hostAddress} ")
-
         try {
             sendDiscoveryRequest(mSocket, address)
             return true
@@ -568,9 +566,11 @@ class Locator private constructor(params: LocatorParams){
 
         val serialList = ArrayList(Arrays.asList(*serials))
 
-        serialList.forEach { serial ->
-            listener.onTargetFound(previouslyLocated[serial])
-            serialList.remove(serial)
+        previouslyLocated.forEach { k, v ->
+            if(serialList.contains(k)){
+                listener.onTargetFound(v)
+                serialList.remove(k)
+            }
         }
 
         val searchTimer = Timer("Specific Tekdaqc Search Timer", false)
@@ -724,8 +724,7 @@ class Locator private constructor(params: LocatorParams){
 
         override fun onTekdaqcFirstLocated(board: ATekdaqc) {
 
-            mSerialList.forEach { serial ->
-
+            if(mSerialList.contains(board.serialNumber)){
                 if (mAutoConnect) {
                     try {
                         board.connect(mDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
@@ -736,7 +735,7 @@ class Locator private constructor(params: LocatorParams){
 
                 mListener.onTargetFound(board)
 
-                mSerialList.remove(serial)
+                mSerialList.remove(board.serialNumber)
 
                 mTekdaqcList.add(board)
 

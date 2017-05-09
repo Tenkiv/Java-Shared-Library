@@ -4,6 +4,7 @@ import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIDigitalOutput
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIMessageUtils
 import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
+import com.tenkiv.tekdaqc.communication.data_points.PWMInputData
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.DigitalInput
@@ -57,6 +58,11 @@ class MessageBroadcaster {
     private val mDigitalChannelListeners = ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IDigitalChannelListener>>>()
 
     /**
+     * Map of all registered PWM Input listeners.
+     */
+    private val mPWMChannelListeners = ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IPWMChannelListener>>>()
+
+    /**
      * Executor for handling callbacks to listeners.
      */
     private var mCallbackThreadpool: Executor = Executors.newFixedThreadPool(1)
@@ -105,6 +111,43 @@ class MessageBroadcaster {
                 listeners.add(listener)
             }
         }
+    }
+
+    /**
+     * Register an object for PWM broadcasts for a specific channel on a particular Tekdaqc.
+
+     * @param tekdaqc  [ATekdaqc] The Tekdaqc to register for.
+     * *
+     * @param input    [DigitalInput] Physical number of the channel to listen for.
+     * *
+     * @param listener [IPWMChannelListener] Listener instance to receive the broadcasts.
+     */
+    fun addPWMChannelListener(tekdaqc: ATekdaqc, input: DigitalInput, listener: IPWMChannelListener) {
+        val listeners: MutableMap<Int, MutableList<IPWMChannelListener>>
+                = mPWMChannelListeners.computeIfAbsent(tekdaqc,
+                { ConcurrentHashMap<Int, MutableList<IPWMChannelListener>>() })
+
+        synchronized(listeners) {
+            val listenerList: MutableList<IPWMChannelListener>
+                    = listeners.getOrPut(input.channelNumber, {ArrayList<IPWMChannelListener>()})
+
+            if (!listenerList.contains(listener)) {
+                listenerList.add(listener)
+            }
+        }
+    }
+
+    /**
+     * Un-register an object from PWM broadcasts for a particular Tekdaqc.
+
+     * @param tekdaqc  [ATekdaqc] The Tekdaqc to un-register for.
+     * *
+     * @param input    [DigitalInput] The input to unregister from
+     * *
+     * @param listener [IPWMChannelListener] Listener instance to remove from broadcasts.
+     */
+    fun removePWMChannelListener(tekdaqc: ATekdaqc, input: DigitalInput, listener: IPWMChannelListener) {
+        unregisterInputListener(tekdaqc, input, listener, mPWMChannelListeners)
     }
 
     /**
@@ -360,6 +403,26 @@ class MessageBroadcaster {
                 channelListeners?.let {
                     synchronized(it) {
                         channelListeners.forEach { listener -> listener.onDigitalDataReceived(tekdaqc.getDigitalInput(data.physicalInput), data) }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Broadcast a single [DigitalInputData] point to all registered listeners for the specified Tekdaqc.
+
+     * @param tekdaqc [ATekdaqc] The serial number string of the Tekdaqc to broadcast for.
+     * *
+     * @param data    [DigitalInputData] The data point to broadcast.
+     */
+    fun broadcastPWMInputDataPoint(tekdaqc: ATekdaqc, data: PWMInputData) {
+        if (mPWMChannelListeners.containsKey(tekdaqc)) {
+            if (mPWMChannelListeners[tekdaqc]?.containsKey(data.physicalInput)!!) {
+                val channelListeners = mPWMChannelListeners[tekdaqc]?.get(data.physicalInput)
+                channelListeners?.let {
+                    synchronized(it) {
+                        channelListeners.forEach { listener -> listener.onPWMDataReceived(tekdaqc.getDigitalInput(data.physicalInput), data) }
                     }
                 }
             }

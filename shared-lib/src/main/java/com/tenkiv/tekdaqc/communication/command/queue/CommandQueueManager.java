@@ -112,14 +112,17 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
         //Update the fact that we're executing a command.
         isTaskExecuting.set(true);
         //If its a command we should execute it.
-        if (mCommandDeque.peek() instanceof ABaseQueueVal) {
+
+        IQueueObject queueObject = mCommandDeque.poll();
+
+        if (queueObject instanceof ABaseQueueVal) {
             //Set last command in case we need to resend it.
-            mLastCommand = (ABaseQueueVal) mCommandDeque.peek();
+            mLastCommand = (ABaseQueueVal) queueObject;
 
             System.out.println("Command Queued: "+new String(mLastCommand.generateCommandBytes()));
 
             //Submit new writing thread to send command.
-            mExecutor.submit(new CommandWriterThread());
+            mExecutor.submit(new CommandWriterThread((ABaseQueueVal) queueObject));
             //Lock the queue so we don't send more.
             System.out.println("Current Thread for Lock"+ Thread.currentThread().getName());
 
@@ -151,8 +154,8 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
                 tryCommand();
             }
         //If its a call back we should update the listener.
-        } else if (mCommandDeque.peek() instanceof QueueCallback) {
-            ((QueueCallback) mCommandDeque.poll()).success(mTekdaqc);
+        } else if (queueObject instanceof QueueCallback) {
+            ((QueueCallback) queueObject).success(mTekdaqc);
             isTaskExecuting.set(false);
             tryCommand();
         }
@@ -314,17 +317,19 @@ public class CommandQueueManager implements ICommandManager, IMessageListener {
 
         private static final String COMMAND_WRITER_THREAD_NAME = "COMMAND_WRITER_THREAD_NAME";
 
-        private CommandWriterThread() {
+        private ABaseQueueVal mValue;
+
+        private CommandWriterThread(ABaseQueueVal value) {
             super(COMMAND_WRITER_THREAD_NAME);
+            mValue = value;
         }
 
         @Override
         public void run() {
             try {
-                writeToStream((ABaseQueueVal) mCommandDeque.poll());
+                writeToStream(mValue);
             } catch (Exception e) {
                 e.printStackTrace();
-
                 mTekdaqc.criticalErrorNotification(TekdaqcCriticalError.TERMINAL_CONNECTION_DISRUPTION);
             }
         }

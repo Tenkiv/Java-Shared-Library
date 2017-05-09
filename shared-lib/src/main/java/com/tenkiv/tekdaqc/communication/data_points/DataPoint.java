@@ -122,6 +122,6 @@ public abstract class DataPoint implements Externalizable {
      * @since v1.0.0.0
      */
     public enum DATA_TYPE {
-        ANALOG_INPUT, ANALOG_OUTPUT, DIGITAL_INPUT, DIGITAL_OUTPUT
+        ANALOG_INPUT, ANALOG_OUTPUT, DIGITAL_INPUT, DIGITAL_OUTPUT, PWM_INPUT
     }
 }

@@ -3,12 +3,14 @@ package com.tenkiv.tekdaqc.hardware;
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIAnalogInputDataMessage;
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIDigitalInputDataMessage;
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIErrorMessage;
+import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIPWMInputDataMessage;
 import com.tenkiv.tekdaqc.communication.command.queue.Commands;
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
 import com.tenkiv.tekdaqc.communication.command.queue.values.QueueValue;
 import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData;
 import com.tenkiv.tekdaqc.communication.data_points.DataPoint;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
+import com.tenkiv.tekdaqc.communication.data_points.PWMInputData;
 import com.tenkiv.tekdaqc.communication.message.ABoardMessage;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate;
@@ -543,6 +545,9 @@ public class Tekdaqc_RevD extends ATekdaqc {
                 final DataPoint digitalInputData = ((ASCIIDigitalInputDataMessage) message).toDataPoints();
                 messageBroadcaster.broadcastDigitalInputDataPoint(this, (DigitalInputData) digitalInputData);
                 break;
+            case PWM_INPUT_DATA:
+                final DataPoint pwmInputData = ((ASCIIPWMInputDataMessage) message).toDataPoints();
+                messageBroadcaster.broadcastPWMInputDataPoint(this, (PWMInputData) pwmInputData);
         }
     }
 

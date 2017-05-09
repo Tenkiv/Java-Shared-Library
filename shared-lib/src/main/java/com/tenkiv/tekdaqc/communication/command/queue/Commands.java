@@ -130,6 +130,8 @@ public enum Commands {
      */
     SET_PWM_OUTPUT,
 
+    SET_PWM_OUTPUT_TIMER,
+
     /**
      * Reads current state of the digital outputs.
      */
@@ -166,7 +168,12 @@ public enum Commands {
     EXIT_CALIBRATION_MODE,
     SET_BOARD_SERIAL_NUM,
     SET_FACTORY_MAC_ADDR,
-    READ_SELF_GCAL;
+    READ_SELF_GCAL,
+
+    ADD_PWM_INPUT,
+    REMOVE_PWM_INPUT,
+    READ_PWM_INPUT,
+    LIST_PWM_INPUTS;
 
     /**
      * Array of all values in the enum. This is done because calling Commands.values() is a relatively intensive operation.

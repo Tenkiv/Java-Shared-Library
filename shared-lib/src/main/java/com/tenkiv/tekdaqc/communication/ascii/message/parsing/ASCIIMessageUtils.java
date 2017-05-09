@@ -12,6 +12,7 @@ public class ASCIIMessageUtils {
 
     public static final String V2_ANALOG_INPUT_HEADER = "?A";
     public static final String V2_DIGITAL_INPUT_HEADER = "?D";
+    public static final String DIGITAL_PWM_INPUT_HEADER = "?P";
     public static final String V2_DIGITAL_OUTPUT_HEADER = "";
 
     public static final String V1_ANALOG_INPUT_HEADER = "Analog Input";
@@ -53,6 +54,10 @@ public class ASCIIMessageUtils {
 
     private static ASCIIDigitalInputDataMessage getDigitalInputDataMessage() {
         return new ASCIIDigitalInputDataMessage();
+    }
+
+    private static ASCIIPWMInputDataMessage getDigitalPWMInputDataMessage() {
+        return new ASCIIPWMInputDataMessage();
     }
 
     private static ASCIIDigitalOutputDataMessage getDigitalOutputDataMessage() {
@@ -120,6 +125,10 @@ public class ASCIIMessageUtils {
                 // This is an ASCII Digital Output Data message
                 message = getDigitalOutputDataMessage();
                 message.setData(messageData);
+            }else if (messageData.contains(DIGITAL_PWM_INPUT_HEADER)) {
+                // This is an ASCII Digital PWM Input Data message
+                message = getDigitalPWMInputDataMessage();
+                message.setData(messageData);
             } else {
                 // This is an unrecognized message format
                 /*System.out.println(TAG + "Unrecognized Message" +messageData);*/
@@ -141,6 +150,6 @@ public class ASCIIMessageUtils {
      * Message type enumeration.
      */
     public static enum MESSAGE_TYPE {
-        DEBUG, STATUS, ERROR, ANALOG_INPUT_DATA, DIGITAL_INPUT_DATA, DIGITAL_OUTPUT_DATA, COMMAND_DATA;
+        DEBUG, STATUS, ERROR, ANALOG_INPUT_DATA, DIGITAL_INPUT_DATA, DIGITAL_OUTPUT_DATA, COMMAND_DATA, PWM_INPUT_DATA;
     }
 }

@@ -210,7 +210,6 @@ fun addAnalogInput(input: AAnalogInput): ABaseQueueVal {
 fun addDigitalInput(input: DigitalInput): ABaseQueueVal {
     val queueValue = QueueValue(
             Commands.ADD_DIGITAL_INPUT.ordinalCommandType,
-            Pair(Params.NAME, input.name),
             Pair(Params.INPUT, input.channelNumber.toByte()))
     return queueValue
 }
@@ -407,7 +406,7 @@ fun deactivateAllAnalogInputs(): List<ABaseQueueVal> {
 fun setAnalogInputScale(scale: ATekdaqc.AnalogScale): ABaseQueueVal {
     val queueValue = QueueValue(
             Commands.SET_ANALOG_INPUT_SCALE.ordinalCommandType,
-            Pair(Params.SCALE, scale.ordinal.toByte()))
+            Pair(Params.SCALE, scale.toString()))
     return queueValue
 }
 
@@ -629,20 +628,16 @@ fun writeCalibrationValid(): ABaseQueueVal {
 
  * @return The [ABaseQueueVal] of the command.
  */
-fun disconnect(): ABaseQueueVal {
-    return QueueValue(
+fun disconnect(): ABaseQueueVal = QueueValue(
             Commands.DISCONNECT.ordinalCommandType)
-}
 
 /**
  * Method to generate a [ABaseQueueVal] representing the command "READ_DIGITAL_OUTPUTS".
 
  * @return The [ABaseQueueVal] of the command.
  */
-fun readDigitalOutput(): ABaseQueueVal {
-    return QueueValue(
+fun readDigitalOutput(): ABaseQueueVal = QueueValue(
             Commands.READ_DIGITAL_OUTPUT.ordinalCommandType)
-}
 
 /**
  * Method to generate a [ABaseQueueVal] representing the command "ENTER_CALIBRATION_MODE".
@@ -653,10 +648,7 @@ fun readDigitalOutput(): ABaseQueueVal {
 
  * @return The [ABaseQueueVal] of the command.
  */
-fun enterCalibrationMode(): ABaseQueueVal {
-    return QueueValue(
-            Commands.ENTER_CALIBRATION_MODE.ordinalCommandType)
-}
+fun enterCalibrationMode(): ABaseQueueVal = QueueValue(Commands.ENTER_CALIBRATION_MODE.ordinalCommandType)
 
 /**
  * Method to generate a [ABaseQueueVal] representing the command "EXIT_CALIBRATION_MODE".
@@ -667,10 +659,7 @@ fun enterCalibrationMode(): ABaseQueueVal {
 
  * @return The [ABaseQueueVal] of the command.
  */
-fun exitCalibrationMode(): ABaseQueueVal {
-    return QueueValue(
-            Commands.EXIT_CALIBRATION_MODE.ordinalCommandType)
-}
+fun exitCalibrationMode(): ABaseQueueVal = QueueValue(Commands.EXIT_CALIBRATION_MODE.ordinalCommandType)
 
 /**
  * Method to generate a [ABaseQueueVal] representing the command "WRITE_SERIAL_NUMBER" with the given parameters.
@@ -683,11 +672,9 @@ fun exitCalibrationMode(): ABaseQueueVal {
  * *
  * @return The [ABaseQueueVal] of the command.
  */
-fun writeSerialNumber(serial: String): ABaseQueueVal {
-    return QueueValue(
+fun writeSerialNumber(serial: String): ABaseQueueVal = QueueValue(
             Commands.READ_DIGITAL_OUTPUT.ordinalCommandType,
             Pair(Params.VALUE, serial))
-}
 
 /**
  * Method to generate a [ABaseQueueVal] representing the command "WRITE_MAC_ADDRESS" with the given parameters.
@@ -700,21 +687,16 @@ fun writeSerialNumber(serial: String): ABaseQueueVal {
  * *
  * @return The [ABaseQueueVal] of the command.
  */
-fun writeFactoryMacAddress(mac: Long): ABaseQueueVal {
-    return QueueValue(
+fun writeFactoryMacAddress(mac: Long): ABaseQueueVal = QueueValue(
             Commands.SET_FACTORY_MAC_ADDR.ordinalCommandType,
             Pair(Params.VALUE, mac.toString() + ""))
-}
 
 /**
  * Method to generate a [ABaseQueueVal] representing the command "NONE".
 
  * @return The [ABaseQueueVal] of the command.
  */
-fun none(): ABaseQueueVal {
-    return QueueValue(
-            Commands.NONE.ordinalCommandType)
-}
+fun none(): ABaseQueueVal = QueueValue(Commands.NONE.ordinalCommandType)
 
 /**
  * Method to generate a [ABaseQueueVal] representing the command "SYSTEM_CAL".
@@ -725,17 +707,64 @@ fun none(): ABaseQueueVal {
 
  * @return The [ABaseQueueVal] of the command.
  */
-fun systemCalibrate(): ABaseQueueVal {
-    return QueueValue(
-            Commands.SYSTEM_CAL.ordinalCommandType)
-}
+fun systemCalibrate(): ABaseQueueVal = QueueValue(Commands.SYSTEM_CAL.ordinalCommandType)
 
 /**
  * Method to generate a [ABaseQueueVal] representing the command "LIST_ANALOG_INPUTS".
 
  * @return The [ABaseQueueVal] of the command.
  */
-fun listAnalogInputs(): ABaseQueueVal {
-    return QueueValue(
-            Commands.LIST_ANALOG_INPUTS.ordinalCommandType)
-}
+fun listAnalogInputs(): ABaseQueueVal = QueueValue(
+        Commands.LIST_ANALOG_INPUTS.ordinalCommandType)
+
+/**
+ * Adds a [DigitalInput] as PWM input.
+ *
+ * @param input The Input number of the Digital Input.
+ */
+fun addPWMInput(input: Int): ABaseQueueVal = QueueValue(
+        Commands.ADD_PWM_INPUT.ordinalCommandType,
+        Pair(Params.INPUT, input))
+
+/**
+ * Adds a [DigitalInput] as PWM input.
+ *
+ * @param input The Digital Input to be activated.
+ */
+fun addPWMInput(input: DigitalInput): ABaseQueueVal = QueueValue(
+        Commands.ADD_PWM_INPUT.ordinalCommandType,
+        Pair(Params.INPUT, input.channelNumber))
+
+/**
+ * Removes a [DigitalInput] PWM input.
+ *
+ * @param input The Input number of the Digital Input.
+ */
+fun removePWMInput(input: Int): ABaseQueueVal = QueueValue(
+        Commands.REMOVE_PWM_INPUT.ordinalCommandType,
+        Pair(Params.INPUT, input))
+
+/**
+ * Reads the PWM status of the [DigitalInput]s.
+ *
+ * @param input The input to be read.
+ * @param number The samples to read.
+ */
+fun readPWMInputs(input: Int, number: Int): ABaseQueueVal = QueueValue(
+        Commands.READ_PWM_INPUT.ordinalCommandType,
+        Pair(Params.INPUT, input),
+        Pair(Params.NUMBER, number))
+
+/**
+ * Lists all added PWM Inputs
+ */
+fun listPWMInputs(): ABaseQueueVal = QueueValue(
+        Commands.LIST_PWM_INPUTS.ordinalCommandType)
+
+/**
+ * Sets the output timer for the PWM Output timer.
+ *
+ * @param time The output timer.
+ */
+fun setPWMOutputTimer(time: Long) = QueueValue(
+        Commands.SET_PWM_OUTPUT_TIMER.ordinalCommandType)
