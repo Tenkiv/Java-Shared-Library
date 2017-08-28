@@ -1,4 +1,4 @@
-Tekdaqc-Java-Core-Library
+Tekdaqc-JVM-Core-Library
 ====================
 
 Base Java library containing the Java classes used by both the [Tekdaqc-JVM-Library](https://github.com/Tenkiv/Tekdaqc-JVM-Library) and the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library) for connecting and managing Tekdaqcs.
