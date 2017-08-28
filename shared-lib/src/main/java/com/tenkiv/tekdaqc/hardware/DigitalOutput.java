@@ -63,8 +63,8 @@ public class DigitalOutput extends IInputOutputHardware {
      * @throws IllegalArgumentException Must not exceed maximum name length.
      */
     public void setName(final String name) {
-        if (name.length() >= ATekdaqc.MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.MAX_NAME_LENGTH + " characters.");
+        if (name.length() >= ATekdaqc.Companion.getMAX_NAME_LENGTH()) {
+            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.Companion.getMAX_NAME_LENGTH() + " characters.");
         } else {
             mName = name;
         }
@@ -98,7 +98,7 @@ public class DigitalOutput extends IInputOutputHardware {
             isActivated = true;
             mPulseWidthModulationDutyCycle = -1;
             mIsOn = true;
-            getTekdaqc().queueCommand(CommandBuilderKt.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -110,7 +110,7 @@ public class DigitalOutput extends IInputOutputHardware {
             isActivated = false;
             mPulseWidthModulationDutyCycle = -1;
             mIsOn = false;
-            getTekdaqc().queueCommand(CommandBuilderKt.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -127,7 +127,7 @@ public class DigitalOutput extends IInputOutputHardware {
             throw new InvalidParameterException("Uptime must be a value between 0 and 100");
         }
         isActivated = true;
-        getTekdaqc().queueCommand(CommandBuilderKt.setDigitalOutputPulseWidthModulation
+        getTekdaqc().queueCommand(CommandBuilder.INSTANCE.setDigitalOutputPulseWidthModulation
                         (DigitalOutputUtilities.intToHex(getChannelNumber()),dutyCycle));
 
     }

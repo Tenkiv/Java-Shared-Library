@@ -17,6 +17,7 @@ import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate;
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD.BufferState;
 import com.tenkiv.tekdaqc.locator.LocatorResponse;
 import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -32,6 +33,14 @@ import java.util.Set;
  * @since v1.0.0.0
  */
 public class Tekdaqc_RevD extends ATekdaqc {
+
+    private TemperatureReference_RevD temperatureReference = new TemperatureReference_RevD(this);
+
+    @NotNull
+    @Override
+    public TemperatureReference_RevD getTemperatureReference() {
+        return temperatureReference;
+    }
 
     /**
      * The number of analog inputs present on the board.
@@ -106,9 +115,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
             Rate.SPS_1000,
             Rate.SPS_2000,
             Rate.SPS_3750,
-            Rate.SPS_7500,
-            Rate.SPS_15000,
-            Rate.SPS_30000);
+            Rate.SPS_7500);
 
     /**
      * List of valid configuration settings for the {@link BufferState}s of the {@link AAnalogInput}s of
@@ -125,26 +132,6 @@ public class Tekdaqc_RevD extends ATekdaqc {
     private static final List<AnalogScale> VALID_ANALOG_SCALEs = Arrays.asList(
             AnalogScale.ANALOG_SCALE_5V,
             AnalogScale.ANALOG_SCALE_400V);
-
-    @Override
-    protected int getAnalogInputCount() {
-        return ANALOG_INPUT_COUNT;
-    }
-
-    @Override
-    protected int getDigitalInputCount() {
-        return DIGITAL_INPUT_COUNT;
-    }
-
-    @Override
-    protected int getDigitalOutputCount() {
-        return DIGITAL_OUTPUT_COUNT;
-    }
-
-    @Override
-    int getAnalogTemperatureSensorChannel() {
-        return ANALOG_INPUT_TEMP_SENSOR;
-    }
 
     /**
      * Provided only to support serialization. User code should not use this
@@ -173,68 +160,66 @@ public class Tekdaqc_RevD extends ATekdaqc {
     protected void initializeBoardStatusLists() {
 
         for (int i = 0; i < ANALOG_INPUT_COUNT; i++) {
-            mAnalogInputs.put(i, new AnalogInput_RevD(this, i));
+            getAnalogInputs().put(i, new AnalogInput_RevD(this, i));
         }
 
         for (int i = 0; i < DIGITAL_INPUT_COUNT; i++) {
-            mDigitalInputs.put(i, new DigitalInput(this, i));
+            getDigitalInputs().put(i, new DigitalInput(this, i));
         }
 
         for (int i = 0; i < DIGITAL_OUTPUT_COUNT; i++) {
-            mDigitalOutputs.put(i, new DigitalOutput(this, i));
+            getDigitalOutputs().put(i, new DigitalOutput(this, i));
         }
-
-        mAnalogInputs.put(ANALOG_INPUT_TEMP_SENSOR, new AnalogInput_RevD(this,ANALOG_INPUT_TEMP_SENSOR));
     }
 
     @Override
     public void readAnalogInput(final int input, final int number) {
-        mCommandQueue.queueCommand(CommandBuilderKt.readAnalogInput(input, number));
+        queueCommand(CommandBuilder.INSTANCE.readAnalogInput(input, number));
 
     }
 
     @Override
     public void readAnalogInputRange(final int start, final int end, final int number) {
-        mCommandQueue.queueCommand(CommandBuilderKt.readAnalogInputRange(start, end, number));
+        queueCommand(CommandBuilder.INSTANCE.readAnalogInputRange(start, end, number));
     }
 
     @Override
     public void readAnalogInputSet(final Set<Integer> inputs, final int number) {
-        mCommandQueue.queueCommand(CommandBuilderKt.readAnalogInputSet(inputs, number));
+        queueCommand(CommandBuilder.INSTANCE.readAnalogInputSet(inputs, number));
     }
 
     @Override
     public void readAllAnalogInput(final int number) {
-        mCommandQueue.queueCommand(CommandBuilderKt.readAllAnalogInput(number));
+        queueCommand(CommandBuilder.INSTANCE.readAllAnalogInput(number));
     }
 
     @Override
     public void readDigitalInput(final int input, final int number) throws IllegalArgumentException {
         haltThrottedDigitalInputReading();
-        mCommandQueue.queueCommand(CommandBuilderKt.readDigitalInput(input, number));
+        queueCommand(CommandBuilder.INSTANCE.readDigitalInput(input, number));
     }
 
     @Override
     public void readDigitalInputRange(final int start, final int end, final int number) throws IllegalArgumentException {
         haltThrottedDigitalInputReading();
-        mCommandQueue.queueCommand(CommandBuilderKt.readDigitalInputRange(start, end, number));
+        queueCommand(CommandBuilder.INSTANCE.readDigitalInputRange(start, end, number));
     }
 
     @Override
     public void readDigitalInputSet(final Set<Integer> inputs, final int number) throws IllegalArgumentException {
         haltThrottedDigitalInputReading();
-        mCommandQueue.queueCommand(CommandBuilderKt.readDigitalInputSet(inputs, number));
+        queueCommand(CommandBuilder.INSTANCE.readDigitalInputSet(inputs, number));
     }
 
     @Override
     public void readAllDigitalInput(final int number) {
         haltThrottedDigitalInputReading();
-        mCommandQueue.queueCommand(CommandBuilderKt.readAllDigitalInput(number));
+        queueCommand(CommandBuilder.INSTANCE.readAllDigitalInput(number));
     }
 
     @Override
     protected void addAnalogInput(final AAnalogInput input) throws IllegalArgumentException, IllegalStateException {
-        mCommandQueue.queueCommand(CommandBuilderKt.addAnalogInput(input));
+        queueCommand(CommandBuilder.INSTANCE.addAnalogInput(input));
     }
 
     @Override
@@ -264,19 +249,19 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     public void setDigitalOutput(final String binaryString) {
-        for (final DigitalOutput output : mDigitalOutputs.values()) {
+        for (final DigitalOutput output : getDigitalOutputs().values()) {
             if (binaryString.charAt(output.getChannelNumber()) == '1') {
                 output.setIsActive(true);
             } else {
                 output.setIsActive(false);
             }
         }
-        mCommandQueue.queueCommand(CommandBuilderKt.setDigitalOutputByBinaryString(binaryString));
+        queueCommand(CommandBuilder.INSTANCE.setDigitalOutputByBinaryString(binaryString));
     }
 
     @Override
     public void setDigitalOutputByHex(final String hex) {
-        for (final DigitalOutput output : mDigitalOutputs.values()) {
+        for (final DigitalOutput output : getDigitalOutputs().values()) {
             if (DigitalOutputUtilities.hex_to_binary(hex)
                     .charAt(output.getChannelNumber()) == '1') {
                 output.setIsActive(true);
@@ -284,82 +269,76 @@ public class Tekdaqc_RevD extends ATekdaqc {
                 output.setIsActive(false);
             }
         }
-        mCommandQueue.queueCommand(CommandBuilderKt.setDigitalOutputByHex(hex));
+        queueCommand(CommandBuilder.INSTANCE.setDigitalOutputByHex(hex));
     }
 
     @Override
     public void setDigitalOutput(final boolean[] digitalOutputState) {
-        for (final DigitalOutput output : mDigitalOutputs.values()) {
+        for (final DigitalOutput output : getDigitalOutputs().values()) {
             if (digitalOutputState[output.getChannelNumber()]) {
                 output.setIsActive(true);
             } else {
                 output.setIsActive(false);
             }
         }
-        mCommandQueue.queueCommand(CommandBuilderKt.setDigitalOutput(digitalOutputState));
+        queueCommand(CommandBuilder.INSTANCE.setDigitalOutput(digitalOutputState));
     }
 
     @Override
     public void removeAnalogInput(final AAnalogInput input) {
-        mCommandQueue.queueCommand(CommandBuilderKt.removeAnalogInput(input));
+        queueCommand(CommandBuilder.INSTANCE.removeAnalogInput(input));
     }
 
     @Override
     public void deactivateAnalogInput(final int input) {
-        mCommandQueue.queueCommand(CommandBuilderKt.removeAnalogInputByNumber(input));
+        queueCommand(CommandBuilder.INSTANCE.removeAnalogInputByNumber(input));
     }
 
     @Override
     public void deactivateAllAddedAnalogInputs() {
-        for (final ABaseQueueVal queueValue : CommandBuilderKt.removeMappedAnalogInputs(mAnalogInputs)) {
-            mCommandQueue.queueCommand(queueValue);
+        for (final ABaseQueueVal queueValue : CommandBuilder.INSTANCE.removeMappedAnalogInputs(getAnalogInputs())) {
+            queueCommand(queueValue);
         }
     }
 
     @Override
     public void deactivateAllAnalogInputs() {
-        for (final ABaseQueueVal queueValue : CommandBuilderKt.deactivateAllAnalogInputs()) {
-            mCommandQueue.queueCommand(queueValue);
+        for (final ABaseQueueVal queueValue : CommandBuilder.INSTANCE.deactivateAllAnalogInputs()) {
+            queueCommand(queueValue);
         }
     }
 
     @Override
     public void deactivateDigitalInput(final DigitalInput input) {
-        mCommandQueue.queueCommand(CommandBuilderKt.removeDigitalInput(input));
+        queueCommand(CommandBuilder.INSTANCE.removeDigitalInput(input));
     }
 
     @Override
     public void deactivateDigitalInput(final int input) {
-        mCommandQueue.queueCommand(CommandBuilderKt.removeDigitalInputByNumber(input));
+        queueCommand(CommandBuilder.INSTANCE.removeDigitalInputByNumber(input));
     }
 
     @Override
     public void deactivateAllAddedDigitalInputs() {
-        for (ABaseQueueVal queueValue : CommandBuilderKt.removeMappedDigitalInputs(mDigitalInputs)) {
-            mCommandQueue.queueCommand(queueValue);
+        for (ABaseQueueVal queueValue : CommandBuilder.INSTANCE.removeMappedDigitalInputs(getDigitalInputs())) {
+            queueCommand(queueValue);
         }
     }
 
     @Override
     public void deactivateAllDigitalInputs() {
-        for (ABaseQueueVal queueValue : CommandBuilderKt.deactivateAllDigitalInputs()) {
-            mCommandQueue.queueCommand(queueValue);
+        for (ABaseQueueVal queueValue : CommandBuilder.INSTANCE.deactivateAllDigitalInputs()) {
+            queueCommand(queueValue);
         }
     }
 
     @Override
-    public void setAnalogInputScale(final AnalogScale scale) {
-        mAnalogScale = scale;
-        mCommandQueue.queueCommand(CommandBuilderKt.setAnalogInputScale(scale));
-    }
-
-    @Override
     protected void addDigitalInput(final DigitalInput input) throws IllegalArgumentException, IllegalStateException {
-        mCommandQueue.queueCommand(CommandBuilderKt.addDigitalInput(input));
+        queueCommand(CommandBuilder.INSTANCE.addDigitalInput(input));
     }
 
     public void systemGainCalibrate(final int input) {
-        mCommandQueue.queueCommand(CommandBuilderKt.systemGainCalibrate(input));
+        queueCommand(CommandBuilder.INSTANCE.systemGainCalibrate(input));
     }
 
     /**
@@ -368,7 +347,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
      */
     @Override
     public void readSystemGainCalibration() {
-        mCommandQueue.queueCommand(CommandBuilderKt.readSystemGainCalibration());
+        queueCommand(CommandBuilder.INSTANCE.readSystemGainCalibration());
     }
 
     /**
@@ -381,64 +360,66 @@ public class Tekdaqc_RevD extends ATekdaqc {
      *               calibration for.
      */
     public void readSelfGainCalibration(Gain gain, Rate rate, BufferState buffer) {
-        mCommandQueue.queueCommand(CommandBuilderKt.readSelfGainCalibration(gain, rate, buffer));
+        queueCommand(CommandBuilder.INSTANCE.readSelfGainCalibration(gain, rate, buffer));
     }
 
     @Override
     public void upgrade() {
-        mCommandQueue.queueCommand(CommandBuilderKt.upgrade());
+        queueCommand(CommandBuilder.INSTANCE.upgrade());
     }
 
     @Override
     public void identify() {
-        mCommandQueue.queueCommand(CommandBuilderKt.identify());
+        queueCommand(CommandBuilder.INSTANCE.identify());
     }
 
     @Override
     public void sample(int number) {
-        mCommandQueue.queueCommand(CommandBuilderKt.sample(number));
+        queueCommand(CommandBuilder.INSTANCE.sample(number));
     }
 
     @Override
     public void halt() {
-        mCommandQueue.queueCommand(new QueueValue(Commands.HALT.getOrdinalCommandType()));
+        queueCommand(new QueueValue(Commands.HALT.getOrdinalCommandType()));
     }
 
     @Override
     public void setRTC(long timestamp) {
-        mCommandQueue.queueCommand(CommandBuilderKt.setRTC(timestamp));
+        queueCommand(CommandBuilder.INSTANCE.setRTC(timestamp));
     }
 
     @Override
     public void readADCRegisters() {
-        mCommandQueue.queueCommand(CommandBuilderKt.readADCRegisters());
+        queueCommand(CommandBuilder.INSTANCE.readADCRegisters());
     }
 
     @Override
     public void getCalibrationStatus() {
-        mCommandQueue.queueCommand(CommandBuilderKt.getCalibrationStatus());
+        queueCommand(CommandBuilder.INSTANCE.getCalibrationStatus());
     }
 
     @Override
     public void writeCalibrationTemperature(final double temp, final int index) {
-        mCommandQueue.queueCommand(CommandBuilderKt.writeCalibrationTemperature(temp, index));
+        queueCommand(CommandBuilder.INSTANCE.writeCalibrationTemperature(temp, index));
     }
 
     @Override
     public void writeGainCalibrationValue(final float value, final Gain gain, final Rate rate,
                                           final BufferState buffer, final AnalogScale scale, final int temp) {
-        mCommandQueue.queueCommand(CommandBuilderKt.writeGainCalibrationValue(value, gain, rate, buffer, scale, temp));
+        queueCommand(CommandBuilder.INSTANCE.writeGainCalibrationValue(value, gain, rate, buffer, scale, temp));
     }
 
     @Override
     public void writeCalibrationValid() {
-        mCommandQueue.queueCommand(new QueueValue(Commands.WRITE_CALIBRATION_VALID.getOrdinalCommandType()));
+        queueCommand(new QueueValue(Commands.WRITE_CALIBRATION_VALID.getOrdinalCommandType()));
     }
 
     @Override
     public AAnalogInput getAnalogInput(final int input) {
-        if ((input >= 0 && input < ANALOG_INPUT_COUNT) || (input == ANALOG_INPUT_TEMP_SENSOR)) {
-            return mAnalogInputs.get(input);
+        if ((input >= 0 && input < ANALOG_INPUT_COUNT)) {
+            return getAnalogInputs().get(input);
+        } else if(input == ANALOG_INPUT_TEMP_SENSOR) {
+            return temperatureReference;
         } else {
             throw new IllegalArgumentException("The requested physical analog input is out of range: " + input);
         }
@@ -456,7 +437,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
     @Override
     public double convertAnalogInputDataToTemperature(final AnalogInputCountData data) {
         final double voltage = convertAnalogInputDataToVoltage(data, AnalogScale.ANALOG_SCALE_5V);
-        return (voltage / 0.010); // LM35 output is 10mV/Deg C
+        return (voltage / 0.010); // LM35 outpuSAMPLE --NUMBER=0t is 10mV/Deg C
     }
 
     @Override
@@ -529,31 +510,51 @@ public class Tekdaqc_RevD extends ATekdaqc {
             case STATUS:
             case COMMAND_DATA:
             case DIGITAL_OUTPUT_DATA:
-                messageBroadcaster.broadcastMessage(this, message);
+                getMessageBroadcaster().broadcastMessage(this, message);
                 break;
             case ERROR:
                 if(((ASCIIErrorMessage)message).isNetworkError){
-                    messageBroadcaster.broadcastNetworkError(this, message);
+                    getMessageBroadcaster().broadcastNetworkError(this, message);
                 }
-                messageBroadcaster.broadcastMessage(this, message);
+                getMessageBroadcaster().broadcastMessage(this, message);
                 break;
             case ANALOG_INPUT_DATA:
                 final DataPoint analogInputData = ((ASCIIAnalogInputDataMessage) message).toDataPoints();
-                messageBroadcaster.broadcastAnalogInputDataPoint(this, (AnalogInputCountData) analogInputData);
+                getMessageBroadcaster().broadcastAnalogInputDataPoint(this, (AnalogInputCountData) analogInputData);
                 break;
             case DIGITAL_INPUT_DATA:
                 final DataPoint digitalInputData = ((ASCIIDigitalInputDataMessage) message).toDataPoints();
-                messageBroadcaster.broadcastDigitalInputDataPoint(this, (DigitalInputData) digitalInputData);
+                getMessageBroadcaster().broadcastDigitalInputDataPoint(this, (DigitalInputData) digitalInputData);
                 break;
             case PWM_INPUT_DATA:
                 final DataPoint pwmInputData = ((ASCIIPWMInputDataMessage) message).toDataPoints();
-                messageBroadcaster.broadcastPWMInputDataPoint(this, (PWMInputData) pwmInputData);
+                getMessageBroadcaster().broadcastPWMInputDataPoint(this, (PWMInputData) pwmInputData);
         }
     }
 
     @Override
     public void onMessageDetetced(final String message) {
         super.onMessageDetetced(message);
-        mParsingExecutor.parseMessage(message, this);
+        getParsingExecutor().parseMessage(message, this);
+    }
+
+    @Override
+    public int getAnalogInputCount() {
+        return ANALOG_INPUT_COUNT;
+    }
+
+    @Override
+    public int getDigitalInputCount() {
+        return DIGITAL_INPUT_COUNT;
+    }
+
+    @Override
+    public int getDigitalOutputCount() {
+        return DIGITAL_OUTPUT_COUNT;
+    }
+
+    @Override
+    public int getAnalogTemperatureReferenceChannel() {
+        return ANALOG_INPUT_TEMP_SENSOR;
     }
 }

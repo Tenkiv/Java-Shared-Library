@@ -124,7 +124,7 @@ public enum Params {
             case GAIN:
                 return AAnalogInput.Gain.getValueFromOrdinal(paramValue).toString();
             case SCALE:
-                return ATekdaqc.AnalogScale.getValueFromOrdinal(paramValue).toString();
+                return ATekdaqc.AnalogScale.Companion.getValueFromOrdinal(paramValue).toString();
             case BUFFER:
                 return AnalogInput_RevD.BufferState.getValueFromOrdinal(paramValue).toString();
             case INPUT:

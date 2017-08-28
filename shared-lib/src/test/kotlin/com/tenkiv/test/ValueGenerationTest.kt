@@ -1,8 +1,7 @@
 package com.tenkiv.test
 
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
-import com.tenkiv.tekdaqc.hardware.addAnalogInput
-import com.tenkiv.tekdaqc.hardware.setAnalogInputScale
+import com.tenkiv.tekdaqc.hardware.CommandBuilder
 import io.kotlintest.matchers.be
 import io.kotlintest.specs.StringSpec
 
@@ -18,7 +17,7 @@ class ValueGenerationTest: StringSpec(){
     init{
         "Generating Values"{
 
-            val aiScale = setAnalogInputScale(ATekdaqc.AnalogScale.ANALOG_SCALE_5V)
+            val aiScale = CommandBuilder.setAnalogInputScale(ATekdaqc.AnalogScale.ANALOG_SCALE_5V)
             String(aiScale.generateCommandBytes()).shouldEqual(SET_ANALOG_INPUT_SCALE)
 
         }

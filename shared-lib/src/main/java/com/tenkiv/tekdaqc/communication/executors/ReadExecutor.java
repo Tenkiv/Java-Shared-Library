@@ -45,7 +45,7 @@ public class ReadExecutor implements ITekdaqcExecutor {
         if (callback == null) throw new IllegalArgumentException("Callback set cannot be null.");
         mTekdaqc = tekdaqc;
         mCallback = callback;
-        mExecutor = new ThrowableExecutor(1);
+        mExecutor = new ThrowableExecutor(5);
         // Submit the task immediately
         mTaskFuture = mExecutor.submit(new Task());
     }

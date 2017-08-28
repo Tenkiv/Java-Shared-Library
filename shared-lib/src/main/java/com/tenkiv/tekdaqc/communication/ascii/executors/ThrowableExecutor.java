@@ -9,11 +9,11 @@ import java.util.concurrent.*;
  */
 public class ThrowableExecutor extends ThreadPoolExecutor {
     public ThrowableExecutor(final int numThreads, final ThreadFactory factory) {
-        super(1, numThreads, 0, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), factory);
+        super(3, numThreads, 0, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), factory);
     }
 
     public ThrowableExecutor(final int numThreads){
-        super(1,numThreads,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>());
+        super(3,numThreads,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>());
     }
 
     @Override

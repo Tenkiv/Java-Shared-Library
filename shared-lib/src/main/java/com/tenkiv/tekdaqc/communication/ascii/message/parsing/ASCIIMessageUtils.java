@@ -92,6 +92,7 @@ public class ASCIIMessageUtils {
         try {
             if (messageData == null)
                 return null;
+
             /*
 			 * The order here is important because debug/status/error messages
 			 * may contain tags which could register as other message types.
@@ -135,12 +136,11 @@ public class ASCIIMessageUtils {
                 message = null;
             }
         } catch (final Exception e) {
-
+            e.printStackTrace();
             /*System.err.println("ERROR MESSAGE: "+messageData);*/
 			/*System.err.println("Detected exception parsing message ("
 					+ e.getClass().getSimpleName() + "). Message Data:");
-			System.err.println(messageData);
-			e.printStackTrace();*///TODO REMOVE THIS ONCE FIRMWARE BECOMES UN-FUCKED.
+			System.err.println(messageData);*///TODO REMOVE THIS ONCE FIRMWARE BECOMES UN-FUCKED.
             return null;
         }
         return message;

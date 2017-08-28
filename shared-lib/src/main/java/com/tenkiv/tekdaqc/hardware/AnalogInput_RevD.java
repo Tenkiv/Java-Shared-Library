@@ -104,8 +104,6 @@ public class AnalogInput_RevD extends AAnalogInput {
             case SPS_2000:
             case SPS_3750:
             case SPS_7500:
-            case SPS_15000:
-            case SPS_30000:
                 return true;
             default:
                 return false;

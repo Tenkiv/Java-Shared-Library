@@ -40,8 +40,8 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     @Override
     protected void queueStatusChange() {
         if (getTekdaqc().isConnected() && isActivated) {
-            getTekdaqc().queueCommand(CommandBuilderKt.removeAnalogInputByNumber(mChannelNumber));
-            getTekdaqc().queueCommand(CommandBuilderKt.addAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removeAnalogInputByNumber(mChannelNumber));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addAnalogInput(this));
         }
     }
 
@@ -62,8 +62,8 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @throws IllegalArgumentException Name must not exceed maximum character length..
      */
     public AAnalogInput setName(final String name) throws IllegalArgumentException {
-        if (name.length() >= ATekdaqc.MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.MAX_NAME_LENGTH + " characters.");
+        if (name.length() >= ATekdaqc.Companion.getMAX_NAME_LENGTH()) {
+            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.Companion.getMAX_NAME_LENGTH() + " characters.");
         } else {
             mName = name;
         }
@@ -104,7 +104,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public void setGainByMaxVoltage(double maxVoltage) {
         ATekdaqc tekdaqc = this.getTekdaqc();
         double scaleDivisor;
-        if(tekdaqc.getAnalogInputScale() == ATekdaqc.AnalogScale.ANALOG_SCALE_5V) {
+        if(tekdaqc.getAnalogScale() == ATekdaqc.AnalogScale.ANALOG_SCALE_5V) {
             if(maxVoltage > 5.0D || maxVoltage < 0.0D) {
                 throw new IllegalArgumentException("Max Voltage Can Only Be Between 0.0 and 5.0 for 5V Scale");
             }
@@ -186,7 +186,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public void activate() {
         if (getTekdaqc().isConnected()) {
             isActivated = true;
-            getTekdaqc().queueCommand(CommandBuilderKt.addAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addAnalogInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -196,7 +196,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
             isActivated = false;
-            getTekdaqc().queueCommand(CommandBuilderKt.removeAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removeAnalogInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }

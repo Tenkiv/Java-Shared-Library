@@ -1,5 +1,5 @@
 group "com.tenkiv.tekdaqc"
-version "1.5.0.6-SNAPSHOT"
+version "1.5.1.1-SNAPSHOT"
 
 apply plugin: 'kotlin'
 apply plugin: 'maven'
@@ -43,7 +43,7 @@ if (version.endsWith('-SNAPSHOT')) {
 dependencies {
     compile(group: 'commons-net', name: 'commons-net', version: '3.3', ext: 'jar')
 
-    compile 'tec.uom:uom-se:1.0.3'
+    compile 'tec.uom:uom-se:1.0.7'
 
     compile 'com.tenkiv.coral.jdk:core:0.11.4.0-SNAPSHOT'
 

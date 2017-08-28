@@ -19,7 +19,7 @@ public abstract class ABaseQueueVal implements IQueueObject {
     /**
      * {@link Commands} to be executed in ordinal {@link Byte} representation.
      */
-    protected byte mCommandType;
+    public byte mCommandType;
 
     /**
      * Constructor specifying {@link Commands} which {@link ABaseQueueVal} represents.

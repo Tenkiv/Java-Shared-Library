@@ -38,8 +38,8 @@ public class DigitalInput extends IInputOutputHardware {
     @Override
     protected void queueStatusChange() {
         if (getTekdaqc().isConnected() && isActivated) {
-            getTekdaqc().queueCommand(CommandBuilderKt.removeDigitalInputByNumber(mChannelNumber));
-            getTekdaqc().queueCommand(CommandBuilderKt.addDigitalInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removeDigitalInputByNumber(mChannelNumber));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addDigitalInput(this));
         }
     }
 
@@ -61,8 +61,8 @@ public class DigitalInput extends IInputOutputHardware {
      * @throws IllegalArgumentException Must not exceed maximum name length.
      */
     public DigitalInput setName(final String name) throws IllegalArgumentException {
-        if (name.length() >= ATekdaqc.MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.MAX_NAME_LENGTH + " characters.");
+        if (name.length() >= ATekdaqc.Companion.getMAX_NAME_LENGTH()) {
+            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.Companion.getMAX_NAME_LENGTH() + " characters.");
         } else {
             mName = name;
         }
@@ -73,7 +73,7 @@ public class DigitalInput extends IInputOutputHardware {
     public void activate() {
         if (getTekdaqc().isConnected() && isPWM == null) {
             isPWM = false;
-            getTekdaqc().queueCommand(CommandBuilderKt.addDigitalInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addDigitalInput(this));
         } else if(!getTekdaqc().isConnected()){
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         } else{
@@ -85,7 +85,7 @@ public class DigitalInput extends IInputOutputHardware {
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
             isPWM = null;
-            getTekdaqc().queueCommand(CommandBuilderKt.removeDigitalInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removeDigitalInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -132,7 +132,7 @@ public class DigitalInput extends IInputOutputHardware {
      */
     public void activatePWM(){
         if (getTekdaqc().isConnected() && isPWM == null) {
-            getTekdaqc().queueCommand(CommandBuilderKt.addPWMInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addPWMInput(this));
         } else if(!getTekdaqc().isConnected()){
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         } else{
@@ -146,7 +146,7 @@ public class DigitalInput extends IInputOutputHardware {
     public void deactivatePWM(){
         if (getTekdaqc().isConnected()) {
             isPWM = null;
-            getTekdaqc().queueCommand(CommandBuilderKt.removePWMInput(this.getChannelNumber()));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removePWMInput(this.getChannelNumber()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }

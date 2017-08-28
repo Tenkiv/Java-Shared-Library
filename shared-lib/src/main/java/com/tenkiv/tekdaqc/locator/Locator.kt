@@ -1,7 +1,6 @@
 //Need to suppress these warnings because Kotlin hasn't implemented Map.computeIfAbsent() or Map.putIfAbsent().
 package com.tenkiv.tekdaqc.locator
 
-import com.sun.javafx.collections.UnmodifiableListSet
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.Tekdaqc_RevD
 import com.tenkiv.tekdaqc.utility.reprepare
@@ -12,6 +11,7 @@ import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.LinkedHashSet
 import kotlin.concurrent.read
 import kotlin.concurrent.withLock
 import kotlin.concurrent.write
@@ -127,7 +127,7 @@ class Locator private constructor(params: LocatorParams){
                 catch (e: UnknownHostException) { e.printStackTrace() }
 
                 if (isTimed) {
-                    timeRemaining = timeRemaining - DEFAULT_LOCATOR_PERIOD
+                    timeRemaining -= DEFAULT_LOCATOR_PERIOD
 
                     if (timeRemaining < 1) {
                         isTimed = false
@@ -559,7 +559,7 @@ class Locator private constructor(params: LocatorParams){
      */
     fun searchForSpecificTekdaqcs(listener: OnTargetTekdaqcFound, timeoutMillis: Long,
                                   autoConnect: Boolean = false,
-                                  autoConnectDefaultScale: ATekdaqc.AnalogScale? = null,
+                                  autoConnectDefaultScale: ATekdaqc.AnalogScale = ATekdaqc.AnalogScale.ANALOG_SCALE_5V,
                                   vararg serials: String) {
 
         val previouslyLocated = getActiveTekdaqcMap()
@@ -702,7 +702,7 @@ class Locator private constructor(params: LocatorParams){
             /**
              * The default [ATekdaqc.AnalogScale] for autoconnect.
              */
-            private val mDefaultScale: ATekdaqc.AnalogScale?) : TimerTask(), OnTekdaqcDiscovered {
+            private val mDefaultScale: ATekdaqc.AnalogScale) : TimerTask(), OnTekdaqcDiscovered {
 
         /**
          * The list of [ATekdaqc]s which have been found.
@@ -740,7 +740,7 @@ class Locator private constructor(params: LocatorParams){
                 mTekdaqcList.add(board)
 
                 if (mSerialList.size == 0) {
-                    mListener.onAllTargetsFound(UnmodifiableListSet(mTekdaqcList))
+                    mListener.onAllTargetsFound(LinkedHashSet(mTekdaqcList))
                 }
             }
         }
