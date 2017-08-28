@@ -7,10 +7,6 @@ Join [Intelligent Automation, Computer Interface, & DAQ Community](https://plus.
 
 ## Java-Shared-Library
 
-### Dependencies
-* [Apache Commons Net Library](http://commons.apache.org/proper/commons-net/) _NOTE: This is currently included in the repository_
-* Intellij Annotations Library _NOTE: This is currently included in the repository_
-
 ### Setup
 
 1. Clone or download a copy of the Java-Shared-Library source code.
