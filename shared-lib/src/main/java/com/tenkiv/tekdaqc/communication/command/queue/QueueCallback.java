@@ -1,5 +1,6 @@
 package com.tenkiv.tekdaqc.communication.command.queue;
 
+import com.tenkiv.tekdaqc.communication.command.queue.values.IQueueObject;
 import com.tenkiv.tekdaqc.communication.tasks.ITaskComplete;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 
@@ -20,7 +21,7 @@ public class QueueCallback implements IQueueObject {
     /**
      * List of all callbacks added to this callback.
      */
-    private ArrayList<ITaskComplete> mCallback = new ArrayList<>();
+    private final ArrayList<ITaskComplete> mCallback = new ArrayList<>();
 
     /**
      *
@@ -35,9 +36,7 @@ public class QueueCallback implements IQueueObject {
     /**
      * Empty constructor for either serialization or later value declaration.
      */
-    public QueueCallback() {
-
-    }
+    public QueueCallback() {}
 
     /**
      * Constructor which creates a {@link QueueCallback} and adds the specified {@link ITaskComplete} to the list of callbacks.

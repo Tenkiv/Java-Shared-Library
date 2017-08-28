@@ -1,6 +1,13 @@
 package com.tenkiv.tekdaqc.hardware;
 
-import com.tenkiv.tekdaqc.utility.DigitalState;
+
+import com.tenkiv.tekdaqc.utility.ChannelType;
+import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities;
+import tec.uom.se.unit.Units;
+
+import javax.measure.Quantity;
+import javax.measure.quantity.Dimensionless;
+import java.security.InvalidParameterException;
 
 /**
  * Container class for all data/settings of an digital output on the Tekdaqc.
@@ -18,7 +25,17 @@ public class DigitalOutput extends IInputOutputHardware {
     /**
      * The current output state.
      */
-    private volatile DigitalState mCurrentState;
+    private volatile boolean mIsOn;
+
+    /**
+     * Uptime for this output's PWM.
+     */
+    private volatile int mPulseWidthModulationDutyCycle = -1;
+
+    @Override
+    public ChannelType getChannelType() {
+        return ChannelType.DIGITAL_OUTPUT;
+    }
 
     /**
      * Constructor
@@ -46,32 +63,42 @@ public class DigitalOutput extends IInputOutputHardware {
      * @throws IllegalArgumentException Must not exceed maximum name length.
      */
     public void setName(final String name) {
-        if (name.length() >= ATekdaqc.MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.MAX_NAME_LENGTH + " characters.");
+        if (name.length() >= ATekdaqc.Companion.getMAX_NAME_LENGTH()) {
+            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.Companion.getMAX_NAME_LENGTH() + " characters.");
         } else {
             mName = name;
         }
     }
 
     /**
-     * Retrieve the current {@link DigitalState} of this output.
+     * Retrieve the current {@link boolean} of this output.
      *
-     * @return {@link DigitalState} The current state of this output.
+     * @return {@link boolean} The current state of this output.
      */
-    public DigitalState getCurrentState() {
-        return mCurrentState;
+    public boolean getIsActivated() {
+        return mIsOn;
     }
 
-    protected void setCurrentState(final DigitalState currentState) {
-        mCurrentState = currentState;
+    public int getPulseWidthModulationDutyCycle() {
+        return mPulseWidthModulationDutyCycle;
+    }
+
+    /**
+     * Updates the state of the output's activity boolean.
+     *
+     * @param isOn The revised state.
+     */
+    protected void setIsActive(final boolean isOn) {
+        mIsOn = isOn;
     }
 
     @Override
     public void activate() {
         if (getTekdaqc().isConnected()) {
             isActivated = true;
-            mCurrentState = DigitalState.LOGIC_HIGH;
-            getTekdaqc().queueCommand(CommandBuilder.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
+            mPulseWidthModulationDutyCycle = -1;
+            mIsOn = true;
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -81,11 +108,40 @@ public class DigitalOutput extends IInputOutputHardware {
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
             isActivated = false;
-            mCurrentState = DigitalState.LOGIC_LOW;
-            getTekdaqc().queueCommand(CommandBuilder.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
+            mPulseWidthModulationDutyCycle = -1;
+            mIsOn = false;
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.setDigitalOutputByBinaryString(getTekdaqc().generateBinaryStringFromOutput()));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
+    }
+
+    /**
+     * Activates pulse width modulation on a digital output; allowing the user to set the percentage of the time
+     * the digital output will be active.
+     *
+     * @param dutyCycle A int value between 0 and 100 to set as the uptime percentage.
+     */
+    public void setPulseWidthModulation(final int dutyCycle){
+        if(dutyCycle < 0 || dutyCycle > 100){
+            throw new InvalidParameterException("Uptime must be a value between 0 and 100");
+        }
+        isActivated = true;
+        getTekdaqc().queueCommand(CommandBuilder.INSTANCE.setDigitalOutputPulseWidthModulation
+                        (DigitalOutputUtilities.intToHex(getChannelNumber()),dutyCycle));
+
+    }
+
+    /**
+     * Activates pulse width modulation on a digital output; allowing the user to set the percentage of the time
+     * the digital output will be active.
+     *
+     * @param dutyCycle A {@link Quantity} that should contain a value in {@link Units#PERCENT}.
+     */
+    public void setPulseWidthModulation(final Quantity<Dimensionless> dutyCycle){
+        int iUptime = dutyCycle.to(Units.PERCENT).getValue().intValue();
+
+        setPulseWidthModulation(iUptime);
     }
 
     @Override

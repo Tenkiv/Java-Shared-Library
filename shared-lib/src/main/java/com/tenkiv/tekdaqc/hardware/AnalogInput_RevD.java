@@ -1,5 +1,7 @@
 package com.tenkiv.tekdaqc.hardware;
 
+import com.tenkiv.tekdaqc.utility.ChannelType;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,6 +19,11 @@ public class AnalogInput_RevD extends AAnalogInput {
      * The input buffer setting.
      */
     private BufferState mBuffer = BufferState.ENABLED;
+
+    @Override
+    public ChannelType getChannelType() {
+        return ChannelType.ANALOG_INPUT;
+    }
 
     /**
      * Constructor. Sets default settings.
@@ -97,8 +104,6 @@ public class AnalogInput_RevD extends AAnalogInput {
             case SPS_2000:
             case SPS_3750:
             case SPS_7500:
-            case SPS_15000:
-            case SPS_30000:
                 return true;
             default:
                 return false;

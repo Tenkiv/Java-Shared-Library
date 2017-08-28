@@ -1,5 +1,7 @@
 package com.tenkiv.tekdaqc.communication.command.queue;
 
+import com.tenkiv.tekdaqc.communication.command.queue.values.IQueueObject;
+
 import java.util.Queue;
 
 /**
@@ -28,4 +30,18 @@ public interface ICommandManager {
      * Attempt to poll an {@link IQueueObject} from the {@link Queue} and process it.
      */
     void tryCommand();
+
+    /**
+     * Purge all queued {@link IQueueObject}s.
+     *
+     * @param forShutdown Flag for safely shutting down the command queue after purge.
+     */
+    void purge(boolean forShutdown);
+
+    /**
+     * Returns the current number of queued commands.
+     *
+     * @return The number of commands.
+     */
+    int getNumberQueued();
 }

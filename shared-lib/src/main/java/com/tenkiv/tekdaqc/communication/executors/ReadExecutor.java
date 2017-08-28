@@ -1,5 +1,6 @@
 package com.tenkiv.tekdaqc.communication.executors;
 
+import com.tenkiv.tekdaqc.communication.ascii.executors.ThrowableExecutor;
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIMessageUtils;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 
@@ -44,7 +45,7 @@ public class ReadExecutor implements ITekdaqcExecutor {
         if (callback == null) throw new IllegalArgumentException("Callback set cannot be null.");
         mTekdaqc = tekdaqc;
         mCallback = callback;
-        mExecutor = Executors.newSingleThreadExecutor();
+        mExecutor = new ThrowableExecutor(5);
         // Submit the task immediately
         mTaskFuture = mExecutor.submit(new Task());
     }

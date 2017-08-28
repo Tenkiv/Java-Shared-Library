@@ -1,6 +1,6 @@
 package com.tenkiv.tekdaqc.communication.message;
 
-import com.tenkiv.tekdaqc.communication.data_points.AnalogInputData;
+import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData;
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
 
@@ -50,9 +50,9 @@ public interface IMessageListener {
      * Called when an analog input data point is received.
      *
      * @param tekdaqc {@link ATekdaqc} The board this message was sent from.
-     * @param data    {@link AnalogInputData} The received message.
+     * @param data    {@link AnalogInputCountData} The received message.
      */
-    void onAnalogInputDataReceived(ATekdaqc tekdaqc, AnalogInputData data);
+    void onAnalogInputDataReceived(ATekdaqc tekdaqc, AnalogInputCountData data);
 
     /**
      * Called when a digital input data point is received.

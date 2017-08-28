@@ -12,6 +12,7 @@ public class ASCIIMessageUtils {
 
     public static final String V2_ANALOG_INPUT_HEADER = "?A";
     public static final String V2_DIGITAL_INPUT_HEADER = "?D";
+    public static final String DIGITAL_PWM_INPUT_HEADER = "?P";
     public static final String V2_DIGITAL_OUTPUT_HEADER = "";
 
     public static final String V1_ANALOG_INPUT_HEADER = "Analog Input";
@@ -21,6 +22,7 @@ public class ASCIIMessageUtils {
     public static final String STATUS_MESSAGE_HEADER = "Status Message";
     public static final String COMMAND_MESSAGE_HEADER = "Command Data Message";
     public static final String ERROR_MESSAGE_HEADER = "Error Message";
+    public static final String NETWORK_ERROR_FLAG = "[NETWORK]";
     public static final String MESSAGE_TAG = "Message: ";
     public static final String NAME_TAG = "Name: ";
     public static final String PHYSICAL_INPUT_TAG = "Physical Input: ";
@@ -52,6 +54,10 @@ public class ASCIIMessageUtils {
 
     private static ASCIIDigitalInputDataMessage getDigitalInputDataMessage() {
         return new ASCIIDigitalInputDataMessage();
+    }
+
+    private static ASCIIPWMInputDataMessage getDigitalPWMInputDataMessage() {
+        return new ASCIIPWMInputDataMessage();
     }
 
     private static ASCIIDigitalOutputDataMessage getDigitalOutputDataMessage() {
@@ -86,6 +92,7 @@ public class ASCIIMessageUtils {
         try {
             if (messageData == null)
                 return null;
+
             /*
 			 * The order here is important because debug/status/error messages
 			 * may contain tags which could register as other message types.
@@ -119,18 +126,21 @@ public class ASCIIMessageUtils {
                 // This is an ASCII Digital Output Data message
                 message = getDigitalOutputDataMessage();
                 message.setData(messageData);
+            }else if (messageData.contains(DIGITAL_PWM_INPUT_HEADER)) {
+                // This is an ASCII Digital PWM Input Data message
+                message = getDigitalPWMInputDataMessage();
+                message.setData(messageData);
             } else {
                 // This is an unrecognized message format
-                System.out.println(TAG + " - Unrecognized message detected: "/*
-                        + Hexdump.hexdump(messageData.getBytes()));
-                System.out.println(TAG + messageData*/);
+                /*System.out.println(TAG + "Unrecognized Message" +messageData);*/
                 message = null;
             }
         } catch (final Exception e) {
+            e.printStackTrace();
+            /*System.err.println("ERROR MESSAGE: "+messageData);*/
 			/*System.err.println("Detected exception parsing message ("
 					+ e.getClass().getSimpleName() + "). Message Data:");
-			System.err.println(messageData);
-			e.printStackTrace();*///TODO REMOVE THIS ONCE FIRMWARE BECOMES UN-FUCKED.
+			System.err.println(messageData);*///TODO REMOVE THIS ONCE FIRMWARE BECOMES UN-FUCKED.
             return null;
         }
         return message;
@@ -140,6 +150,6 @@ public class ASCIIMessageUtils {
      * Message type enumeration.
      */
     public static enum MESSAGE_TYPE {
-        DEBUG, STATUS, ERROR, ANALOG_INPUT_DATA, DIGITAL_INPUT_DATA, DIGITAL_OUTPUT_DATA, COMMAND_DATA;
+        DEBUG, STATUS, ERROR, ANALOG_INPUT_DATA, DIGITAL_INPUT_DATA, DIGITAL_OUTPUT_DATA, COMMAND_DATA, PWM_INPUT_DATA;
     }
 }

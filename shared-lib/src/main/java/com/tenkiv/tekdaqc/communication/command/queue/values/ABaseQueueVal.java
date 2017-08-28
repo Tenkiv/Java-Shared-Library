@@ -1,7 +1,6 @@
 package com.tenkiv.tekdaqc.communication.command.queue.values;
 
 import com.tenkiv.tekdaqc.communication.command.queue.Commands;
-import com.tenkiv.tekdaqc.communication.command.queue.IQueueObject;
 import com.tenkiv.tekdaqc.communication.command.queue.Params;
 
 import java.io.IOException;
@@ -20,7 +19,7 @@ public abstract class ABaseQueueVal implements IQueueObject {
     /**
      * {@link Commands} to be executed in ordinal {@link Byte} representation.
      */
-    protected byte mCommandType;
+    public byte mCommandType;
 
     /**
      * Constructor specifying {@link Commands} which {@link ABaseQueueVal} represents.

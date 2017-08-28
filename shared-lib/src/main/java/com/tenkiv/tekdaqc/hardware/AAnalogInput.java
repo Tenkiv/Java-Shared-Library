@@ -1,5 +1,8 @@
 package com.tenkiv.tekdaqc.hardware;
 
+import com.tenkiv.tekdaqc.communication.message.ICountListener;
+import com.tenkiv.tekdaqc.communication.message.IVoltageListener;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -37,8 +40,8 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     @Override
     protected void queueStatusChange() {
         if (getTekdaqc().isConnected() && isActivated) {
-            getTekdaqc().queueCommand(CommandBuilder.removeAnalogInputByNumber(mChannelNumber));
-            getTekdaqc().queueCommand(CommandBuilder.addAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removeAnalogInputByNumber(mChannelNumber));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addAnalogInput(this));
         }
     }
 
@@ -59,8 +62,8 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @throws IllegalArgumentException Name must not exceed maximum character length..
      */
     public AAnalogInput setName(final String name) throws IllegalArgumentException {
-        if (name.length() >= ATekdaqc.MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.MAX_NAME_LENGTH + " characters.");
+        if (name.length() >= ATekdaqc.Companion.getMAX_NAME_LENGTH()) {
+            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.Companion.getMAX_NAME_LENGTH() + " characters.");
         } else {
             mName = name;
         }
@@ -91,6 +94,42 @@ public abstract class AAnalogInput extends IInputOutputHardware {
         mGain = gain;
         queueStatusChange();
         return this;
+    }
+
+    /**
+     * Sets the gain of the input by the maximum voltage for easier use.
+     *
+     * @param maxVoltage The maximum voltage the channel is reading.
+     */
+    public void setGainByMaxVoltage(double maxVoltage) {
+        ATekdaqc tekdaqc = this.getTekdaqc();
+        double scaleDivisor;
+        if(tekdaqc.getAnalogScale() == ATekdaqc.AnalogScale.ANALOG_SCALE_5V) {
+            if(maxVoltage > 5.0D || maxVoltage < 0.0D) {
+                throw new IllegalArgumentException("Max Voltage Can Only Be Between 0.0 and 5.0 for 5V Scale");
+            }
+
+            scaleDivisor = 5.0D;
+        } else {
+            if(maxVoltage > 400.0D || maxVoltage < 0.0D) {
+                throw new IllegalArgumentException("Max Voltage Can Only Be Between 0.0 and 5.0 for 5V Scale");
+            }
+
+            scaleDivisor = 400.0D;
+        }
+
+        int distance = Math.abs((int)(scaleDivisor / (double)AAnalogInput.Gain.values()[0].gain - maxVoltage));
+        int idx = 0;
+
+        for(int i = 1; i < AAnalogInput.Gain.values().length; ++i) {
+            int cdistance = Math.abs((int)(scaleDivisor / (double)AAnalogInput.Gain.values()[0].gain - maxVoltage));
+            if(cdistance < distance) {
+                idx = i;
+                distance = cdistance;
+            }
+        }
+
+        this.setGain(AAnalogInput.Gain.values()[idx]);
     }
 
     /**
@@ -147,7 +186,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public void activate() {
         if (getTekdaqc().isConnected()) {
             isActivated = true;
-            getTekdaqc().queueCommand(CommandBuilder.addAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addAnalogInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
@@ -157,10 +196,28 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
             isActivated = false;
-            getTekdaqc().queueCommand(CommandBuilder.removeAnalogInput(this));
+            getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removeAnalogInput(this));
         } else {
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
+    }
+
+    /**
+     * Method to add a {@link ICountListener} to listen for data on only this channel.
+     *
+     * @param listener The {@link ICountListener} to add for callbacks.
+     */
+    public void addCountListener(ICountListener listener) {
+        getTekdaqc().addAnalogCountListener(listener,this);
+    }
+
+    /**
+     * Method to add a {@link IVoltageListener} to listen for data on only this channel.
+     *
+     * @param listener The {@link IVoltageListener} to add for callbacks.
+     */
+    public void addVoltageListener(IVoltageListener listener) {
+        getTekdaqc().addAnalogVoltageListener(listener,this);
     }
 
     /**
@@ -211,13 +268,15 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @since v1.0.0.0
      */
     public enum Gain {
-        X1("1"), X2("2"), X4("4"), X8("8"), X16("16"), X32("32"), X64("64");
+        X1(1), X2(2), X4(4), X8(8), X16(16), X32(32), X64(64);
 
-        private static Gain[] mValueArray = Gain.values();
-        public final String gain;
+        private static final Gain[] mValueArray = Gain.values();
+        public final int gain;
+
+        Gain(final int gain){this.gain = gain;}
 
         Gain(final String gain) {
-            this.gain = gain;
+            this.gain = Integer.valueOf(gain);
         }
 
         public static Gain getValueFromOrdinal(final byte ordinal) {
@@ -225,8 +284,18 @@ public abstract class AAnalogInput extends IInputOutputHardware {
         }
 
         public static Gain fromString(final String gain) {
-            for (Gain g : values()) {
-                if (g.gain.equals(gain)) {
+            for (final Gain g : values()) {
+
+                if (g.toString().equals(gain)) {
+                    return g;
+                }
+            }
+            return null;
+        }
+
+        public static Gain fromInt(final int gain) {
+            for (final Gain g : values()) {
+                if (g.gain == gain) {
                     return g;
                 }
             }
@@ -235,7 +304,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
 
         @Override
         public String toString() {
-            return gain;
+            return String.valueOf(gain);
         }
     }
 
@@ -250,7 +319,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
                 "500"), SPS_100("100"), SPS_60("60"), SPS_50("50"), SPS_30("30"), SPS_25("25"), SPS_15("15"), SPS_10(
                 "10"), SPS_5("5"), SPS_2_5("2.5");
 
-        private static Rate[] mValueArray = Rate.values();
+        private static final Rate[] mValueArray = Rate.values();
         public final String rate;
 
         Rate(final String rate) {
@@ -285,7 +354,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public enum SensorCurrent {
         _10uA("10"), _2uA("2"), _0_5uA("0.5"), OFF("0");
 
-        private static SensorCurrent[] mValueArray = SensorCurrent.values();
+        private static final SensorCurrent[] mValueArray = SensorCurrent.values();
         public final String mCurrent;
 
         SensorCurrent(final String current) {

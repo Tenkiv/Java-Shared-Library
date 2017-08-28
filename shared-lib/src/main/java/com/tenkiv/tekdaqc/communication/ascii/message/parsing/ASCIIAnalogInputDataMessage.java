@@ -1,6 +1,6 @@
 package com.tenkiv.tekdaqc.communication.ascii.message.parsing;
 
-import com.tenkiv.tekdaqc.communication.data_points.AnalogInputData;
+import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData;
 import com.tenkiv.tekdaqc.communication.data_points.DataPoint;
 import com.tenkiv.tekdaqc.communication.data_points.IDataPointFactory;
 
@@ -100,7 +100,7 @@ public class ASCIIAnalogInputDataMessage extends AASCIIMessage implements IDataP
 
     @Override
     public DataPoint toDataPoints() {
-        return new AnalogInputData(mNumber, mName, Long.parseLong(mTimestamps.replaceAll("\\s", "")), mReadings);
+        return new AnalogInputCountData(mNumber, mName, Long.parseLong(mTimestamps.replaceAll("\\s", "")), mReadings);
     }
 
     @Override

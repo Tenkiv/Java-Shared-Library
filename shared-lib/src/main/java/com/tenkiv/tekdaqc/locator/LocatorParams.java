@@ -37,7 +37,7 @@ public final class LocatorParams implements Externalizable {
     /**
      * Default timeout in milliseconds.
      */
-    public static final int DEFAULT_TIMEOUT = 500;
+    public static final int DEFAULT_TIMEOUT = 250;
 
     /**
      * Default activation message.
@@ -144,7 +144,8 @@ public final class LocatorParams implements Externalizable {
         }
 
         if (response.getFirwareVersion().equals(INVALID_FIRMWARE_VERSION)) {
-            System.out.println("Firmware Response is Null! Cannot Process Response with no Firmware Version.");
+            if (DEBUG)
+                System.out.println("Firmware Response is Null! Cannot Process Response with no Firmware Version.");
             return false;
         }
         return true;

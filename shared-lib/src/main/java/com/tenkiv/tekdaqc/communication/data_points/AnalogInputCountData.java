@@ -11,26 +11,26 @@ import java.math.BigInteger;
  * @author Tenkiv (software@tenkiv.com)
  * @since v1.0.0.0
  */
-public class AnalogInputData extends DataPoint {
+public class AnalogInputCountData extends DataPoint {
 
     protected int mData;
 
     /**
      * Provided for externalization. User code should not use this constructor.
      */
-    public AnalogInputData() {
+    public AnalogInputCountData() {
         // Do nothing
     }
 
     /**
-     * Constructs an {@link AnalogInputData} point from the provided parameters.
+     * Constructs an {@link AnalogInputCountData} point from the provided parameters.
      *
      * @param channel   int The physical channel number.
      * @param name      {@link String} The channel name. Can be null.
      * @param timestamp {@link BigInteger} The timestamp of the sample.
      * @param data      int The sample data, in ADC counts.
      */
-    public AnalogInputData(final int channel, final String name, final long timestamp, final int data) {
+    public AnalogInputCountData(final int channel, final String name, final long timestamp, final int data) {
         super(name, channel, timestamp);
         mData = data;
     }

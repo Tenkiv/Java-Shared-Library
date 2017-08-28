@@ -1,7 +1,5 @@
 package com.tenkiv.tekdaqc.communication.data_points;
 
-import com.tenkiv.tekdaqc.utility.DigitalState;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -16,9 +14,9 @@ import java.math.BigInteger;
 public class DigitalInputData extends DataPoint {
 
     /**
-     * The {@link DigitalState} of this data point.
+     * The {@link boolean} of this data point.
      */
-    protected DigitalState mState;
+    protected boolean mState;
 
     /**
      * Provided for externalization. User code should not use this constructor.
@@ -33,9 +31,9 @@ public class DigitalInputData extends DataPoint {
      * @param channel   int The physical channel number.
      * @param name      {@link String} The channel name. Can be null.
      * @param timestamp {@link BigInteger} The timestamp of the sample.
-     * @param state     {@link DigitalState} The state of this data point.
+     * @param state     {@link boolean} The state of this data point.
      */
-    public DigitalInputData(final int channel, final String name, final long timestamp, final DigitalState state) {
+    public DigitalInputData(final int channel, final String name, final long timestamp, final boolean state) {
         super(name, channel, timestamp);
         mState = state;
     }
@@ -43,9 +41,9 @@ public class DigitalInputData extends DataPoint {
     /**
      * Retrieve the data for this data point.
      *
-     * @return {@link DigitalState} The data value.
+     * @return {@link boolean} The data value.
      */
-    public DigitalState getState() {
+    public boolean getState() {
         return mState;
     }
 
@@ -57,7 +55,7 @@ public class DigitalInputData extends DataPoint {
 
     @Override
     protected void readIn(final ObjectInput input) throws IOException, ClassNotFoundException {
-        mState = (DigitalState) input.readObject();
+        mState = (boolean) input.readObject();
     }
 
     @Override
