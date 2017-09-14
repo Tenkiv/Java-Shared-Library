@@ -62,6 +62,9 @@ class MessageBroadcaster {
      */
     private val mPWMChannelListeners = ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IPWMChannelListener>>>()
 
+    /**
+     * Map of prioritized listeners.
+     */
     private val mQueueListeners = ConcurrentHashMap<ATekdaqc, IMessageListener>()
 
     /**
@@ -452,7 +455,6 @@ class MessageBroadcaster {
     private inner class BroadcastRunnable(internal val mTekdaqc: ATekdaqc, internal val mMessage: ABoardMessage) : Runnable {
 
         override fun run() {
-            println("Message: $mMessage")
 
             if(mMessage.type == ASCIIMessageUtils.MESSAGE_TYPE.STATUS) {
                 mQueueListeners[mTekdaqc]?.onStatusMessageReceived(mTekdaqc, mMessage)

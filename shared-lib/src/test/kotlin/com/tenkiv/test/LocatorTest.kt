@@ -42,7 +42,6 @@ class LocatorTest: StringSpec() {
 
                     tekdaqc.sample(20)
 
-                    println("Added n Sampling")
                 }
 
                 override fun onTargetFailure(serial: String, flag: OnTargetTekdaqcFound.FailureFlag) {

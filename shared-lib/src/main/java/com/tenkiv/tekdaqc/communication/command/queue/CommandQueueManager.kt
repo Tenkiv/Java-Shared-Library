@@ -82,7 +82,6 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
     }
 
     override fun queueCommand(command: IQueueObject) {
-        println("Queuing $command ${mCommandDeque.size} ${isTaskExecuting.get()}")
         mCommandDeque.addLast(command)
         mCommandDeque.addLast(QueueCallback(true))
         tryCommand()
