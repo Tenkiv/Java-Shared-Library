@@ -182,7 +182,6 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
 
                 /*}
             }.start()*/
-
         }
     }
 
