@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply plugin: 'kotlin'
-
 group "com.tenkiv.tekdaqc"
 version "1.5.1.2-SNAPSHOT"
 

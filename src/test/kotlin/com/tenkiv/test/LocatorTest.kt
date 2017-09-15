@@ -9,7 +9,6 @@ import com.tenkiv.tekdaqc.hardware.DigitalInput
 import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.OnTargetTekdaqcFound
 import com.tenkiv.tekdaqc.locator.OnTekdaqcDiscovered
-import io.kotlintest.specs.StringSpec
 
 /**
  * Created by tenkiv on 5/5/17.
