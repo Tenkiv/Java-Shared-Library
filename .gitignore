@@ -1,8 +1,6 @@
 # built application files
 *.apk
 *.ap_
-*.bat
-gradlew
 
 # files for the dex VM
 *.dex
@@ -32,3 +30,4 @@ proguard/
 .idea/
 library/build/
 .gradle/
+build/
