@@ -18,6 +18,7 @@ version "1.5.1.2-SNAPSHOT"
 
 apply plugin: 'kotlin'
 apply plugin: 'maven'
+apply plugin: 'jacoco'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -78,3 +79,17 @@ sourceSets {
 def isReleaseBuild() {
     return version.contains("SNAPSHOT") == false
 }
+
+jacoco {
+    toolVersion = '0.7.9'
+}
+
+jacocoTestReport {
+    reports {
+        html.enabled = true
+        xml.enabled = true
+        csv.enabled = false
+    }
+}
+
+test.finalizedBy jacocoTestReport
