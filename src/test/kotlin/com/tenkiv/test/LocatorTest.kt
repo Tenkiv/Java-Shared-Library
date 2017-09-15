@@ -55,5 +55,4 @@ class LocatorTest {
 
         assert(assert)
     }
-
 }
