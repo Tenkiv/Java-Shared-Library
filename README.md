@@ -1,23 +1,28 @@
-Tekdaqc-JVM-Core-Library
+Tekdaqc-JVM-Library
 ====================
 
-Base Java and Kotlin library containing the Java classes used by both the [Tekdaqc-JVM-Library](https://github.com/Tenkiv/Tekdaqc-JVM-Library) and the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library) for connecting and managing Tekdaqcs.
+Base Java and Kotlin library containing the classes used for connecting and managing Tekdaqcs in the JVM environment and for the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library) .
 
 Join [Intelligent Automation, Computer Interface, & DAQ Community](https://plus.google.com/u/0/communities/109351353187504550254) on [![DAQ Community on Google Plus](https://ssl.gstatic.com/images/icons/gplus-16.png)](https://plus.google.com/u/0/communities/109351353187504550254) to stay up-to-date on the latest news.
 
-## JVM-Shared-Library
+## Tekdaqc-JVM-Library
 
 ### Setup
+Using Gradle add the Tenkiv Java Library to your projects dependancies and make sure Maven Central is added under your repositories.
 
-1. Clone or download a copy of the JVM-Shared-Library source code.
-2. Build library using Gradle.
-3. Upload to local Maven repository.
-4. It is now ready to use in the [Tekdaqc-Java-Library](https://github.com/Tenkiv/Tekdaqc-JVM-Library), the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library), or for your own Tekdaqc control software.
+```groovy
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'com.tenkiv.tekdaqc', name: 'java-library', version: '2.1.2.3'
+}
+```
 
 ## More Information
 
 ### Other Tekdaqc GIT Repositories
-* [Tekdaqc-JVM-Library](https://github.com/Tenkiv/Tekdaqc-JVM-Library)
 * [Tekdaqc Android Library](https://github.com/Tenkiv/Tekdaqc-Android-Library)
 * [Tekdaqc Firmware](https://github.com/Tenkiv/Tekdaqc-Firmware)
 
