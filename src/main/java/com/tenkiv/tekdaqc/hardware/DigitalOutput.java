@@ -146,6 +146,7 @@ public class DigitalOutput extends IInputOutputHardware {
 
     @Override
     protected void queueStatusChange() {
-
+        deactivate();
+        activate();
     }
 }

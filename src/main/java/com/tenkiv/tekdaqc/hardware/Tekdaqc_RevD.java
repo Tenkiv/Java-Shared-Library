@@ -34,14 +34,6 @@ import java.util.Set;
  */
 public class Tekdaqc_RevD extends ATekdaqc {
 
-    private TemperatureReference_RevD temperatureReference = new TemperatureReference_RevD(this);
-
-    @NotNull
-    @Override
-    public TemperatureReference_RevD getTemperatureReference() {
-        return temperatureReference;
-    }
-
     /**
      * The number of analog inputs present on the board.
      */
@@ -134,6 +126,11 @@ public class Tekdaqc_RevD extends ATekdaqc {
             AnalogScale.ANALOG_SCALE_400V);
 
     /**
+     * The temperature reference for the Tekdaqc.
+     */
+    private TemperatureReference_RevD temperatureReference = new TemperatureReference_RevD(this);
+
+    /**
      * Provided only to support serialization. User code should not use this
      * method.
      */
@@ -149,6 +146,12 @@ public class Tekdaqc_RevD extends ATekdaqc {
      */
     public Tekdaqc_RevD(final LocatorResponse response) {
         super(response);
+    }
+
+    @NotNull
+    @Override
+    public TemperatureReference_RevD getTemperatureReference() {
+        return temperatureReference;
     }
 
     @Override
@@ -529,6 +532,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
             case PWM_INPUT_DATA:
                 final DataPoint pwmInputData = ((ASCIIPWMInputDataMessage) message).toDataPoints();
                 getMessageBroadcaster().broadcastPWMInputDataPoint(this, (PWMInputData) pwmInputData);
+                break;
         }
     }
 

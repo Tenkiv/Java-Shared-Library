@@ -121,7 +121,7 @@ public final class LocatorResponse implements Externalizable {
      * @return {@link String} The IP Address.
      */
     public String getHostIP() {
-        return new String(mHostIPAddress);
+        return mHostIPAddress;
     }
 
     /**
@@ -130,7 +130,7 @@ public final class LocatorResponse implements Externalizable {
      * @return {@link String} The firmware version.
      */
     public String getFirwareVersion() {
-        return new String(mFirmwareVersion);
+        return mFirmwareVersion;
     }
 
     /**
@@ -139,7 +139,7 @@ public final class LocatorResponse implements Externalizable {
      * @return {@link String} The MAC Address.
      */
     public String getMacAddress() {
-        return new String(mMACAddress);
+        return mMACAddress;
     }
 
     /**
@@ -148,7 +148,7 @@ public final class LocatorResponse implements Externalizable {
      * @return {@link String} The serial number string.
      */
     public String getSerial() {
-        return new String(mSerial);
+        return mSerial;
     }
 
     /**
@@ -157,7 +157,7 @@ public final class LocatorResponse implements Externalizable {
      * @return {@link String} The application name.
      */
     public String getTitle() {
-        return new String(mTitle);
+        return mTitle;
     }
 
     /**

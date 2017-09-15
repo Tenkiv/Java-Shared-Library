@@ -14,19 +14,11 @@ import java.io.ObjectOutput;
  */
 public abstract class AASCIIMessage extends ABoardMessage {
 
-    /**
-     * Constructor.
-     */
-    public AASCIIMessage() {
-        super();
-    }
-
     protected void setData(final String raw) {
         parse(raw);
     }
 
     protected void reset() {
-
         mTimestamp = 0;
     }
 

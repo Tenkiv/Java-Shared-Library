@@ -11,18 +11,18 @@ import com.tenkiv.tekdaqc.utility.ChannelType;
 public abstract class IInputOutputHardware {
 
     /**
+     * The default exception text.
+     */
+    public static final String TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT
+            = "Unable to preform operation. Tekdaqc is not connected.";
+
+    /**
      * Method to return the channel type of the channel.
      *
      * @return The {@link ChannelType} of the channel.
      */
     public abstract ChannelType getChannelType();
 
-    /**
-     * The default exception text.
-     */
-    public static final String TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT
-
-            = "Unable to preform operation. Tekdaqc is not connected.";
     /**
      * The physical channel. This is unique to a type of channel, there will be repeats for different channel type,
      * i.e. analog inputs and digital inputs.

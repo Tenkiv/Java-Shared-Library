@@ -90,12 +90,6 @@ public final class LocatorParams implements Externalizable {
     private char type;
 
     /**
-     * Constructor.
-     */
-    public LocatorParams() {
-    }
-
-    /**
      * Retrieve a default instance of the locator parameters.
      *
      * @return {@link LocatorParams} A locator parameter packet with default configuration.
@@ -113,34 +107,25 @@ public final class LocatorParams implements Externalizable {
      * @return boolean True if the locator response and parameters match.
      */
     static boolean isValidResponse(LocatorParams params, LocatorResponse response) {
-        if (params.title != null) {
-            if (!params.title.equals(response.getTitle())) {
-                if (DEBUG) System.out.println("Invalid Title in response: " + response.getTitle());
-                return false;
-            }
+        if (params.title != null && !params.title.equals(response.getTitle())) {
+            if (DEBUG) System.out.println("Invalid Title in response: " + response.getTitle());
+            return false;
         }
 
-        if (params.serial != null) {
-            if (!params.serial.equals(response.getSerial())) {
-                if (DEBUG) System.out.println("Invalid Serial in response: " + response.getSerial());
-                return false;
-            }
+        if (params.serial != null && !params.serial.equals(response.getSerial())) {
+            if (DEBUG) System.out.println("Invalid Serial in response: " + response.getSerial());
+            return false;
         }
 
-        if (params.type != TYPE_ANY) {
-            if (params.type != response.getType()) {
-                if (DEBUG) System.out.println("Invalid Type in response: " + response.getType());
-                return false;
-            }
+        if (params.type != TYPE_ANY && params.type != response.getType()) {
+            if (DEBUG) System.out.println("Invalid Type in response: " + response.getType());
+            return false;
         }
 
-        if (params.firmware != null) {
-            if (!params.firmware.equals(response.getFirwareVersion())) {
-                if (DEBUG)
-                    System.out.println("Invalid Firmware Version in response: " + response.getFirwareVersion());
-                return false;
-            }
-
+        if (params.firmware != null && !params.firmware.equals(response.getFirwareVersion())) {
+            if (DEBUG)
+                System.out.println("Invalid Firmware Version in response: " + response.getFirwareVersion());
+            return false;
         }
 
         if (response.getFirwareVersion().equals(INVALID_FIRMWARE_VERSION)) {

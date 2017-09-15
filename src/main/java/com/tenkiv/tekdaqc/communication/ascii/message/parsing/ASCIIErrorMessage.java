@@ -13,13 +13,16 @@ import java.io.ObjectOutput;
 public class ASCIIErrorMessage extends ASCIIReadableMessage {
 
     /**
+     * If the error is caused by a network limitation.
+     */
+    public boolean isNetworkError = false;
+
+    /**
      * Constructor.
      */
     public ASCIIErrorMessage() {
         super();
     }
-
-    public boolean isNetworkError = false;
 
     /**
      * Constructor.

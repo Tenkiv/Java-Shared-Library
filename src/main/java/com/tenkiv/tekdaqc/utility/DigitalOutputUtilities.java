@@ -63,8 +63,9 @@ public class DigitalOutputUtilities {
      * @return The Binary string of the hex string.
      */
     public static String hex_to_binary(final String hex) {
-        String hex_char, bin_char, binary;
-        binary = "";
+        String hex_char;
+        String bin_char;
+        String binary = "";
         int len = hex.length() / 2;
         for (int i = 0; i < len; i++) {
             hex_char = hex.substring(2 * i, 2 * i + 2);
