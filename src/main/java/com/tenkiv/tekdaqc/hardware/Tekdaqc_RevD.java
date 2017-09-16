@@ -265,7 +265,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
     @Override
     public void setDigitalOutputByHex(final String hex) {
         for (final DigitalOutput output : getDigitalOutputs().values()) {
-            if (DigitalOutputUtilities.hex_to_binary(hex)
+            if (DigitalOutputUtilities.hexToBinary(hex)
                     .charAt(output.getChannelNumber()) == '1') {
                 output.setIsActive(true);
             } else {
@@ -532,6 +532,8 @@ public class Tekdaqc_RevD extends ATekdaqc {
             case PWM_INPUT_DATA:
                 final DataPoint pwmInputData = ((ASCIIPWMInputDataMessage) message).toDataPoints();
                 getMessageBroadcaster().broadcastPWMInputDataPoint(this, (PWMInputData) pwmInputData);
+                break;
+            default:
                 break;
         }
     }

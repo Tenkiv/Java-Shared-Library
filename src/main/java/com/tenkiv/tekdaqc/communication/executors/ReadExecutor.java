@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
@@ -22,7 +21,6 @@ import java.util.concurrent.Future;
  */
 public class ReadExecutor implements ITekdaqcExecutor {
 
-    private static final String TAG = "ReadExecutor";
     private static final String POLLING_THREAD_NAME = "TEKDAQC_POLLING_THREAD";
     private static final int POLLING_THREAD_PRIORITY = 4; // Equivilant to Android's Process.THREAD_PRIORITY_BACKGROUND
 

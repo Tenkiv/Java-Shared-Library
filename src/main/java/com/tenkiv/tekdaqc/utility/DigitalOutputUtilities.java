@@ -62,7 +62,7 @@ public class DigitalOutputUtilities {
      * @param hex The hex {@link String} to be converted.
      * @return The Binary string of the hex string.
      */
-    public static String hex_to_binary(final String hex) {
+    public static String hexToBinary(final String hex) {
         String hex_char;
         String bin_char;
         String binary = "";
@@ -71,7 +71,7 @@ public class DigitalOutputUtilities {
             hex_char = hex.substring(2 * i, 2 * i + 2);
             final int conv_int = Integer.parseInt(hex_char, 16);
             bin_char = Integer.toBinaryString(conv_int);
-            bin_char = zero_pad_bin_char(bin_char);
+            bin_char = zeroPadBinChar(bin_char);
             if (i == 0) binary = bin_char;
             else binary = binary + bin_char;
             //out.printf("%s %s\n", hex_char,bin_char);
@@ -79,7 +79,7 @@ public class DigitalOutputUtilities {
         return binary;
     }
 
-    public static String zero_pad_bin_char(final String bin_char) {
+    public static String zeroPadBinChar(final String bin_char) {
         final int len = bin_char.length();
         if (len == 8) return bin_char;
         String zero_pad = "0";

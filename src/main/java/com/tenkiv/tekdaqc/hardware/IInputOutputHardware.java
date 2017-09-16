@@ -17,13 +17,6 @@ public abstract class IInputOutputHardware {
             = "Unable to preform operation. Tekdaqc is not connected.";
 
     /**
-     * Method to return the channel type of the channel.
-     *
-     * @return The {@link ChannelType} of the channel.
-     */
-    public abstract ChannelType getChannelType();
-
-    /**
      * The physical channel. This is unique to a type of channel, there will be repeats for different channel type,
      * i.e. analog inputs and digital inputs.
      */
@@ -50,6 +43,13 @@ public abstract class IInputOutputHardware {
         this.mTekdaqc = mTekdaqc;
         mChannelNumber = channelNumber;
     }
+
+    /**
+     * Method to return the channel type of the channel.
+     *
+     * @return The {@link ChannelType} of the channel.
+     */
+    public abstract ChannelType getChannelType();
 
     /**
      * Method to activate an input or output. Internally this represents the

@@ -106,7 +106,7 @@ public final class LocatorParams implements Externalizable {
      * @param response {@link LocatorResponse} The response which was generated from the search.
      * @return boolean True if the locator response and parameters match.
      */
-    static boolean isValidResponse(LocatorParams params, LocatorResponse response) {
+    public static boolean isValidResponse(LocatorParams params, LocatorResponse response) {
         if (params.title != null && !params.title.equals(response.getTitle())) {
             if (DEBUG) System.out.println("Invalid Title in response: " + response.getTitle());
             return false;

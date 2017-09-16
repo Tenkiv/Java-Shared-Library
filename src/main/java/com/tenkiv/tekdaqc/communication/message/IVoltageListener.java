@@ -3,9 +3,7 @@ package com.tenkiv.tekdaqc.communication.message;
 import com.tenkiv.tekdaqc.hardware.AAnalogInput;
 import org.tenkiv.coral.ValueInstant;
 import tec.uom.se.ComparableQuantity;
-import tec.uom.se.spi.Measurement;
 
-import javax.measure.Quantity;
 import javax.measure.quantity.ElectricPotential;
 
 /**

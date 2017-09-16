@@ -42,10 +42,6 @@ public class ASCIIMessageUtils {
     public static final Pattern RECORD_SEPARATOR_PATTERN = Pattern
             .compile("\\x1E");
 
-    private static final String TAG = "AASCIIMessage";
-    private static final int MESSAGE_POOL_CAPACITY = 50;
-    private static final long serialVersionUID = 1L;
-
     private static ASCIIAnalogInputDataMessage getAnalogInputDataMessage() {
 
         return new ASCIIAnalogInputDataMessage();
