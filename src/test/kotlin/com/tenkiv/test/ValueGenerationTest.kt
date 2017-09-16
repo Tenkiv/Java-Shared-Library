@@ -15,6 +15,7 @@ class ValueGenerationTest: StringSpec(){
     val ADD_ANALOG_INPUT = "ADD_ANALOG_INPUT --INPUT=0 --RATE=5 --GAIN=2 --BUFFER=ON\r"
 
     init{
+        throw Exception()
         "Generating Values"{
 
             val aiScale = CommandBuilder.setAnalogInputScale(ATekdaqc.AnalogScale.ANALOG_SCALE_5V)
