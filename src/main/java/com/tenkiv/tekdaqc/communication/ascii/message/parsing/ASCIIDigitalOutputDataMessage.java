@@ -63,7 +63,7 @@ public class ASCIIDigitalOutputDataMessage extends AASCIIMessage {
 
         // Extract the message text
         String hex = raw.substring(start, end);
-        String binAddr = DigitalOutputUtilities.hex_to_binary(hex);
+        String binAddr = DigitalOutputUtilities.hexToBinary(hex);
         mDigitalOutputArray = new boolean[16];
         for (int i = 0; i < binAddr.length(); i++) {
             mDigitalOutputArray[i] = binAddr.charAt(i) == '1';
