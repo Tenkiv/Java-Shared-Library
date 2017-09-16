@@ -1,3 +1,4 @@
+# Consider changing this to Kotlin eventually.
 language: java
 
 jdk:
