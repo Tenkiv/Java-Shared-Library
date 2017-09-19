@@ -1,6 +1,6 @@
 Tekdaqc-JVM-Library
 ====================
-[![Build Status](https://travis-ci.org/Tenkiv/Tekdaqc-Java-Library.svg?branch=master)](https://travis-ci.org/Tenkiv/Tekdaqc-Java-Library)
+[![Build Status](https://travis-ci.org/Tenkiv/Tekdaqc-Java-Library.svg?branch=master)](https://travis-ci.org/Tenkiv/Tekdaqc-Java-Library) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6b9a493eb1194c7fb9667f9a813c5d41)](https://www.codacy.com/app/Tenkiv/Tekdaqc-Java-Library?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Tenkiv/Tekdaqc-Java-Library&amp;utm_campaign=Badge_Grade) [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/6b9a493eb1194c7fb9667f9a813c5d41)](https://www.codacy.com/app/Tenkiv/Tekdaqc-Java-Library?utm_source=github.com&utm_medium=referral&utm_content=Tenkiv/Tekdaqc-Java-Library&utm_campaign=Badge_Coverage)
 
 Base Java and Kotlin library containing the classes used for connecting and managing Tekdaqcs in the JVM environment and for the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library) .
 
