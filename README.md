@@ -1,6 +1,6 @@
 Tekdaqc-JVM-Library
 ====================
-https://travis-ci.org/Tenkiv/Tekdaqc-Java-Library.svg?branch=master
+[![Build Status](https://travis-ci.org/Tenkiv/Tekdaqc-Java-Library.svg?branch=master)](https://travis-ci.org/Tenkiv/Tekdaqc-Java-Library)
 
 Base Java and Kotlin library containing the classes used for connecting and managing Tekdaqcs in the JVM environment and for the [Tekdaqc-Android-Library](https://github.com/Tenkiv/Tekdaqc-Android-Library) .
 
