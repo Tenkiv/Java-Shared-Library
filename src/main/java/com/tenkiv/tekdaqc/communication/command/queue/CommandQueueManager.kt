@@ -260,7 +260,7 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
      * Custom thread factory for this class's internal executor. Ensures that all threads will have the appropriate
      * priority level and name.
 
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
      */

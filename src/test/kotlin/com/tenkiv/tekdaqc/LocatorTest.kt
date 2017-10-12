@@ -1,11 +1,7 @@
-package com.tenkiv.test
+package com.tenkiv.tekdaqc
 
-import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
-import com.tenkiv.tekdaqc.communication.data_points.PWMInputData
 import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
-import com.tenkiv.tekdaqc.communication.message.IPWMChannelListener
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
-import com.tenkiv.tekdaqc.hardware.DigitalInput
 import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.OnTargetTekdaqcFound
 import com.tenkiv.tekdaqc.locator.OnTekdaqcDiscovered

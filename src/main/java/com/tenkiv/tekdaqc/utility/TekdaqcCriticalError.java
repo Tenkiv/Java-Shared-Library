@@ -1,7 +1,7 @@
 package com.tenkiv.tekdaqc.utility;
 
 /**
- * Created by ejberry on 10/17/16.
+ * Enum of critical errors which may necessitate total reboot of board.
  */
 public enum TekdaqcCriticalError{
     FAILED_TO_REINITIALIZE,

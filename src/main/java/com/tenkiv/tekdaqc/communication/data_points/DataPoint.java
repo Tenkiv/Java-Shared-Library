@@ -118,7 +118,7 @@ public abstract class DataPoint implements Externalizable {
     /**
      * Set of possible data point types.
      *
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * @since v1.0.0.0
      */
     public enum DATA_TYPE {

@@ -143,7 +143,7 @@ public class AnalogInput_RevD extends AAnalogInput {
     /**
      * Set of possible input buffer states.
      *
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * @since v1.0.0.0
      */
     public enum BufferState {

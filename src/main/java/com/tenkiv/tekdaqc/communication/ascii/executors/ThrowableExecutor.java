@@ -6,7 +6,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by ejberry on 10/21/16.
+ * Class which handles Exceptions that occur when executing threads in an Executor.
  */
 public class ThrowableExecutor extends ThreadPoolExecutor {
     public ThrowableExecutor(final int numThreads, final ThreadFactory factory) {
@@ -18,7 +18,7 @@ public class ThrowableExecutor extends ThreadPoolExecutor {
     }
 
     @Override
-    protected void afterExecute(Runnable r, Throwable t) {
+    protected void afterExecute(Runnable r, Throwable t) throws RuntimeException {
         super.afterExecute(r, t);
 
         if(t != null){

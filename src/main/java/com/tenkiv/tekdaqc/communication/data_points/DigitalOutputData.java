@@ -36,6 +36,7 @@ public class DigitalOutputData extends ABoardMessage {
      */
     public DigitalOutputData(final long timestamp, final boolean[] state) {
         mDigitalState = state;
+        mTimestamp = timestamp;
     }
 
     public boolean[] getDigitalState() {

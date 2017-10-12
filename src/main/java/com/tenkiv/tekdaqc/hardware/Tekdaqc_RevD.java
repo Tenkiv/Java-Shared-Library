@@ -421,7 +421,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
     public AAnalogInput getAnalogInput(final int input) {
         if ((input >= 0 && input < ANALOG_INPUT_COUNT)) {
             return getAnalogInputs().get(input);
-        } else if(input == ANALOG_INPUT_TEMP_SENSOR) {
+        } else if (input == ANALOG_INPUT_TEMP_SENSOR) {
             return temperatureReference;
         } else {
             throw new IllegalArgumentException("The requested physical analog input is out of range: " + input);
@@ -496,14 +496,25 @@ public class Tekdaqc_RevD extends ATekdaqc {
         return VALID_ANALOG_SCALEs;
     }
 
+    /**
+     * Not overridden in this hardware revision.
+     *
+     * @param input The ObjectInput
+     * @throws IOException            IOException
+     * @throws ClassNotFoundException Failed to cast class.
+     */
     @Override
     protected void readIn(final ObjectInput input) throws IOException, ClassNotFoundException {
-
     }
 
+    /**
+     * Not overridden in this hardware revision.
+     *
+     * @param output The ObjectInput
+     * @throws IOException IOException
+     */
     @Override
     protected void writeOut(final ObjectOutput output) throws IOException {
-
     }
 
     @Override
@@ -516,7 +527,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
                 getMessageBroadcaster().broadcastMessage(this, message);
                 break;
             case ERROR:
-                if(((ASCIIErrorMessage)message).isNetworkError){
+                if (((ASCIIErrorMessage) message).isNetworkError) {
                     getMessageBroadcaster().broadcastNetworkError(this, message);
                 }
                 getMessageBroadcaster().broadcastMessage(this, message);

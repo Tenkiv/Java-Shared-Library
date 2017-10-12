@@ -18,17 +18,18 @@ public class DigitalOutputUtilities {
      * @return String in hexadecimal
      */
     public static String hexConversion(String binaryString) {
+        String bin = binaryString;
 
         final StringBuilder hexBuilder = new StringBuilder();
 
-        while (binaryString.length() > 0) {
+        while (bin.length() > 0) {
 
-            final int decimal = Integer.parseInt(binaryString.substring(0, 4), 2);
+            final int decimal = Integer.parseInt(bin.substring(0, 4), 2);
             final String hexStr = Integer.toString(decimal, 16);
 
             hexBuilder.append(hexStr);
 
-            binaryString = binaryString.substring(4, binaryString.length());
+            bin = bin.substring(4, bin.length());
         }
         return hexBuilder.toString();
     }

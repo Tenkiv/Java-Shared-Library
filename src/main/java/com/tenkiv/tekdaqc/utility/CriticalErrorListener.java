@@ -1,7 +1,7 @@
 package com.tenkiv.tekdaqc.utility;
 
 /**
- * Created by ejberry on 10/17/16.
+ * Listener for errors which may require board reset.
  */
 public interface CriticalErrorListener {
 

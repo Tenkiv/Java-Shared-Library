@@ -264,7 +264,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     /**
      * Set of possible input gain settings.
      *
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * @since v1.0.0.0
      */
     public enum Gain {
@@ -311,7 +311,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     /**
      * Set of possible input sample rate settings.
      *
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * @since v1.0.0.0
      */
     public enum Rate {
@@ -348,7 +348,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     /**
      * Set of possible input drive current settings.
      *
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * @since v1.0.0.0
      */
     public enum SensorCurrent {

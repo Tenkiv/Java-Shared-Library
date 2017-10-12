@@ -330,7 +330,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     fun generateBinaryStringFromOutput(): String {
         val builder = StringBuilder()
 
-        for (i in 0..getDigitalOutputCount() - 1) {
+        for (i in 0 until getDigitalOutputCount()) {
             builder.append(0)
         }
 
@@ -1321,7 +1321,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * Enumeration of the available connection methods.
 
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
      */
@@ -1332,7 +1332,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * Enumeration of the available communication methods.
 
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
      */
@@ -1343,7 +1343,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * Enumeration of the available analog input voltage scales.
 
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
      */

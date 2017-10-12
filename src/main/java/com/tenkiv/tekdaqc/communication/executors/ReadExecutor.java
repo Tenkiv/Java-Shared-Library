@@ -75,7 +75,7 @@ public class ReadExecutor implements ITekdaqcExecutor {
      * Polling task to be submitted to the executor. This task in theory will run for the entire existence of the
      * {@link ATekdaqc}.
      *
-     * @author Jared Woolston (jwoolston@tenkiv.com)
+     * @author Tenkiv (software@tenkiv.com)
      * @since v1.0.0.0
      */
     private final class Task implements Callable<Void> {
