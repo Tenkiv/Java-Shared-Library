@@ -89,9 +89,6 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     protected var parsingExecutor: ASCIIParsingExecutor = ASCIIParsingExecutor(5)
 
     /**
-     * The digital input rate for throttled sampling.
-     */
-    /**
      * Method returning the current throttled digital input rate in samples/millisecond..
 
      * @return An [Integer] of the throttled rate in samples/millisecond.
@@ -133,9 +130,6 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     @Transient protected var mConnection: ITekdaqcTelnetConnection? = null
 
     /**
-     * The read stream for the telnet connection.
-     */
-    /**
      * Gets the [InputStream] for this [ATekdaqc].
 
      * @return [InputStream] The reader for the data stream from the
@@ -144,9 +138,6 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     @Transient var inputStream: InputStream? = null
         protected set
 
-    /**
-     * The write stream for the telnet connection.
-     */
     /**
      * Gets the [OutputStream] for this [ATekdaqc].
 
@@ -181,9 +172,6 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      */
     protected var keepAlivePacketSent = false
 
-    /**
-     * If the tekdaqc is connected.
-     */
     /**
      * Checks the state of the connection with this board.
 
