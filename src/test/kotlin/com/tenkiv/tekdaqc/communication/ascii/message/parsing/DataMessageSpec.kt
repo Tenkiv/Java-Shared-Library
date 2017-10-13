@@ -1,25 +1,24 @@
 package com.tenkiv.tekdaqc.communication.ascii.message.parsing
 
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 
 class DataMessageSpec: StringSpec({
     "Analog Input Data Message Spec"{
-        val testAnalogMessage = "?A0\r\n"+
-                "967711311300,-512"
-
-        val message = ASCIIAnalogInputDataMessage(testAnalogMessage)
-        assert(message.mNumber == 0)
-        assert(message.mTimestamps == "967711311300")
-        assert(message.mReadings == -512)
+        val message = getAnalogTestMessage()
+        message.mNumber shouldBe 0
+        message.mTimestamps shouldBe "967711311300"
+        message.mReadings shouldBe -512
     }
 
     "Digital Input Data Message Spec"{
-        val testAnalogMessage = "?D0\r\n"+
-                "967711311300,L"
-
-        val message = ASCIIDigitalInputDataMessage(testAnalogMessage)
-        assert(message.mNumber == 0)
-        assert(message.mTimestamps == "967711311300")
-        assert(!message.mReadings)
+        val message = getDigitalTestMessage()
+        message.mNumber shouldBe 0
+        message.mTimestamps shouldBe "967711311300"
+        message.mReadings shouldBe false
     }
 })
+
+fun getAnalogTestMessage(): ASCIIAnalogInputDataMessage = ASCIIAnalogInputDataMessage("?A0\r\n967711311300,-512")
+
+fun getDigitalTestMessage(): ASCIIDigitalInputDataMessage = ASCIIDigitalInputDataMessage("?D0\r\n967711311300,L")

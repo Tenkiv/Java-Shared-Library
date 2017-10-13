@@ -2,8 +2,6 @@ package com.tenkiv.tekdaqc.locator
 
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.ShouldSpec
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 
 val spoofedLocatorResponse = byteArrayOf(-2, 115, 2, 69, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
         48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 50, -64, -88, 0, 118, 52, 104, 82, 22, 53, -106, 1,

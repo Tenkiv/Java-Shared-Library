@@ -1,10 +1,8 @@
 package com.tenkiv.tekdaqc.hardware
 
 import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities
-import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.ShouldSpec
-import io.kotlintest.specs.StringSpec
 
 /**
  * Created by tenkiv on 4/29/17.
@@ -22,15 +20,18 @@ class CommandBuilderSpec : ShouldSpec({
         val DIGITAL_OUTPUT_ON_BIN_STRING = "1111111111111111"
         val SET_DIGITAL_OUTPUT_ON = "SET_DIGITAL_OUTPUT --OUTPUT=ffff\r"
 
-        String(CommandBuilder.
-                writeGainCalibrationValue(
-                        0f,
-                        AAnalogInput.Gain.X32,
-                        AAnalogInput.Rate.SPS_5,
-                        AnalogInput_RevD.BufferState.ENABLED,
-                        ATekdaqc.AnalogScale.ANALOG_SCALE_5V,
-                        0)
-                .generateCommandBytes()).shouldEqual(WRITE_GAIN_CALIBRATION_VALUE)
+        should("Generate Gain Calibration Value"){
+            String(CommandBuilder.
+                    writeGainCalibrationValue(
+                            0f,
+                            AAnalogInput.Gain.X32,
+                            AAnalogInput.Rate.SPS_5,
+                            AnalogInput_RevD.BufferState.ENABLED,
+                            ATekdaqc.AnalogScale.ANALOG_SCALE_5V,
+                            0)
+                    .generateCommandBytes()).shouldEqual(WRITE_GAIN_CALIBRATION_VALUE)
+        }
+
         should("Generate Set Analog Scale Value") {
             String(CommandBuilder.setAnalogInputScale(ATekdaqc.AnalogScale.ANALOG_SCALE_5V)
                     .generateCommandBytes()).shouldEqual(SET_ANALOG_INPUT_SCALE)

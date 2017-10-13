@@ -1,7 +1,5 @@
 package com.tenkiv.tekdaqc.hardware
 
-import com.tenkiv.tekdaqc.locator.LocatorParams
-import com.tenkiv.tekdaqc.locator.LocatorResponse
 import com.tenkiv.tekdaqc.locator.getSimulatedLocatorResponse
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.ShouldSpec

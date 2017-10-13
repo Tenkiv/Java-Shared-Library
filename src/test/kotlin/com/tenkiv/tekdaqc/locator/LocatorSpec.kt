@@ -1,32 +1,53 @@
 package com.tenkiv.tekdaqc.locator
 
-import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
-import io.kotlintest.Duration
 import io.kotlintest.specs.ShouldSpec
-import io.kotlintest.eventually
-import java.util.concurrent.TimeUnit
+import java.lang.Thread.sleep
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
+import kotlin.concurrent.thread
 
-class LocatorSpec: ShouldSpec({
-    "Locator Spec"{
-        should("Find a tekdaqc on network"){
-            eventually(Duration(5,TimeUnit.SECONDS)){
-                Locator.instance.addLocatorListener(object : OnTekdaqcDiscovered {
-                    override fun onTekdaqcResponse(board: ATekdaqc) {
-                        println("Found ${board.serialNumber}")
-                        assert(true)
-                    }
+@Volatile
+var onResponseCalled = false
+@Volatile
+var onFirstLocatedCalled = false
+@Volatile
+var onNotLocatedCalled = false
 
-                    override fun onTekdaqcFirstLocated(board: ATekdaqc) {
-                    }
+class LocatorSpec : ShouldSpec({
 
-                    override fun onTekdaqcNoLongerLocated(board: ATekdaqc) {
-                    }
+    "Locator Spec" {
+        thread(start = true) {
+            Locator.instance.addLocatorListener(object : OnTekdaqcDiscovered {
+                override fun onTekdaqcResponse(board: ATekdaqc) {
+                    onResponseCalled = true
+                    println("Found ${board.serialNumber}")
+                }
 
-                })
-            }
-        }.config(enabled = false)
+                override fun onTekdaqcFirstLocated(board: ATekdaqc) {
+                    onFirstLocatedCalled = true
+                }
+
+                override fun onTekdaqcNoLongerLocated(board: ATekdaqc) {
+                    println("Lost ${board.serialNumber}")
+                    onNotLocatedCalled = true
+                }
+
+            })
+        }
 
         Locator.instance.searchForTekdaqcs()
+
+        val clientSocket = DatagramSocket()
+        clientSocket.broadcast = true
+
+        clientSocket.send(DatagramPacket(
+                spoofedLocatorResponse,
+                spoofedLocatorResponse.size, InetAddress.getLoopbackAddress(), 9800))
+
+        sleep(5000)
+
+        assert(onResponseCalled && onFirstLocatedCalled && onNotLocatedCalled)
     }
 })
