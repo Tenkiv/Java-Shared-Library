@@ -99,7 +99,7 @@ class MessageBroadcaster {
      */
     fun addMessageListener(tekdaqc: ATekdaqc, listener: IMessageListener) {
         val listeners: MutableList<IMessageListener>
-                = mFullListeners.computeIfAbsent(tekdaqc, { ArrayList<IMessageListener>() })
+                = mFullListeners.computeIfAbsent(tekdaqc, { ArrayList() })
 
         synchronized(listeners) {
             if (!listeners.contains(listener)) {
@@ -117,7 +117,7 @@ class MessageBroadcaster {
      */
     fun addNetworkListener(tekdaqc: ATekdaqc, listener: INetworkListener) {
         val listeners: MutableList<INetworkListener>
-                = mNetworkListeners.computeIfAbsent(tekdaqc, { ArrayList<INetworkListener>() })
+                = mNetworkListeners.computeIfAbsent(tekdaqc, { ArrayList() })
 
         synchronized(listeners) {
             if (!listeners.contains(listener)) {
@@ -138,7 +138,7 @@ class MessageBroadcaster {
     fun addPWMChannelListener(tekdaqc: ATekdaqc, input: DigitalInput, listener: IPWMChannelListener) {
         val listeners: MutableMap<Int, MutableList<IPWMChannelListener>>
                 = mPWMChannelListeners.computeIfAbsent(tekdaqc,
-                { ConcurrentHashMap<Int, MutableList<IPWMChannelListener>>() })
+                { ConcurrentHashMap() })
 
         synchronized(listeners) {
             val listenerList: MutableList<IPWMChannelListener>
@@ -175,11 +175,11 @@ class MessageBroadcaster {
     fun addAnalogChannelListener(tekdaqc: ATekdaqc, input: AAnalogInput, listener: ICountListener) {
         val listeners: MutableMap<Int, MutableList<ICountListener>>
                 = mAnalogCountListeners.computeIfAbsent(tekdaqc,
-                { ConcurrentHashMap<Int, MutableList<ICountListener>>() })
+                { ConcurrentHashMap() })
 
         synchronized(listeners) {
             val listenerList: MutableList<ICountListener>
-                    = listeners.getOrPut(input.channelNumber, { ArrayList<ICountListener>() })
+                    = listeners.getOrPut(input.channelNumber, { ArrayList() })
 
             if (!listenerList.contains(listener)) {
                 listenerList.add(listener)
@@ -199,11 +199,11 @@ class MessageBroadcaster {
     fun addAnalogVoltageListener(tekdaqc: ATekdaqc, input: AAnalogInput, listener: IVoltageListener) {
         val listeners: MutableMap<Int, MutableList<IVoltageListener>>
                 = mAnalogVoltageListeners.computeIfAbsent(tekdaqc,
-                { ConcurrentHashMap<Int, MutableList<IVoltageListener>>() })
+                { ConcurrentHashMap() })
 
         synchronized(listeners) {
             val listenerList: MutableList<IVoltageListener>
-                    = listeners.getOrPut(input.channelNumber, { ArrayList<IVoltageListener>() })
+                    = listeners.getOrPut(input.channelNumber, { ArrayList() })
 
             if (!listenerList.contains(listener)) {
                 listenerList.add(listener)
@@ -223,11 +223,11 @@ class MessageBroadcaster {
     fun addDigitalChannelListener(tekdaqc: ATekdaqc, input: DigitalInput, listener: IDigitalChannelListener) {
         val listeners: MutableMap<Int, MutableList<IDigitalChannelListener>>
                 = mDigitalChannelListeners.computeIfAbsent(tekdaqc,
-                { ConcurrentHashMap<Int, MutableList<IDigitalChannelListener>>() })
+                { ConcurrentHashMap() })
 
         synchronized(listeners) {
             val listenerList: MutableList<IDigitalChannelListener>
-                    = listeners.getOrPut(input.channelNumber, { ArrayList<IDigitalChannelListener>() })
+                    = listeners.getOrPut(input.channelNumber, { ArrayList() })
 
             if (!listenerList.contains(listener)) {
                 listenerList.add(listener)
@@ -337,42 +337,32 @@ class MessageBroadcaster {
      * @param data    [AnalogInputCountData] The data point to broadcast.
      */
     fun broadcastAnalogInputDataPoint(tekdaqc: ATekdaqc, data: AnalogInputCountData) {
-        try {
             val listeners = mFullListeners[tekdaqc]
             if (listeners != null) {
                 synchronized(listeners) {
                     listeners.forEach { listener ->
-                        try {
-                            listener.onAnalogInputDataReceived(tekdaqc, data)
-                        } catch (e: Exception) {
-                            throw e
-                        }
+                        listener.onAnalogInputDataReceived(tekdaqc, data)
                     }
                 }
             }
 
             if (mAnalogCountListeners.containsKey(tekdaqc)) {
-                if (mAnalogCountListeners[tekdaqc]?.containsKey(data.physicalInput)!!) {
+                if (mAnalogCountListeners[tekdaqc]?.containsKey(data.physicalInput) == true) {
                     val channelListeners = mAnalogCountListeners[tekdaqc]?.get(data.physicalInput)
                     channelListeners?.let {
                         synchronized(it) {
-                            try {
-                                channelListeners.forEach { listener -> listener.onAnalogDataReceived(tekdaqc.getAnalogInput(data.physicalInput), data.data) }
-                            } catch (e: Exception) {
-                                throw e
-                            }
-
+                            channelListeners.forEach { listener -> listener.onAnalogDataReceived(tekdaqc.getAnalogInput(data.physicalInput), data.data) }
                         }
                     }
                 }
             }
 
             if (mAnalogVoltageListeners.containsKey(tekdaqc)) {
-                if (mAnalogVoltageListeners[tekdaqc]?.containsKey(data.physicalInput)!!) {
+                if (mAnalogVoltageListeners[tekdaqc]?.containsKey(data.physicalInput) == true) {
                     val channelListeners = mAnalogVoltageListeners[tekdaqc]?.get(data.physicalInput)
                     channelListeners?.let {
                         synchronized(it) {
-                            try {
+
                                 val quant = Quantities.getQuantity(
                                         tekdaqc.convertAnalogInputDataToVoltage(
                                                 data,
@@ -385,18 +375,10 @@ class MessageBroadcaster {
                                                     Instant.ofEpochMilli(data.timestamp)))
                                 }
 
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                throw e
-                            }
-
                         }
                     }
                 }
             }
-        }catch (e: Exception){
-            throw e
-        }
     }
 
     /**
@@ -417,7 +399,7 @@ class MessageBroadcaster {
         }
 
         if (mDigitalChannelListeners.containsKey(tekdaqc)) {
-            if (mDigitalChannelListeners[tekdaqc]?.containsKey(data.physicalInput)!!) {
+            if (mDigitalChannelListeners[tekdaqc]?.containsKey(data.physicalInput) == true) {
                 val channelListeners = mDigitalChannelListeners[tekdaqc]?.get(data.physicalInput)
                 channelListeners?.let {
                     synchronized(it) {
@@ -437,7 +419,7 @@ class MessageBroadcaster {
      */
     fun broadcastPWMInputDataPoint(tekdaqc: ATekdaqc, data: PWMInputData) {
         if (mPWMChannelListeners.containsKey(tekdaqc)) {
-            if (mPWMChannelListeners[tekdaqc]?.containsKey(data.physicalInput)!!) {
+            if (mPWMChannelListeners[tekdaqc]?.containsKey(data.physicalInput) == true) {
                 val channelListeners = mPWMChannelListeners[tekdaqc]?.get(data.physicalInput)
                 channelListeners?.let {
                     synchronized(it) {

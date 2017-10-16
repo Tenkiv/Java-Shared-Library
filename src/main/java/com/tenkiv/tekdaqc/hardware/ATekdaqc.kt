@@ -443,7 +443,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The firmware version.
      */
     val firmwareVersion: String
-        get() = locatorResponse?.firwareVersion ?: throw NullPointerException()
+        get() = locatorResponse?.firwareVersion ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the board's revision code.
@@ -451,7 +451,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return char The boards revision code.
      */
     val revisionType: Char
-        get() = locatorResponse?.type?.toChar() ?: throw NullPointerException()
+        get() = locatorResponse?.type ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the board's IP address.
@@ -459,7 +459,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The board's IP address.
      */
     val hostIP: String
-        get() = locatorResponse?.hostIP ?: throw NullPointerException()
+        get() = locatorResponse?.hostIP ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the boards MAC address.
@@ -467,7 +467,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The board's MAC address.
      */
     val macAddress: String
-        get() = locatorResponse?.macAddress ?: throw NullPointerException()
+        get() = locatorResponse?.macAddress ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the serial number of this [ATekdaqc].
@@ -475,7 +475,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The serial number.
      */
     val serialNumber: String
-        get() = locatorResponse?.serial ?: throw NullPointerException()
+        get() = locatorResponse?.serial ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the board's application title.
@@ -483,7 +483,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The application title.
      */
     val title: String
-        get() = locatorResponse?.title ?: throw NullPointerException()
+        get() = locatorResponse?.title ?: throw UninitializedPropertyAccessException()
 
     /**
      * Fetches an analog input from this Tekdaqc.
