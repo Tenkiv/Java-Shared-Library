@@ -69,15 +69,12 @@ object CommandBuilder {
         for (input in inputs) {
             inputBuilder.append(input).append(',')
         }
-        inputBuilder.deleteCharAt(inputBuilder.length)
+        inputBuilder.deleteCharAt(inputBuilder.lastIndex)
 
-        val queueValue = QueueValue(
+        return QueueValue(
                 Commands.READ_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, inputBuilder.toString()),
                 Pair(Params.NUMBER, number.toByte()))
-
-        return queueValue
-
     }
 
     /**
@@ -146,14 +143,12 @@ object CommandBuilder {
         for (input in inputs) {
             inputBuilder.append(input).append(',')
         }
-        inputBuilder.deleteCharAt(inputBuilder.length)
+        inputBuilder.deleteCharAt(inputBuilder.lastIndex)
 
-        val queueValue = QueueValue(
+        return QueueValue(
                 Commands.READ_DIGITAL_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, inputBuilder.toString()),
                 Pair(Params.NUMBER, number.toByte()))
-
-        return queueValue
 
     }
 

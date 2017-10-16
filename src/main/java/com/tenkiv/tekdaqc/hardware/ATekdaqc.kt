@@ -122,7 +122,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * The [ICommandManager] which controls who commands to be executed are handled.
      */
-    @Transient internal var mCommandQueue: ICommandManager = CommandQueueManager(this)
+    @Transient var mCommandQueue: ICommandManager = CommandQueueManager(this)
 
     /**
      * The Telnet connection.
