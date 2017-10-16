@@ -19,9 +19,11 @@ import kotlin.concurrent.write
 /**
  * Created by tenkiv on 2/7/17.
  */
-class Locator private constructor(params: LocatorParams){
+class Locator private constructor(params: LocatorParams) {
 
-    private object SINGLETON_INSTANCE { val INSTANCE = Locator(LocatorParams())}
+    private object SINGLETON_INSTANCE {
+        val INSTANCE = Locator(LocatorParams())
+    }
 
     companion object {
         val instance: Locator by lazy { SINGLETON_INSTANCE.INSTANCE }
@@ -101,30 +103,21 @@ class Locator private constructor(params: LocatorParams){
      * The timer task run at interval, which updates the [List] of known [ATekdaqc]
      */
     private val updateTask: TimerTask
-        get() =  object: TimerTask() {
+        get() = object : TimerTask() {
 
             override fun run() {
                 updateKnownTekdaqcs()
-
-                try {
-                    socketLock.withLock {
-                        try {
-                            val interfaces = NetworkInterface.getNetworkInterfaces()
-                            while (interfaces.hasMoreElements()) {
-                                val iAddrs = interfaces.nextElement().interfaceAddresses
-                                iAddrs.forEach { addr ->
-                                    if (addr.broadcast != null) {
-                                        locate(addr.broadcast)
-                                    }
-                                }
+                socketLock.withLock {
+                    val interfaces = NetworkInterface.getNetworkInterfaces()
+                    while (interfaces.hasMoreElements()) {
+                        val iAddrs = interfaces.nextElement().interfaceAddresses
+                        iAddrs.forEach { addr ->
+                            if (addr.broadcast != null) {
+                                locate(addr.broadcast)
                             }
-                        } catch (e: SocketException) {
-                            e.printStackTrace()
                         }
                     }
                 }
-                catch (e: SocketException) { e.printStackTrace() }
-                catch (e: UnknownHostException) { e.printStackTrace() }
 
                 if (isTimed) {
                     timeRemaining -= DEFAULT_LOCATOR_PERIOD
@@ -237,6 +230,7 @@ class Locator private constructor(params: LocatorParams){
      * @param defaultScale The current [ATekdaqc.AnalogScale] the board is set to.
      * *                     This should match the physical jumpers on the board.
      * *
+     * @throws IOException
      * *
      * @return A [ATekdaqc] with an open connection.
      */
@@ -249,21 +243,14 @@ class Locator private constructor(params: LocatorParams){
             try {
                 tekdaqc?.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
             } catch (e: IOException) {
-                e.printStackTrace()
+                throw e
             }
 
             return tekdaqc
 
         } else {
-            try {
-                throw Exception("No Tekdaqc Found with serial number " + serialNumber)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
+            throw Exception("No Tekdaqc Found with serial number " + serialNumber)
         }
-
-        return null
     }
 
     /**
@@ -281,6 +268,7 @@ class Locator private constructor(params: LocatorParams){
      * *                     This should match the physical jumpers on the board.
      * *
      * *
+     * @throws IOException
      * @return A [ATekdaqc] object that represents an un-located, hypothetical Tekdaqc on the network.
      */
     fun connectToUnsafeTarget(serialNumber: String, hostIPAdress: String, tekdaqcRevision: Char, defaultScale: ATekdaqc.AnalogScale): ATekdaqc {
@@ -298,7 +286,7 @@ class Locator private constructor(params: LocatorParams){
         try {
             tekdaqc.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
         } catch (e: IOException) {
-            e.printStackTrace()
+            throw e
         }
 
         return tekdaqc
@@ -326,7 +314,7 @@ class Locator private constructor(params: LocatorParams){
      * *               remove.
      */
     protected fun removeTekdaqcForSerial(serial: String) {
-        tekdaqcMapLock.write{ activeTekdaqcMap.remove(serial) }
+        tekdaqcMapLock.write { activeTekdaqcMap.remove(serial) }
     }
 
     /**
@@ -337,7 +325,7 @@ class Locator private constructor(params: LocatorParams){
      */
     protected fun addTekdaqcToMap(tekdaqc: ATekdaqc) {
         tekdaqcMapLock.write {
-            (activeTekdaqcMap as java.util.Map<String, ATekdaqc>).putIfAbsent(tekdaqc.serialNumber,tekdaqc)
+            (activeTekdaqcMap as java.util.Map<String, ATekdaqc>).putIfAbsent(tekdaqc.serialNumber, tekdaqc)
         }
     }
 
@@ -347,7 +335,7 @@ class Locator private constructor(params: LocatorParams){
      * @return A new [HashMap] which contains all currently located [ATekdaqc].
      */
     fun getActiveTekdaqcMap(): Map<String, ATekdaqc> {
-        tekdaqcMapLock.read{
+        tekdaqcMapLock.read {
             return HashMap(activeTekdaqcMap)
         }
     }
@@ -567,7 +555,7 @@ class Locator private constructor(params: LocatorParams){
         val serialList = ArrayList(Arrays.asList(*serials))
 
         previouslyLocated.forEach { k, v ->
-            if(serialList.contains(k)){
+            if (serialList.contains(k)) {
                 listener.onTargetFound(v)
                 serialList.remove(k)
             }
@@ -592,6 +580,8 @@ class Locator private constructor(params: LocatorParams){
      * *                                THIS MUST BE NON-NULL IN ORDER TO AUTOMATICALLY CONNECT.
      * *
      * @param serials The serial numbers of [ATekdaqc]s to search for.
+     *
+     * @throws IOException
      * *
      * @return A list of [ATekdaqc]s found during the timeout with the listed serial numbers.
      */
@@ -613,12 +603,8 @@ class Locator private constructor(params: LocatorParams){
                     if (serial == board.serialNumber && !discoveredTekdaqcs.contains(board)) {
 
                         if (autoConnect && autoConnectDefaultScale != null) {
-                            try {
-                                board.connect(autoConnectDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                            }
 
+                            board.connect(autoConnectDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
                         }
 
                         discoveredTekdaqcs.add(board)
@@ -645,11 +631,7 @@ class Locator private constructor(params: LocatorParams){
         searchForTekdaqcs()
 
         lock.withLock {
-            try {
-                condition.await()
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
-            }
+            condition.await()
         }
 
         timer.purge()
@@ -665,7 +647,7 @@ class Locator private constructor(params: LocatorParams){
      * Internal class used for [Locator.blockingSearchForSpecificTekdaqcs]
      * and similar methods.
      */
-     private inner class BlockingWakeTask internal constructor(private val mLock: Lock, private val mCondition: Condition) : TimerTask() {
+    private inner class BlockingWakeTask internal constructor(private val mLock: Lock, private val mCondition: Condition) : TimerTask() {
 
         override fun run() {
             mLock.withLock { mCondition.signalAll() }
@@ -724,13 +706,9 @@ class Locator private constructor(params: LocatorParams){
 
         override fun onTekdaqcFirstLocated(board: ATekdaqc) {
 
-            if(mSerialList.contains(board.serialNumber)){
+            if (mSerialList.contains(board.serialNumber)) {
                 if (mAutoConnect) {
-                    try {
-                        board.connect(mDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
+                    board.connect(mDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
                 }
 
                 mListener.onTargetFound(board)

@@ -92,10 +92,6 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
         tryCommand()
     }
 
-    /**
-     * Internal method which sorts between [ABaseQueueVal] to be executed as commands and
-     * [QueueCallback] to be called back to as notification.
-     */
     private fun executeCommand() {
         //Update the fact that we're executing a command.
         isTaskExecuting.set(true)
@@ -108,14 +104,12 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
             mLastCommand = queueObject
 
             //Submit new writing thread to send command.
-            mExecutor.submit(CommandWriterThread(queueObject))
+            mExecutor.submit(CommandWriterThread(mTekdaqc,queueObject))
             //Lock the queue so we don't send more.
             mQueueLock.lock()
             try {
                 //Max wait time for the lock.
                 mCommandCondition.await(3, TimeUnit.SECONDS)
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
             } finally {
                 //If task timed out and we're still connected, attempt to send the command again.
                 if (didTaskTimeout.get() && mTekdaqc.isConnected) {
@@ -192,8 +186,8 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
      */
     private fun cullQueueUntilCallback() {
         if (mCommandDeque.size > 0) {
-            if (mCommandDeque.peek() is QueueCallback) {
-                val callback = mCommandDeque.poll() as QueueCallback
+            val callback = mCommandDeque.poll() as? QueueCallback
+            if (callback != null) {
                 if (!callback.isInternalDelimiter) {
                     callback.failure(mTekdaqc)
                 }
@@ -287,37 +281,6 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
         }
     }
 
-    /**
-     * Class which is executed by [CommandQueueManager.mExecutor]. Writes out generated [Byte] of [ABaseQueueVal]
-     * to the [ATekdaqc.getOutputStream]
-     */
-    private inner class CommandWriterThread constructor(private val mValue: ABaseQueueVal) : Thread(COMMAND_WRITER_THREAD_NAME) {
-
-        override fun run() {
-            try {
-                writeToStream(mValue)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                mTekdaqc.criticalErrorNotification(TekdaqcCriticalError.TERMINAL_CONNECTION_DISRUPTION)
-            }
-
-        }
-
-        /**
-         * Method to get and write out command bytes to Telnet.
-
-         * @param command The command to be executed
-         * *
-         * @throws IOException Generic exception to catch issues in Telnet.
-         */
-        @Throws(IOException::class)
-        private fun writeToStream(command: ABaseQueueVal) {
-            val out = BufferedOutputStream(mTekdaqc.outputStream)
-            out.write(command.generateCommandBytes())
-            out.flush()
-        }
-    }
-
     companion object {
 
         /**
@@ -325,6 +288,5 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
          */
         private val MAX_ALLOWABLE_FAILURES = 3
 
-        private val COMMAND_WRITER_THREAD_NAME = "COMMAND_WRITER_THREAD_NAME"
     }
 }
