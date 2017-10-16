@@ -36,6 +36,11 @@ import java.util.concurrent.locks.ReentrantLock
 class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMessageListener {
 
     /**
+     * The total number of allowable failures for a single command before a [TekdaqcCriticalError] is thrown.
+     */
+    private val MAX_ALLOWABLE_FAILURES = 3
+
+    /**
      * The lock ensuring execution safety.
      */
     private val mQueueLock = ReentrantLock()
@@ -78,7 +83,7 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
     init {
         mExecutor = Executors.newSingleThreadExecutor(Factory())
         mCommandDeque = LinkedBlockingDeque<IQueueObject>()
-        mTekdaqc.messageBroadcaster.commandQueueAddListener(mTekdaqc,this)
+        mTekdaqc.messageBroadcaster.commandQueueAddListener(mTekdaqc, this)
     }
 
     override fun queueCommand(command: IQueueObject) {
@@ -100,43 +105,50 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
         val queueObject = mCommandDeque.poll()
 
         if (queueObject is ABaseQueueVal) {
-            //Set last command in case we need to resend it.
-            mLastCommand = queueObject
-
-            //Submit new writing thread to send command.
-            mExecutor.submit(CommandWriterThread(mTekdaqc,queueObject))
-            //Lock the queue so we don't send more.
-            mQueueLock.lock()
-            try {
-                //Max wait time for the lock.
-                mCommandCondition.await(3, TimeUnit.SECONDS)
-            } finally {
-                //If task timed out and we're still connected, attempt to send the command again.
-                if (didTaskTimeout.get() && mTekdaqc.isConnected) {
-                    println("Interrupt Hit. Not Woken in time")
-                    //If failures is less then total failure count, resend.
-                    if (mFailureCount.get() < MAX_ALLOWABLE_FAILURES) {
-                        //Get and increment failure count.
-                        mFailureCount.getAndIncrement()
-                        //Re-add the last command.
-                        mCommandDeque.addFirst(mLastCommand)
-                        //Update the fact that we're not executing a command.
-                        isTaskExecuting.set(false)
-                    } else {
-                        //Throw a critical error if we run out of attempts.
-                        mTekdaqc.criticalErrorNotification(TekdaqcCriticalError.FAILED_MAJOR_COMMAND)
-                    }
-                }
-                didTaskTimeout.set(true)
-                mQueueLock.unlock()
-                tryCommand()
-            }
-            //If its a call back we should update the listener.
+            executeQueueValue(queueObject)
         } else if (queueObject is QueueCallback) {
-            queueObject.success(mTekdaqc)
-            isTaskExecuting.set(false)
+            executeQueueCallback(queueObject)
+        }
+    }
+
+    private fun executeQueueValue(queueObject: ABaseQueueVal){
+        //Set last command in case we need to resend it.
+        mLastCommand = queueObject
+
+        //Submit new writing thread to send command.
+        mExecutor.submit(CommandWriterThread(mTekdaqc, queueObject))
+        //Lock the queue so we don't send more.
+        mQueueLock.lock()
+        try {
+            //Max wait time for the lock.
+            mCommandCondition.await(3, TimeUnit.SECONDS)
+        } finally {
+            //If task timed out and we're still connected, attempt to send the command again.
+            if (didTaskTimeout.get() && mTekdaqc.isConnected) {
+                println("Interrupt Hit. Not Woken in time")
+                //If failures is less then total failure count, resend.
+                if (mFailureCount.get() < MAX_ALLOWABLE_FAILURES) {
+                    //Get and increment failure count.
+                    mFailureCount.getAndIncrement()
+                    //Re-add the last command.
+                    mCommandDeque.addFirst(mLastCommand)
+                    //Update the fact that we're not executing a command.
+                    isTaskExecuting.set(false)
+                } else {
+                    //Throw a critical error if we run out of attempts.
+                    mTekdaqc.criticalErrorNotification(TekdaqcCriticalError.FAILED_MAJOR_COMMAND)
+                }
+            }
+            didTaskTimeout.set(true)
+            mQueueLock.unlock()
             tryCommand()
         }
+    }
+
+    private fun executeQueueCallback(queueObject: QueueCallback){
+        queueObject.success(mTekdaqc)
+        isTaskExecuting.set(false)
+        tryCommand()
     }
 
     override fun purge(forShutdown: Boolean) {
@@ -169,13 +181,7 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
         if (!isTaskExecuting.get()
                 && mCommandDeque.size > 0
                 && mTekdaqc.isConnected) {
-            /*object : Thread() {
-                override fun run() {*/
-
             executeCommand()
-
-                /*}
-            }.start()*/
         }
     }
 
@@ -260,33 +266,15 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
      */
     private class Factory : ThreadFactory {
 
+        private val COMMAND_THREAD_NAME = "TEKDAQC_COMMAND_THREAD"
+
+        private val COMMAND_THREAD_PRIORITY = 4 // Equivalent to Android's Process.THREAD_PRIORITY_BACKGROUND
+
         override fun newThread(r: Runnable): Thread {
             val thread = Thread(r)
             thread.priority = COMMAND_THREAD_PRIORITY
             thread.name = COMMAND_THREAD_NAME
             return thread
         }
-
-        companion object {
-
-            /**
-             * The name for the threads.
-             */
-            private val COMMAND_THREAD_NAME = "TEKDAQC_COMMAND_THREAD"
-
-            /**
-             * The priority for the threads.
-             */
-            private val COMMAND_THREAD_PRIORITY = 4 // Equivalent to Android's Process.THREAD_PRIORITY_BACKGROUND
-        }
-    }
-
-    companion object {
-
-        /**
-         * The total number of allowable failures for a single command before a [TekdaqcCriticalError] is thrown.
-         */
-        private val MAX_ALLOWABLE_FAILURES = 3
-
     }
 }

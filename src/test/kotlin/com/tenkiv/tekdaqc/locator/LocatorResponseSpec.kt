@@ -33,6 +33,9 @@ val spoofedLocatorResponse = byteArrayOf(-2, 115, 2, 69, 48, 48, 48, 48, 48, 48,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+/**
+ * Class to test LocatorResponse generation.
+ */
 class LocatorResponseSpec: ShouldSpec ({
     "LocatorResponseSpec"{
         val response = getSimulatedLocatorResponse()
@@ -45,5 +48,10 @@ class LocatorResponseSpec: ShouldSpec ({
     }
 })
 
+/**
+ * Generates a simulated LocatorResponse
+ *
+ * @return A fake locatorResponse for testing
+ */
 fun getSimulatedLocatorResponse(): LocatorResponse =
         LocatorResponse("0.0.0.0", spoofedLocatorResponse)

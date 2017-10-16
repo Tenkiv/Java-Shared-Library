@@ -6,12 +6,13 @@ import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError
 import java.io.BufferedOutputStream
 import java.io.IOException
 
+
+private val COMMAND_WRITER_THREAD_NAME = "COMMAND_WRITER_THREAD_NAME"
+
 /**
  * Class which is executed by [CommandQueueManager.mExecutor]. Writes out generated [Byte] of [ABaseQueueVal]
  * to the [ATekdaqc.getOutputStream]
  */
-private val COMMAND_WRITER_THREAD_NAME = "COMMAND_WRITER_THREAD_NAME"
-
 internal class CommandWriterThread(val tekdaqc: ATekdaqc, val mValue: ABaseQueueVal) :
         Thread(COMMAND_WRITER_THREAD_NAME) {
 

@@ -11,6 +11,9 @@ import io.kotlintest.eventually
 import io.kotlintest.seconds
 import io.kotlintest.specs.ShouldSpec
 
+/**
+ * Class to test sending commands through MessageBroadcaster
+ */
 class MessageBroadcasterSpec: ShouldSpec({
     "Message Broadcaster Spec"{
         val simulatedTekdaqc = Tekdaqc_RevD(getSimulatedLocatorResponse())

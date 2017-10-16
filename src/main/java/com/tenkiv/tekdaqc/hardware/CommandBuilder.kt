@@ -7,6 +7,7 @@ import com.tenkiv.tekdaqc.communication.command.queue.values.*
 import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities
 
 import java.lang.reflect.Array
+import java.security.InvalidParameterException
 import java.util.ArrayList
 
 /**
@@ -180,7 +181,7 @@ object CommandBuilder {
      */
     @Throws(IllegalArgumentException::class, IllegalStateException::class)
     fun addAnalogInput(input: AAnalogInput): ABaseQueueVal {
-        val Input = input as AnalogInput_RevD
+        val Input = input as? AnalogInput_RevD ?: throw IllegalArgumentException()
         val queueValue = QueueValue(
                 Commands.ADD_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, Input.channelNumber.toByte()),
@@ -197,11 +198,10 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      * *
-     * @throws IllegalArgumentException Thrown if the [DigitalInput] contains incorrect values.
      * *
-     * @throws IllegalStateException    Thrown if the [DigitalInput] is of the improper type.
+     * @throws IllegalArgumentException    Thrown if the [DigitalInput] is of the improper type.
      */
-    @Throws(IllegalArgumentException::class, IllegalStateException::class)
+    @Throws(IllegalArgumentException::class)
     fun addDigitalInput(input: DigitalInput): ABaseQueueVal {
         val queueValue = QueueValue(
                 Commands.ADD_DIGITAL_INPUT.ordinalCommandType,
@@ -299,6 +299,8 @@ object CommandBuilder {
      * @param inputs The [Map] of the inputs to be removed.
      * *
      * @return The [List] of [ABaseQueueVal] representing the commands.
+     *
+     * @throws IllegalArgumentException
      */
     fun removeMappedAnalogInputs(inputs: Map<Int, AAnalogInput>): List<ABaseQueueVal> {
         val keys = inputs.keys
@@ -307,7 +309,7 @@ object CommandBuilder {
                 .map {
                     QueueValue(
                             Commands.REMOVE_ANALOG_INPUT.ordinalCommandType,
-                            Pair(Params.INPUT, it!!.channelNumber.toByte()))
+                            Pair(Params.INPUT, it?.channelNumber?.toByte()?:throw IllegalArgumentException()))
                 }
         return queueVals
     }
@@ -346,6 +348,7 @@ object CommandBuilder {
      * @param inputs The [Map] of the inputs to be removed.
      * *
      * @return The [List] of [ABaseQueueVal] representing the commands.
+     * @throws IllegalArgumentException
      */
     fun removeMappedDigitalInputs(inputs: Map<Int, DigitalInput>): List<ABaseQueueVal> {
         val keys = inputs.keys
@@ -354,7 +357,7 @@ object CommandBuilder {
                 .map {
                     QueueValue(
                             Commands.REMOVE_DIGITAL_INPUT.ordinalCommandType,
-                            Pair(Params.INPUT, it!!.channelNumber.toByte()))
+                            Pair(Params.INPUT, it?.channelNumber?.toByte()?: IllegalArgumentException()))
                 }
         return queueVals
     }
@@ -366,7 +369,7 @@ object CommandBuilder {
      * @return The [List] of [ABaseQueueVal] representing the commands.
      */
     fun deactivateAllDigitalInputs(): List<ABaseQueueVal> {
-        val queueVals = (0..Tekdaqc_RevD.DIGITAL_INPUT_COUNT - 1).map {
+        val queueVals = (0 until Tekdaqc_RevD.DIGITAL_INPUT_COUNT).map {
             QueueValue(
                     Commands.REMOVE_DIGITAL_INPUT.ordinalCommandType,
                     Pair(Params.INPUT, it.toByte()))

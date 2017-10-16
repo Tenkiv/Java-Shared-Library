@@ -240,16 +240,12 @@ class Locator private constructor(params: LocatorParams) {
 
         if (map.containsKey(serialNumber)) {
             val tekdaqc = map[serialNumber]
-            try {
-                tekdaqc?.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
-            } catch (e: IOException) {
-                throw e
-            }
+            tekdaqc?.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
 
             return tekdaqc
 
         } else {
-            throw Exception("No Tekdaqc Found with serial number " + serialNumber)
+            throw IOException("No Tekdaqc Found with serial number " + serialNumber)
         }
     }
 

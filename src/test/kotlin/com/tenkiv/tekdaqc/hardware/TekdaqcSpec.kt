@@ -8,6 +8,9 @@ import io.kotlintest.matchers.shouldNot
 import io.kotlintest.matchers.shouldNotBe
 import io.kotlintest.specs.ShouldSpec
 
+/**
+ * Class to test Tekdaqc functions
+ */
 class TekdaqcSpec: ShouldSpec({
     "TekdaqcSpec"{
         val tekdaqc = Tekdaqc_RevD(getSimulatedLocatorResponse())

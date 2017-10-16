@@ -5,9 +5,8 @@ import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.ShouldSpec
 
 /**
- * Created by tenkiv on 4/29/17.
+ * Class to test building commands
  */
-
 class CommandBuilderSpec : ShouldSpec({
     "Generating Values"{
 

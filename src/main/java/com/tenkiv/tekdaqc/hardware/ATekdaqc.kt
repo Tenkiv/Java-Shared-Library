@@ -38,13 +38,14 @@ import java.util.concurrent.locks.ReentrantLock
  * *
  * @since 1.0.0.0
  */
-abstract class ATekdaqc protected constructor(): Externalizable, IParsingListener {
+abstract class ATekdaqc protected constructor() : Externalizable, IParsingListener {
 
     private var locatorResponse: LocatorResponse? = null
 
-    protected constructor(locatorResponse: LocatorResponse): this(){
+    protected constructor(locatorResponse: LocatorResponse) : this() {
         this.locatorResponse = locatorResponse
     }
+
     /**
      * Maximum length of a channel name.
      */
@@ -72,9 +73,9 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * Maps of inputs/outputs
      */
-    val analogInputs: Map<Int, AAnalogInput> = HashMap<Int, AAnalogInput>()
-    val digitalInputs: Map<Int, DigitalInput> = HashMap<Int, DigitalInput>()
-    val digitalOutputs: Map<Int, DigitalOutput> = HashMap<Int, DigitalOutput>()
+    val analogInputs: Map<Int, AAnalogInput> = HashMap()
+    val digitalInputs: Map<Int, DigitalInput> = HashMap()
+    val digitalOutputs: Map<Int, DigitalOutput> = HashMap()
 
     abstract val temperatureReference: AAnalogInput
 
@@ -93,7 +94,8 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
 
      * @return An [Integer] of the throttled rate in samples/millisecond.
      */
-    @Transient var throttledDigitalInputSampleRate = 1000
+    @Transient
+    var throttledDigitalInputSampleRate = 1000
 
     private var _analogScale: AnalogScale = AnalogScale.ANALOG_SCALE_5V
 
@@ -122,7 +124,8 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * The [ICommandManager] which controls who commands to be executed are handled.
      */
-    @Transient var mCommandQueue: ICommandManager = CommandQueueManager(this)
+    @Transient
+    var mCommandQueue: ICommandManager = CommandQueueManager(this)
 
     /**
      * The Telnet connection.
@@ -135,7 +138,8 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [InputStream] The reader for the data stream from the
      * * Tekdaqc.
      */
-    @Transient var inputStream: InputStream? = null
+    @Transient
+    var inputStream: InputStream? = null
         protected set
 
     /**
@@ -144,7 +148,8 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [OutputStream] The writer for the output data stream to the
      * * Tekdaqc.
      */
-    @Transient var outputStream: OutputStream? = null
+    @Transient
+    var outputStream: OutputStream? = null
         protected set
 
     /**
@@ -214,7 +219,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     protected var mDigitalInputActivationTask: TimerTask = object : TimerTask() {
 
         override fun run() {
-            if (mConnection?.isConnected ?: throw NullPointerException()) {
+            if (mConnection?.isConnected ?: throw IOException("Tekdaqc Not Connected")) {
                 mCommandQueue.queueCommand(CommandBuilder.readAllDigitalInput(1))
 
                 if (mThrottledSamples > 0) {
@@ -323,7 +328,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
         }
 
         for (outputNumber in digitalOutputs.keys) {
-            if (digitalOutputs[outputNumber]?.getIsActivated()?: throw IndexOutOfBoundsException("Digital Output Out of Range,")) {
+            if (digitalOutputs[outputNumber]?.getIsActivated() ?: throw IndexOutOfBoundsException("Digital Output Out of Range,")) {
                 builder.replace(outputNumber, outputNumber + 1, "1")
             }
         }
@@ -360,57 +365,48 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param reactivateChannels If channels should be reactivated after reconnection.
      */
     fun restoreTekdaqc(millisTimeout: Long, reactivateChannels: Boolean) {
-        try {
-            mCommandQueue.purge(false)
 
-            mConnection?.disconnect()
+        mCommandQueue.purge(false)
 
-            inputStream = null
-            outputStream = null
+        mConnection?.disconnect()
 
-            Locator.instance
-                    .blockingSearchForSpecificTekdaqcs(
-                            millisTimeout,
-                            ReentrantLock(),
-                            false, null,
-                            serialNumber)[0].connect(analogScale, CONNECTION_METHOD.ETHERNET)
+        inputStream = null
+        outputStream = null
+
+        Locator.instance
+                .blockingSearchForSpecificTekdaqcs(
+                        millisTimeout,
+                        ReentrantLock(),
+                        false, null,
+                        serialNumber)[0].connect(analogScale, CONNECTION_METHOD.ETHERNET)
 
 
-            val commands = ArrayList<ABaseQueueVal>()
+        val commands = ArrayList<ABaseQueueVal>()
 
-            commands.addAll(CommandBuilder.deactivateAllAnalogInputs())
+        commands.addAll(CommandBuilder.deactivateAllAnalogInputs())
 
-            commands.addAll(CommandBuilder.deactivateAllDigitalInputs())
+        commands.addAll(CommandBuilder.deactivateAllDigitalInputs())
 
-            if (reactivateChannels) {
+        if (reactivateChannels) {
 
-                for (input in analogInputs.values) {
-                    if (input.isActivated) {
-                        commands.add(CommandBuilder.addAnalogInput(input))
-                    }
-                }
+            analogInputs.values
+                    .filter { it.isActivated }
+                    .mapTo(commands) { CommandBuilder.addAnalogInput(it) }
 
-                for (input in digitalInputs.values) {
-                    if (input.isActivated) {
-                        commands.add(CommandBuilder.addDigitalInput(input))
-                    }
-                }
+            digitalInputs.values
+                    .filter { it.isActivated }
+                    .mapTo(commands) { CommandBuilder.addDigitalInput(it) }
+        }
+
+        queueTask(Task(object : ITaskComplete {
+            override fun onTaskSuccess(tekdaqc: ATekdaqc) {
+
             }
 
-            queueTask(Task(object : ITaskComplete {
-                override fun onTaskSuccess(tekdaqc: ATekdaqc) {
-
-                }
-
-                override fun onTaskFailed(tekdaqc: ATekdaqc) {
-                    criticalErrorNotification(TekdaqcCriticalError.FAILED_TO_REINITIALIZE)
-                }
-            }, commands))
-
-
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
+            override fun onTaskFailed(tekdaqc: ATekdaqc) {
+                criticalErrorNotification(TekdaqcCriticalError.FAILED_TO_REINITIALIZE)
+            }
+        }, commands))
 
     }
 
@@ -829,7 +825,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
 
     @Throws(IOException::class, ClassNotFoundException::class)
     override fun readExternal(input: ObjectInput) {
-        locatorResponse = input.readObject() as LocatorResponse
+        locatorResponse = input.readObject() as? LocatorResponse
         readIn(input)
     }
 
