@@ -1,6 +1,13 @@
 package com.tenkiv.tekdaqc.locator
 
+import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import io.kotlintest.specs.ShouldSpec
+import java.lang.Thread.sleep
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
+import java.net.NetworkInterface
+import kotlin.concurrent.thread
 
 @Volatile
 var onResponseCalled = false
@@ -16,7 +23,7 @@ var onNotLocatedCalled = false
  */
 class LocatorSpec : ShouldSpec({
 
-    /*"Locator Spec" {
+    "Locator Spec" {
         thread(start = true) {
 
             Locator.instance.addLocatorListener(object : OnTekdaqcDiscovered {
@@ -37,16 +44,18 @@ class LocatorSpec : ShouldSpec({
             })
         }
 
-        Locator.instance.searchForTekdaqcs()*/
+        Locator.instance.searchForTekdaqcs()
 
-        //val clientSocket = DatagramSocket()
-        /*clientSocket.broadcast = true
+        Locator.instance.enableLoopbackBroadcast = true
+
+        val clientSocket = DatagramSocket()
+        clientSocket.broadcast = true
 
         clientSocket.send(DatagramPacket(
                 spoofedLocatorResponse,
-                spoofedLocatorResponse.size, InetAddress.getLoopbackAddress(), 9800))*/
+                spoofedLocatorResponse.size, InetAddress.getByName("127.255.255.255"), 9800))
 
-        /*val interfaces = NetworkInterface.getNetworkInterfaces()
+        val interfaces = NetworkInterface.getNetworkInterfaces()
         while (interfaces.hasMoreElements()) {
             val iAddrs = interfaces.nextElement().interfaceAddresses
             iAddrs.forEach { addr ->
@@ -61,6 +70,6 @@ class LocatorSpec : ShouldSpec({
 
         sleep(5000)
 
-        assert(onResponseCalled && onFirstLocatedCalled && onNotLocatedCalled)*/
-    //}
+        assert(onResponseCalled && onFirstLocatedCalled && onNotLocatedCalled)
+    }
 })

@@ -100,6 +100,12 @@ class Locator private constructor(params: LocatorParams) {
     private var updateTimer = Timer("Update Timer", false)
 
     /**
+     * Flag setting if Locator broadcasts will send to loopback address. Used internally for automated testing.
+     */
+    @Volatile
+    var enableLoopbackBroadcast = false
+
+    /**
      * The timer task run at interval, which updates the [List] of known [ATekdaqc]
      */
     private val updateTask: TimerTask
@@ -114,6 +120,10 @@ class Locator private constructor(params: LocatorParams) {
                         iAddrs.forEach { addr ->
                             if (addr.broadcast != null) {
                                 locate(addr.broadcast)
+                            }
+
+                            if (enableLoopbackBroadcast && addr.address.isLoopbackAddress){
+                                locate(addr.address)
                             }
                         }
                     }
@@ -267,7 +277,10 @@ class Locator private constructor(params: LocatorParams) {
      * @throws IOException On failed connection attempt.
      * @return A [ATekdaqc] object that represents an un-located, hypothetical Tekdaqc on the network.
      */
-    fun connectToUnsafeTarget(serialNumber: String, hostIPAdress: String, tekdaqcRevision: Char, defaultScale: ATekdaqc.AnalogScale): ATekdaqc {
+    fun connectToUnsafeTarget(serialNumber: String,
+                              hostIPAdress: String,
+                              tekdaqcRevision: Char,
+                              defaultScale: ATekdaqc.AnalogScale): ATekdaqc {
 
         val pseudoResponse = LocatorResponse()
 
@@ -521,10 +534,11 @@ class Locator private constructor(params: LocatorParams) {
     }
 
     /**
-     * Convenience method to search for specific [ATekdaqc]s on the network. Note: this method will start the [Locator]'s
-     * default method ([Locator.searchForTekdaqcs]), so other classes may also be notified of discovered [ATekdaqc]s.
-     * Contains the option to automatically connect to the [ATekdaqc] so that the boards returned will not be taken by other
-     * listeners and will not need the [ATekdaqc.connect] method called on them.
+     * Convenience method to search for specific [ATekdaqc]s on the network.
+     * Note: this method will start the [Locator]'s default method ([Locator.searchForTekdaqcs]), so other classes
+     * may also be notified of discovered [ATekdaqc]s. Contains the option to automatically connect to the [ATekdaqc]
+     * so that the boards returned will not be taken by other listeners and will not need the [ATekdaqc.connect]
+     * method called on them.
 
      * @param listener The [OnTargetTekdaqcFound] listener to be notified.
      * *
@@ -539,7 +553,8 @@ class Locator private constructor(params: LocatorParams) {
      */
     fun searchForSpecificTekdaqcs(listener: OnTargetTekdaqcFound, timeoutMillis: Long,
                                   autoConnect: Boolean = false,
-                                  autoConnectDefaultScale: ATekdaqc.AnalogScale = ATekdaqc.AnalogScale.ANALOG_SCALE_5V,
+                                  autoConnectDefaultScale: ATekdaqc.AnalogScale
+                                  = ATekdaqc.AnalogScale.ANALOG_SCALE_5V,
                                   vararg serials: String) {
 
         val previouslyLocated = getActiveTekdaqcMap()
@@ -555,7 +570,12 @@ class Locator private constructor(params: LocatorParams) {
 
         val searchTimer = Timer("Specific Tekdaqc Search Timer", false)
 
-        searchTimer.schedule(AwaitSpecificTekdaqcTask(serialList, listener, autoConnect, autoConnectDefaultScale), timeoutMillis)
+        searchTimer.schedule(AwaitSpecificTekdaqcTask(
+                serialList,
+                listener,
+                autoConnect,
+                autoConnectDefaultScale),
+                timeoutMillis)
 
     }
 
@@ -564,7 +584,8 @@ class Locator private constructor(params: LocatorParams) {
 
      * @param timeoutMillis The maximum time to search for [ATekdaqc]s.
      * *
-     * @param lock Optional lock to be used. This should be implemented where custom threading libraries or concurrency is being used.
+     * @param lock Optional lock to be used. This should be implemented where custom threading libraries or
+     * concurrency is being used.
      * *
      * @param autoConnect If [ATekdaqc]s should be automatically connected to.
      * *
@@ -639,7 +660,8 @@ class Locator private constructor(params: LocatorParams) {
      * Internal class used for [Locator.blockingSearchForSpecificTekdaqcs]
      * and similar methods.
      */
-    private inner class BlockingWakeTask internal constructor(private val mLock: Lock, private val mCondition: Condition) : TimerTask() {
+    private inner class BlockingWakeTask internal constructor(private val mLock: Lock,
+                                                              private val mCondition: Condition) : TimerTask() {
 
         override fun run() {
             mLock.withLock { mCondition.signalAll() }
@@ -723,10 +745,8 @@ class Locator private constructor(params: LocatorParams) {
 
             instance.removeLocatorListener(this)
 
-            mSerialList.forEach { serial -> mListener.onTargetFailure(serial, OnTargetTekdaqcFound.FailureFlag.TEKDAQC_NOT_LOCATED) }
-
+            mSerialList.forEach { serial -> mListener.onTargetFailure(serial,
+                    OnTargetTekdaqcFound.FailureFlag.TEKDAQC_NOT_LOCATED) }
         }
     }
-
-
 }

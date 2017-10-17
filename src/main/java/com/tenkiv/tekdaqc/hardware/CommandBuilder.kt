@@ -10,8 +10,8 @@ import java.lang.reflect.Array
 import java.util.*
 
 /**
- * Utility code which handles the creation of [ABaseQueueVal] for the purpose of adding them individually to a [Task] or
- * directly to the command queue via the [ATekdaqc].
+ * Utility code which handles the creation of [ABaseQueueVal] for the purpose of adding them
+ * individually to a [Task] or directly to the command queue via the [ATekdaqc].
 
  * @author Tenkiv (software@tenkiv.com)
  * *
