@@ -3,6 +3,7 @@ package com.tenkiv.tekdaqc.communication.command.queue.values
 import com.tenkiv.tekdaqc.communication.command.queue.Commands
 import com.tenkiv.tekdaqc.communication.command.queue.Params
 import com.tenkiv.tekdaqc.communication.command.queue.QueueUtil
+import java.io.NotSerializableException
 import java.io.ObjectInput
 import java.io.ObjectOutput
 import java.util.*
@@ -55,7 +56,7 @@ class QueueValue(command: Byte) : ABaseQueueVal(command) {
         (size..0).forEach {
             parameters.add(
                     Pair(Params.getValueFromOrdinal(`in`.readByte()),
-                            `in`.readObject() as String))
+                            `in`.readObject() as? String ?: throw NotSerializableException()))
         }
     }
 }

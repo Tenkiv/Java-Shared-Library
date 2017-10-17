@@ -1,7 +1,10 @@
 package com.tenkiv.tekdaqc.hardware
 
 import com.tenkiv.tekdaqc.communication.ascii.executors.ASCIIParsingExecutor
-import com.tenkiv.tekdaqc.communication.command.queue.*
+import com.tenkiv.tekdaqc.communication.command.queue.CommandQueueManager
+import com.tenkiv.tekdaqc.communication.command.queue.ICommandManager
+import com.tenkiv.tekdaqc.communication.command.queue.QueueCallback
+import com.tenkiv.tekdaqc.communication.command.queue.Task
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal
 import com.tenkiv.tekdaqc.communication.command.queue.values.IQueueObject
 import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData
@@ -20,15 +23,14 @@ import com.tenkiv.tekdaqc.telnet.client.SerialTelnetConnection
 import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError
-import com.tenkiv.tekdaqc.utility.*
+import com.tenkiv.tekdaqc.utility.reprepare
 import tec.uom.se.unit.Units
-
-import javax.measure.Quantity
-import javax.measure.quantity.Dimensionless
 import java.io.*
 import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.locks.ReentrantLock
+import javax.measure.Quantity
+import javax.measure.quantity.Dimensionless
 
 /**
  * Class which contains information about a specific Tekdaqc and provides
@@ -757,12 +759,7 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
 
         mCommandQueue.queueCommand(QueueCallback(object : ITaskComplete {
             override fun onTaskSuccess(tekdaqc: ATekdaqc) {
-                try {
-                    disconnect()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-
+                disconnect()
             }
 
             override fun onTaskFailed(tekdaqc: ATekdaqc) {
@@ -1304,7 +1301,7 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
 
     /**
      * Enumeration of the available connection methods.
-
+     *
      * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
@@ -1315,7 +1312,7 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
 
     /**
      * Enumeration of the available communication methods.
-
+     *
      * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
@@ -1326,7 +1323,7 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
 
     /**
      * Enumeration of the available analog input voltage scales.
-
+     *
      * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
@@ -1342,19 +1339,24 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
 
             private val mValueArray = AnalogScale.values()
 
-            fun getValueFromOrdinal(ordinal: Byte): AnalogScale {
-                return mValueArray[ordinal.toInt()]
-            }
+            /**
+             * Gets the AnalogScale corresponding to the ordinal position.
+             *
+             * @param ordinal The ordinal position to be fetched.
+             *
+             * @return The AnalogScale at the ordinal position.
+             */
+            fun getValueFromOrdinal(ordinal: Byte): AnalogScale = mValueArray[ordinal.toInt()]
 
-            fun fromString(scale: String): AnalogScale? {
-                for (s in values()) {
-                    if (s.scale == scale) {
-                        return s
-                    }
-                }
-                return null
-            }
+            /**
+             * Attempts to get the AnalogScale value from a string representation.
+             *
+             * @param scale The string to be parsed.
+             *
+             * @return The scale associated with the string or null on failure.
+             */
+            fun fromString(scale: String): AnalogScale? = values().firstOrNull { it.scale == scale }
+
         }
     }
-
 }

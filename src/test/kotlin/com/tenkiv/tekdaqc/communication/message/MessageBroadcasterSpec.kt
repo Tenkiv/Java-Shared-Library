@@ -23,7 +23,7 @@ class MessageBroadcasterSpec: ShouldSpec({
             eventually(2.seconds){
                 messageBroadcaster.addAnalogChannelListener(
                         simulatedTekdaqc,
-                        simulatedTekdaqc.analogInputs[0]!!,
+                        simulatedTekdaqc.getAnalogInput(0),
                         ICountListener { input, count ->
                             assert(true)
                         })
@@ -34,7 +34,7 @@ class MessageBroadcasterSpec: ShouldSpec({
             eventually(2.seconds){
                 messageBroadcaster.addAnalogVoltageListener(
                         simulatedTekdaqc,
-                        simulatedTekdaqc.analogInputs[0]!!,
+                        simulatedTekdaqc.getAnalogInput(0),
                         IVoltageListener { input, value ->
                             assert(true)
                         })
@@ -45,7 +45,7 @@ class MessageBroadcasterSpec: ShouldSpec({
             eventually(2.seconds){
                 messageBroadcaster.addDigitalChannelListener(
                         simulatedTekdaqc,
-                        simulatedTekdaqc.digitalInputs[0]!!,
+                        simulatedTekdaqc.getDigitalInput(0),
                         IDigitalChannelListener { input, data ->
                             assert(true)
                         })

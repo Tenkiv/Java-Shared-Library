@@ -17,7 +17,7 @@ import kotlin.concurrent.withLock
 import kotlin.concurrent.write
 
 /**
- * Created by tenkiv on 2/7/17.
+ * Class to locate Tekdaqcs on the Network or to connect to unknown Tekdaqcs based on IP address .
  */
 class Locator private constructor(params: LocatorParams) {
 
@@ -264,7 +264,7 @@ class Locator private constructor(params: LocatorParams) {
      * *                     This should match the physical jumpers on the board.
      * *
      * *
-     * @throws IOException
+     * @throws IOException On failed connection attempt.
      * @return A [ATekdaqc] object that represents an un-located, hypothetical Tekdaqc on the network.
      */
     fun connectToUnsafeTarget(serialNumber: String, hostIPAdress: String, tekdaqcRevision: Char, defaultScale: ATekdaqc.AnalogScale): ATekdaqc {
@@ -279,11 +279,7 @@ class Locator private constructor(params: LocatorParams) {
 
         val tekdaqc = createTekdaqc(pseudoResponse, false)
 
-        try {
-            tekdaqc.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
-        } catch (e: IOException) {
-            throw e
-        }
+        tekdaqc.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
 
         return tekdaqc
 

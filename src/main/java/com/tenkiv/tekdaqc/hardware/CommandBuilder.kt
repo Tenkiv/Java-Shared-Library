@@ -3,12 +3,11 @@ package com.tenkiv.tekdaqc.hardware
 import com.tenkiv.tekdaqc.communication.command.queue.Commands
 import com.tenkiv.tekdaqc.communication.command.queue.Params
 import com.tenkiv.tekdaqc.communication.command.queue.Task
-import com.tenkiv.tekdaqc.communication.command.queue.values.*
+import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal
+import com.tenkiv.tekdaqc.communication.command.queue.values.QueueValue
 import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities
-
 import java.lang.reflect.Array
-import java.security.InvalidParameterException
-import java.util.ArrayList
+import java.util.*
 
 /**
  * Utility code which handles the creation of [ABaseQueueVal] for the purpose of adding them individually to a [Task] or

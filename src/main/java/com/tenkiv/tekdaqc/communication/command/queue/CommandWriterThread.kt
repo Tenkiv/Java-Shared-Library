@@ -19,7 +19,7 @@ internal class CommandWriterThread(val tekdaqc: ATekdaqc, val mValue: ABaseQueue
     override fun run() {
         try {
             writeToStream(mValue)
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             tekdaqc.criticalErrorNotification(TekdaqcCriticalError.TERMINAL_CONNECTION_DISRUPTION)
         }
 

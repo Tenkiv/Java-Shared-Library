@@ -58,7 +58,7 @@ class TekdaqcSpec: ShouldSpec({
                 tekdaqc.readAllDigitalInput(10)
                 mCommandQueue.numberQueued shouldBe 16
 
-                addAnalogInput(tekdaqc.analogInputs[0]!!)
+                addAnalogInput(tekdaqc.getAnalogInput(0))
                 mCommandQueue.numberQueued shouldBe 18
 
                 setDigitalOutput("0000000000000000")
@@ -70,10 +70,10 @@ class TekdaqcSpec: ShouldSpec({
                 setDigitalOutput(BooleanArray(16,{false}))
                 mCommandQueue.numberQueued shouldBe 24
 
-                removeAnalogInput(tekdaqc.analogInputs[0]!!)
+                removeAnalogInput(tekdaqc.getAnalogInput(0))
                 mCommandQueue.numberQueued shouldBe 26
 
-                addDigitalInput(tekdaqc.digitalInputs[0]!!)
+                addDigitalInput(tekdaqc.getDigitalInput(0))
                 mCommandQueue.numberQueued shouldBe 28
 
                 systemGainCalibrate(0)
