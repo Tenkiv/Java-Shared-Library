@@ -35,32 +35,38 @@ class MessageBroadcaster {
     /**
      * Map of all registered all-channel listeners.
      */
-    private val mFullListeners = ConcurrentHashMap<ATekdaqc, MutableList<IMessageListener>>()
+    private val mFullListeners =
+            ConcurrentHashMap<ATekdaqc, MutableList<IMessageListener>>()
 
     /**
      * Map of all registered network listeners.
      */
-    private val mNetworkListeners = ConcurrentHashMap<ATekdaqc, MutableList<INetworkListener>>()
+    private val mNetworkListeners =
+            ConcurrentHashMap<ATekdaqc, MutableList<INetworkListener>>()
 
     /**
      * Map of all registered count listeners.
      */
-    private val mAnalogCountListeners = ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<ICountListener>>>()
+    private val mAnalogCountListeners =
+            ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<ICountListener>>>()
 
     /**
      * Map of all registered voltage listeners.
      */
-    private val mAnalogVoltageListeners = ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IVoltageListener>>>()
+    private val mAnalogVoltageListeners =
+            ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IVoltageListener>>>()
 
     /**
      * Map of all registered digital listeners.
      */
-    private val mDigitalChannelListeners = ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IDigitalChannelListener>>>()
+    private val mDigitalChannelListeners =
+            ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IDigitalChannelListener>>>()
 
     /**
      * Map of all registered PWM Input listeners.
      */
-    private val mPWMChannelListeners = ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IPWMChannelListener>>>()
+    private val mPWMChannelListeners =
+            ConcurrentHashMap<ATekdaqc, MutableMap<Int, MutableList<IPWMChannelListener>>>()
 
     /**
      * Map of prioritized listeners.
@@ -293,7 +299,11 @@ class MessageBroadcaster {
         unregisterInputListener(tekdaqc, input, listener, mDigitalChannelListeners)
     }
 
-    private fun <IT : IInputOutputHardware, LT> unregisterInputListener(tekdaqc: ATekdaqc, input: IT, listener: LT, listenerMap: MutableMap<ATekdaqc, MutableMap<Int, MutableList<LT>>>) {
+    private fun <IT : IInputOutputHardware, LT> unregisterInputListener(tekdaqc: ATekdaqc,
+                                                                        input: IT,
+                                                                        listener: LT,
+                                                                        listenerMap: MutableMap<ATekdaqc,
+                                                                                MutableMap<Int, MutableList<LT>>>) {
         val listeners = listenerMap[tekdaqc]?.get(input.channelNumber)
 
         if (listeners != null) {
@@ -351,7 +361,8 @@ class MessageBroadcaster {
                     val channelListeners = mAnalogCountListeners[tekdaqc]?.get(data.physicalInput)
                     channelListeners?.let {
                         synchronized(it) {
-                            channelListeners.forEach { listener -> listener.onAnalogDataReceived(tekdaqc.getAnalogInput(data.physicalInput), data.data) }
+                            channelListeners.forEach { listener ->
+                                listener.onAnalogDataReceived(tekdaqc.getAnalogInput(data.physicalInput), data.data) }
                         }
                     }
                 }
@@ -403,7 +414,9 @@ class MessageBroadcaster {
                 val channelListeners = mDigitalChannelListeners[tekdaqc]?.get(data.physicalInput)
                 channelListeners?.let {
                     synchronized(it) {
-                        channelListeners.forEach { listener -> listener.onDigitalDataReceived(tekdaqc.getDigitalInput(data.physicalInput), data) }
+                        channelListeners.forEach {
+                            listener ->
+                            listener.onDigitalDataReceived(tekdaqc.getDigitalInput(data.physicalInput), data) }
                     }
                 }
             }
@@ -423,7 +436,9 @@ class MessageBroadcaster {
                 val channelListeners = mPWMChannelListeners[tekdaqc]?.get(data.physicalInput)
                 channelListeners?.let {
                     synchronized(it) {
-                        channelListeners.forEach { listener -> listener.onPWMDataReceived(tekdaqc.getDigitalInput(data.physicalInput), data) }
+                        channelListeners.forEach {
+                            listener ->
+                            listener.onPWMDataReceived(tekdaqc.getDigitalInput(data.physicalInput), data) }
                     }
                 }
             }
@@ -434,7 +449,8 @@ class MessageBroadcaster {
      * Class that wraps callbacks from the [com.tenkiv.tekdaqc.communication.ascii.executors.ASCIIParsingExecutor]
      * so that they are called back in a different thread.
      */
-    private inner class BroadcastRunnable(internal val mTekdaqc: ATekdaqc, internal val mMessage: ABoardMessage) : Runnable {
+    private inner class BroadcastRunnable(internal val mTekdaqc: ATekdaqc,
+                                          internal val mMessage: ABoardMessage) : Runnable {
 
         override fun run() {
 
@@ -449,13 +465,18 @@ class MessageBroadcaster {
                 synchronized(listeners) {
                     for (listener in listeners) {
                         when (mMessage.type) {
-                            ASCIIMessageUtils.MESSAGE_TYPE.DEBUG -> listener.onDebugMessageReceived(mTekdaqc, mMessage)
-                            ASCIIMessageUtils.MESSAGE_TYPE.STATUS -> listener.onStatusMessageReceived(mTekdaqc, mMessage)
-                            ASCIIMessageUtils.MESSAGE_TYPE.ERROR -> listener.onErrorMessageReceived(mTekdaqc, mMessage)
-                            ASCIIMessageUtils.MESSAGE_TYPE.COMMAND_DATA -> listener.onCommandDataMessageReceived(mTekdaqc, mMessage)
+                            ASCIIMessageUtils.MESSAGE_TYPE.DEBUG ->
+                                listener.onDebugMessageReceived(mTekdaqc, mMessage)
+                            ASCIIMessageUtils.MESSAGE_TYPE.STATUS ->
+                                listener.onStatusMessageReceived(mTekdaqc, mMessage)
+                            ASCIIMessageUtils.MESSAGE_TYPE.ERROR ->
+                                listener.onErrorMessageReceived(mTekdaqc, mMessage)
+                            ASCIIMessageUtils.MESSAGE_TYPE.COMMAND_DATA ->
+                                listener.onCommandDataMessageReceived(mTekdaqc, mMessage)
                             ASCIIMessageUtils.MESSAGE_TYPE.DIGITAL_OUTPUT_DATA -> {
-                                listener.onDigitalOutputDataReceived(mTekdaqc, (mMessage as ASCIIDigitalOutputDataMessage)
-                                        .digitalOutputArray)
+                                listener.onDigitalOutputDataReceived(
+                                        mTekdaqc,
+                                        (mMessage as ASCIIDigitalOutputDataMessage).digitalOutputArray)
                                 System.err.println("Unknown message type with serial: " + mTekdaqc.serialNumber)
                             }
                             else -> System.err.println("Unknown message type with serial: " + mTekdaqc.serialNumber)
@@ -467,7 +488,8 @@ class MessageBroadcaster {
         }
     }
 
-    private inner class NetworkBroadcastRunnable(internal val mTekdaqc: ATekdaqc, internal val mMessage: ABoardMessage) : Runnable {
+    private inner class NetworkBroadcastRunnable(
+            internal val mTekdaqc: ATekdaqc, internal val mMessage: ABoardMessage) : Runnable {
 
         override fun run() {
             val listeners = mNetworkListeners[mTekdaqc]
