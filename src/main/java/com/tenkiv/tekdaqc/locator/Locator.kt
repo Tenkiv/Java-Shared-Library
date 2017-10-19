@@ -27,6 +27,16 @@ class Locator private constructor(params: LocatorParams) {
 
     companion object {
         val instance: Locator by lazy { SINGLETON_INSTANCE.INSTANCE }
+
+        /**
+         * The default delay on the [Locator] running.
+         */
+        private const val DEFAULT_LOCATOR_DELAY: Long = 0
+
+        /**
+         * The default period of running the [Locator].
+         */
+        private const val DEFAULT_LOCATOR_PERIOD: Long = 500
     }
 
     /**
@@ -45,17 +55,12 @@ class Locator private constructor(params: LocatorParams) {
     private val activeTekdaqcMap = HashMap<String, ATekdaqc>()
 
     /**
-     * Flag to enable/disable debug logging
-     */
-    private var DEBUG = false
-
-    /**
      * The parameter set to use for the locator request
      */
     private var params: LocatorParams = LocatorParams.Builder().build()
 
     /**
-     * Lock ensuring thread safety of [Locator.mTempMapLock]
+     * Lock ensuring thread safety of [Locator.tempMapLock]
      */
     private val tempMapLock = ReentrantReadWriteLock()
 
@@ -68,16 +73,6 @@ class Locator private constructor(params: LocatorParams) {
      * The listeners associated with the locator.
      */
     private val listeners = Collections.synchronizedList(ArrayList<OnTekdaqcDiscovered>())
-
-    /**
-     * The default delay on the [Locator] running.
-     */
-    private val DEFAULT_LOCATOR_DELAY: Long = 0
-
-    /**
-     * The default period of running the [Locator].
-     */
-    private val DEFAULT_LOCATOR_PERIOD: Long = 500
 
     /**
      * Boolean determining if the [Locator] is running.
@@ -186,24 +181,6 @@ class Locator private constructor(params: LocatorParams) {
     }
 
     /**
-     * Get the status of debug logging.
-
-     * @return boolean True if debug logging is enabled.
-     */
-    fun getDebug(): Boolean {
-        return DEBUG
-    }
-
-    /**
-     * Set status of debug logging.
-
-     * @param debug boolean The state to set debugging to.
-     */
-    fun setDebug(debug: Boolean) {
-        DEBUG = debug
-    }
-
-    /**
      * Factory method for producing a [ATekdaqc] of the correct subclass
      * based on the response from the locator service.
 
@@ -227,7 +204,7 @@ class Locator private constructor(params: LocatorParams) {
                     addTekdaqcToMap(tekdaqc)
                 }
             }
-            else -> throw IllegalArgumentException("Unknown Tekdaqc Revision: " + response.type.toChar())
+            else -> throw IllegalArgumentException("Unknown Tekdaqc Revision: " + response.type)
         }
         return tekdaqc
     }
@@ -330,7 +307,7 @@ class Locator private constructor(params: LocatorParams) {
      */
     protected fun addTekdaqcToMap(tekdaqc: ATekdaqc) {
         tekdaqcMapLock.write {
-            (activeTekdaqcMap as java.util.Map<String, ATekdaqc>).putIfAbsent(tekdaqc.serialNumber, tekdaqc)
+            activeTekdaqcMap.putIfAbsent(tekdaqc.serialNumber, tekdaqc)
         }
     }
 
@@ -358,21 +335,16 @@ class Locator private constructor(params: LocatorParams) {
     @Throws(SocketException::class, UnknownHostException::class)
     private fun locate(address: InetAddress): Boolean {
 
-        val mSocket = DatagramSocket(params.getPort())
+        val mSocket = DatagramSocket(params.port)
         mSocket.broadcast = true
-        mSocket.soTimeout = params.getTimeout()
+        mSocket.soTimeout = params.timeout
 
-        try {
+        return try {
             sendDiscoveryRequest(mSocket, address)
-            return true
+            true
         } catch (e: IOException) {
-            if (DEBUG)
-                println("Unable to discover targets due to IO Exception.")
-
-            return false
+            false
         } finally {
-            if (DEBUG)
-                println("Closing socket...")
             mSocket.close()
         }
     }
@@ -393,49 +365,45 @@ class Locator private constructor(params: LocatorParams) {
         val data = message.toByteArray()
         var buf = ByteArray(1024)
 
-        if (DEBUG) {
-            println("Data bytes length: " + data.size + " String Length: " + message.length)
-            println("Sending discovery packet...")
-        }
-
         socket.send(DatagramPacket(data, data.size, addr, params.getPort()))
 
         while (true) {
             try {
                 val packet = DatagramPacket(buf, buf.size)
-                if (DEBUG)
-                    println("Waiting for return packet...")
+
                 socket.receive(packet)
 
                 val response = LocatorResponse(packet.address.hostAddress, packet.data)
 
                 if (response.isValid(params)) {
-
-                    tempMapLock.write {
-                        if (isKnownTekdaqc(response.serial)) {
-                            tempTekdaqcMap.put(response.serial, getTekdaqcForSerial(response.serial)!!)
-                        } else {
-                            val tekdaqc = createTekdaqc(response, true)
-                            tempTekdaqcMap.put(tekdaqc.serialNumber, tekdaqc)
-
-                            for (listener in listeners) {
-                                listener.onTekdaqcFirstLocated(tekdaqc)
-                            }
-                        }
-                        for (listener in listeners) {
-                            listener.onTekdaqcResponse(getTekdaqcForSerial(response.serial))
-                        }
-                    }
-
-                } else {
-                    if (DEBUG) println("Invalid response received: ")
+                    handleResponse(response)
                 }
+
             } catch (e: SocketTimeoutException) {
-                if (DEBUG) println("Discovery timed out.")
                 return
             }
 
             buf = ByteArray(1024)
+        }
+    }
+
+    private fun handleResponse(response: LocatorResponse){
+        tempMapLock.write {
+            if (isKnownTekdaqc(response.serial)) {
+                tempTekdaqcMap.put(response.serial,
+                        getTekdaqcForSerial(response.serial) ?:
+                                createTekdaqc(response, true))
+            } else {
+                val tekdaqc = createTekdaqc(response, true)
+                tempTekdaqcMap.put(tekdaqc.serialNumber, tekdaqc)
+
+                for (listener in listeners) {
+                    listener.onTekdaqcFirstLocated(tekdaqc)
+                }
+            }
+            for (listener in listeners) {
+                listener.onTekdaqcResponse(getTekdaqcForSerial(response.serial))
+            }
         }
     }
 
@@ -515,6 +483,7 @@ class Locator private constructor(params: LocatorParams) {
      */
     fun searchForTekdaqcsForDuration(totalTimeMillis: Long) {
         timeRemaining = totalTimeMillis
+        isTimed = true
 
         if (isActive()) {
             cancelLocator()
@@ -681,32 +650,21 @@ class Locator private constructor(params: LocatorParams) {
      * @param listener The [OnTargetTekdaqcFound] listener to be notified.
      * *
      * @param autoConnect If the program should automatically connect.
+     *
+     * @param defaultScale The default scale to connect at.
      */
     internal constructor(
-            /**
-             * The [List] of the serial numbers to find.
-             */
-            private val mSerialList: MutableList<String>,
-            /**
-             * The [OnTargetTekdaqcFound] listener to be notified.
-             */
-            private val mListener: OnTargetTekdaqcFound,
-            /**
-             * If [ATekdaqc] should be automatically connected to.
-             */
-            private val mAutoConnect: Boolean,
-            /**
-             * The default [ATekdaqc.AnalogScale] for autoconnect.
-             */
-            private val mDefaultScale: ATekdaqc.AnalogScale) : TimerTask(), OnTekdaqcDiscovered {
+            private val serialList: MutableList<String>,
+            private val listener: OnTargetTekdaqcFound,
+            private val autoConnect: Boolean,
+            private val defaultScale: ATekdaqc.AnalogScale) : TimerTask(), OnTekdaqcDiscovered {
 
         /**
          * The list of [ATekdaqc]s which have been found.
          */
-        private val mTekdaqcList = ArrayList<ATekdaqc>()
+        private val tekdaqcList = ArrayList<ATekdaqc>()
 
         init {
-
             instance.addLocatorListener(this)
 
             if (!instance.isActive) {
@@ -720,19 +678,19 @@ class Locator private constructor(params: LocatorParams) {
 
         override fun onTekdaqcFirstLocated(board: ATekdaqc) {
 
-            if (mSerialList.contains(board.serialNumber)) {
-                if (mAutoConnect) {
-                    board.connect(mDefaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
+            if (serialList.contains(board.serialNumber)) {
+                if (autoConnect) {
+                    board.connect(defaultScale, ATekdaqc.CONNECTION_METHOD.ETHERNET)
                 }
 
-                mListener.onTargetFound(board)
+                listener.onTargetFound(board)
 
-                mSerialList.remove(board.serialNumber)
+                serialList.remove(board.serialNumber)
 
-                mTekdaqcList.add(board)
+                tekdaqcList.add(board)
 
-                if (mSerialList.size == 0) {
-                    mListener.onAllTargetsFound(LinkedHashSet(mTekdaqcList))
+                if (serialList.size == 0) {
+                    listener.onAllTargetsFound(LinkedHashSet(tekdaqcList))
                 }
             }
         }
@@ -745,7 +703,7 @@ class Locator private constructor(params: LocatorParams) {
 
             instance.removeLocatorListener(this)
 
-            mSerialList.forEach { serial -> mListener.onTargetFailure(serial,
+            serialList.forEach { serial -> listener.onTargetFailure(serial,
                     OnTargetTekdaqcFound.FailureFlag.TEKDAQC_NOT_LOCATED) }
         }
     }

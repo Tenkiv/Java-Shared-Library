@@ -8,7 +8,9 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.NetworkInterface
+import java.util.*
 import kotlin.concurrent.thread
+import kotlin.concurrent.timerTask
 
 @Volatile
 private var onResponseCalled = false
@@ -43,13 +45,13 @@ class LocatorSpec : ShouldSpec({
             })
         }
 
-        Locator.instance.searchForTekdaqcs()
+        Locator.instance.searchForTekdaqcsForDuration(3000)
 
         Locator.instance.enableLoopbackBroadcast = true
 
         sendFakeTekdaqcUPD()
 
-        sleep(3000)
+        sleep(3500)
 
         should("have called all locator responses"){
             onResponseCalled shouldBe true
@@ -82,6 +84,29 @@ class LocatorSpec : ShouldSpec({
 
         should("have found specified tekdaqc"){
             specificWasLocated shouldBe true
+        }
+    }
+
+    "Blocking Search for Specific"{
+
+        val timer = Timer()
+
+        var count = 5
+
+        timer.schedule(timerTask {
+            if(count > 0){
+                sendFakeTekdaqcUPD()
+                count--
+            }else{
+                this.cancel()
+            }
+        },1000,1000)
+
+        val tekdaqcs = Locator.instance.blockingSearchForSpecificTekdaqcs(
+                timeoutMillis = 5000,serials = "00000000000000000000000000000012")
+
+        should("not be empty"){
+            tekdaqcs.isNotEmpty() shouldBe true
         }
     }
 })
