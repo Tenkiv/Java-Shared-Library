@@ -19,7 +19,7 @@ class MessageBroadcasterSpec: ShouldSpec({
         val simulatedTekdaqc = Tekdaqc_RevD(getSimulatedLocatorResponse())
         val messageBroadcaster = simulatedTekdaqc.messageBroadcaster
 
-        should("Receive Analog Count Data"){
+        should("Receive analog count data"){
             eventually(2.seconds){
                 messageBroadcaster.addAnalogChannelListener(
                         simulatedTekdaqc,
@@ -30,7 +30,7 @@ class MessageBroadcasterSpec: ShouldSpec({
             }
         }
 
-        should("Receive Voltage Count Data"){
+        should("Receive voltage count data"){
             eventually(2.seconds){
                 messageBroadcaster.addAnalogVoltageListener(
                         simulatedTekdaqc,
@@ -41,7 +41,7 @@ class MessageBroadcasterSpec: ShouldSpec({
             }
         }
 
-        should("Receive Digital Data"){
+        should("Receive digital data"){
             eventually(2.seconds){
                 messageBroadcaster.addDigitalChannelListener(
                         simulatedTekdaqc,
@@ -52,7 +52,7 @@ class MessageBroadcasterSpec: ShouldSpec({
             }
         }
 
-        should("Receive Any Data"){
+        should("Receive any data"){
             eventually(2.seconds){
                 messageBroadcaster.addMessageListener(
                         simulatedTekdaqc,

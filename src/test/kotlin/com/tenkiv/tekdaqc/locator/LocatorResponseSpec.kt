@@ -1,5 +1,6 @@
 package com.tenkiv.tekdaqc.locator
 
+import com.tenkiv.tekdaqc.*
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.ShouldSpec
 
@@ -40,11 +41,19 @@ class LocatorResponseSpec: ShouldSpec ({
     "LocatorResponseSpec"{
         val response = getSimulatedLocatorResponse()
 
-        response.type shouldBe 'E'
-        response.mMACAddress shouldBe "34:68:52:16:35:96"
-        response.hostIP shouldBe "0.0.0.0"
-        response.mSerial shouldBe "00000000000000000000000000000012"
-        response.firwareVersion shouldBe "1.3.1.0"
+        should("Equal correct values"){
+            response.type shouldBe TYPE
+            response.mMACAddress shouldBe MACADDR
+            response.hostIP shouldBe IPADDR
+            response.mSerial shouldBe SERIAL
+            response.firwareVersion shouldBe FIRMWARE
+        }
+
+        should("Serialize correctly"){
+            val obj = serializeToAny(response)
+            (obj is LocatorResponse) shouldBe true
+            (obj as LocatorResponse).mSerial shouldBe SERIAL
+        }
     }
 })
 
@@ -54,4 +63,4 @@ class LocatorResponseSpec: ShouldSpec ({
  * @return A fake locatorResponse for testing
  */
 fun getSimulatedLocatorResponse(): LocatorResponse =
-        LocatorResponse("0.0.0.0", spoofedLocatorResponse)
+        LocatorResponse(IPADDR, spoofedLocatorResponse)

@@ -53,7 +53,7 @@ class LocatorSpec : ShouldSpec({
 
         sleep(3500)
 
-        should("have called all locator responses"){
+        should("Have called all locator responses"){
             onResponseCalled shouldBe true
 
             onFirstLocatedCalled shouldBe true
@@ -82,7 +82,7 @@ class LocatorSpec : ShouldSpec({
 
         sleep(3000)
 
-        should("have found specified tekdaqc"){
+        should("Have found specified tekdaqc"){
             specificWasLocated shouldBe true
         }
     }
@@ -105,7 +105,7 @@ class LocatorSpec : ShouldSpec({
         val tekdaqcs = Locator.instance.blockingSearchForSpecificTekdaqcs(
                 timeoutMillis = 5000,serials = "00000000000000000000000000000012")
 
-        should("not be empty"){
+        should("Not be empty"){
             tekdaqcs.isNotEmpty() shouldBe true
         }
     }

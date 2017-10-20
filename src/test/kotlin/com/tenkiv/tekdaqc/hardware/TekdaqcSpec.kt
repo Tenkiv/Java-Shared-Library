@@ -1,5 +1,6 @@
 package com.tenkiv.tekdaqc.hardware
 
+import com.tenkiv.tekdaqc.*
 import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData
 import com.tenkiv.tekdaqc.locator.getSimulatedLocatorResponse
 import io.kotlintest.matchers.shouldBe
@@ -14,14 +15,24 @@ class TekdaqcSpec: ShouldSpec({
     "TekdaqcSpec"{
         val tekdaqc = Tekdaqc_RevD(getSimulatedLocatorResponse())
 
-        should("Have certain numbers of i/o"){
+        should("Temperature reference check"){
+            tekdaqc.temperatureReference shouldNotBe null
+        }
+
+        should("Have basic properties"){
+
             tekdaqc.analogInputs.size shouldEqual 32
             tekdaqc.digitalInputs.size shouldEqual 24
             tekdaqc.digitalOutputs.size shouldEqual 16
-        }
 
-        should("Temperature reference check"){
-            tekdaqc.temperatureReference shouldNotBe null
+            tekdaqc.analogScale = ATekdaqc.AnalogScale.ANALOG_SCALE_400V
+            tekdaqc.analogScale shouldBe ATekdaqc.AnalogScale.ANALOG_SCALE_400V
+
+            tekdaqc.firmwareVersion shouldBe FIRMWARE
+            tekdaqc.hostIP shouldBe IPADDR
+            tekdaqc.macAddress shouldBe MACADDR
+            tekdaqc.title shouldBe TITLE
+            tekdaqc.serialNumber shouldBe SERIAL
         }
 
         should("Add values to a queue"){
@@ -29,9 +40,6 @@ class TekdaqcSpec: ShouldSpec({
             tekdaqc.apply {
                 //Command queue iterates by two. Once for the command and then the completion callback.
                 commandQueue.numberQueued shouldBe 0
-                should("some"){
-                    true shouldBe false
-                }
 
                 readAnalogInput(0,10)
                 commandQueue.numberQueued shouldBe 2

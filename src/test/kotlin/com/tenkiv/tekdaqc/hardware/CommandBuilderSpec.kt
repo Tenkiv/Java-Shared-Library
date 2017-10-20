@@ -19,7 +19,7 @@ class CommandBuilderSpec : ShouldSpec({
         val DIGITAL_OUTPUT_ON_BIN_STRING = "1111111111111111"
         val SET_DIGITAL_OUTPUT_ON = "SET_DIGITAL_OUTPUT --OUTPUT=ffff\r"
 
-        should("Generate Gain Calibration Value"){
+        should("Generate gain calibration value"){
             String(CommandBuilder.
                     writeGainCalibrationValue(
                             0f,
@@ -31,17 +31,17 @@ class CommandBuilderSpec : ShouldSpec({
                     .generateCommandBytes()).shouldEqual(WRITE_GAIN_CALIBRATION_VALUE)
         }
 
-        should("Generate Set Analog Scale Value") {
+        should("Generate set analog scale value") {
             String(CommandBuilder.setAnalogInputScale(ATekdaqc.AnalogScale.ANALOG_SCALE_5V)
                     .generateCommandBytes()).shouldEqual(SET_ANALOG_INPUT_SCALE)
         }
 
-        should("Generate Add Analog Input Value") {
+        should("Generate add analog input value") {
             String(CommandBuilder.addAnalogInput(analogInput)
                     .generateCommandBytes()).shouldEqual(ADD_ANALOG_INPUT)
         }
 
-        should("Set Digital Output"){
+        should("Set digital output"){
             String(CommandBuilder.setDigitalOutputByHex(
                     DigitalOutputUtilities.hexConversion(
                             DIGITAL_OUTPUT_ON_BIN_STRING))
