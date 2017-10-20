@@ -1,9 +1,8 @@
 package com.tenkiv.tekdaqc.locator
 
+import com.tenkiv.tekdaqc.*
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.ShouldSpec
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 
 val spoofedLocatorResponse = byteArrayOf(-2, 115, 2, 69, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
         48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 50, -64, -88, 0, 118, 52, 104, 82, 22, 53, -106, 1,
@@ -35,17 +34,33 @@ val spoofedLocatorResponse = byteArrayOf(-2, 115, 2, 69, 48, 48, 48, 48, 48, 48,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+/**
+ * Class to test LocatorResponse generation.
+ */
 class LocatorResponseSpec: ShouldSpec ({
     "LocatorResponseSpec"{
         val response = getSimulatedLocatorResponse()
 
-        response.type shouldBe 'E'
-        response.mMACAddress shouldBe "34:68:52:16:35:96"
-        response.hostIP shouldBe "0.0.0.0"
-        response.mSerial shouldBe "00000000000000000000000000000012"
-        response.firwareVersion shouldBe "1.3.1.0"
+        should("Equal correct values"){
+            response.type shouldBe TYPE
+            response.mMACAddress shouldBe MACADDR
+            response.hostIP shouldBe IPADDR
+            response.mSerial shouldBe SERIAL
+            response.firwareVersion shouldBe FIRMWARE
+        }
+
+        should("Serialize correctly"){
+            val obj = serializeToAny(response)
+            (obj is LocatorResponse) shouldBe true
+            (obj as LocatorResponse).mSerial shouldBe SERIAL
+        }
     }
 })
 
+/**
+ * Generates a simulated LocatorResponse
+ *
+ * @return A fake locatorResponse for testing
+ */
 fun getSimulatedLocatorResponse(): LocatorResponse =
-        LocatorResponse("0.0.0.0", spoofedLocatorResponse)
+        LocatorResponse(IPADDR, spoofedLocatorResponse)

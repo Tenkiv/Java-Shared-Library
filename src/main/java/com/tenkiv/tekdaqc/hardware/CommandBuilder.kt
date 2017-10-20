@@ -3,15 +3,15 @@ package com.tenkiv.tekdaqc.hardware
 import com.tenkiv.tekdaqc.communication.command.queue.Commands
 import com.tenkiv.tekdaqc.communication.command.queue.Params
 import com.tenkiv.tekdaqc.communication.command.queue.Task
-import com.tenkiv.tekdaqc.communication.command.queue.values.*
+import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal
+import com.tenkiv.tekdaqc.communication.command.queue.values.QueueValue
 import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities
-
 import java.lang.reflect.Array
-import java.util.ArrayList
+import java.util.*
 
 /**
- * Utility code which handles the creation of [ABaseQueueVal] for the purpose of adding them individually to a [Task] or
- * directly to the command queue via the [ATekdaqc].
+ * Utility code which handles the creation of [ABaseQueueVal] for the purpose of adding them
+ * individually to a [Task] or directly to the command queue via the [ATekdaqc].
 
  * @author Tenkiv (software@tenkiv.com)
  * *
@@ -27,13 +27,10 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readAnalogInput(input: Int, number: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun readAnalogInput(input: Int, number: Int): ABaseQueueVal = QueueValue(
                 Commands.READ_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, input.toByte()),
                 Pair(Params.NUMBER, number.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate the "READ_ANALOG_INPUT" command with a range of inputs.
@@ -46,13 +43,10 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readAnalogInputRange(start: Int, end: Int, number: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun readAnalogInputRange(start: Int, end: Int, number: Int): ABaseQueueVal = QueueValue(
                 Commands.READ_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, start.toString() + "-" + end),
                 Pair(Params.NUMBER, number.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate the "READ_ANALOG_INPUT" command with a set if inputs.
@@ -69,15 +63,12 @@ object CommandBuilder {
         for (input in inputs) {
             inputBuilder.append(input).append(',')
         }
-        inputBuilder.deleteCharAt(inputBuilder.length)
+        inputBuilder.deleteCharAt(inputBuilder.lastIndex)
 
-        val queueValue = QueueValue(
+        return QueueValue(
                 Commands.READ_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, inputBuilder.toString()),
                 Pair(Params.NUMBER, number.toByte()))
-
-        return queueValue
-
     }
 
     /**
@@ -87,13 +78,10 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readAllAnalogInput(number: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun readAllAnalogInput(number: Int): ABaseQueueVal = QueueValue(
                 Commands.READ_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, "ALL"),
                 Pair(Params.NUMBER, number.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate the "READ_ANALOG_INPUT" command with the given parameters.
@@ -104,13 +92,10 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readDigitalInput(input: Int, number: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun readDigitalInput(input: Int, number: Int): ABaseQueueVal = QueueValue(
                 Commands.READ_DIGITAL_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, input.toByte()),
                 Pair(Params.NUMBER, number.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate the "READ_ANALOG_INPUT" command with a range of inputs.
@@ -123,13 +108,10 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readDigitalInputRange(start: Int, end: Int, number: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun readDigitalInputRange(start: Int, end: Int, number: Int): ABaseQueueVal  = QueueValue(
                 Commands.READ_DIGITAL_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, start.toString() + "-" + end),
                 Pair(Params.NUMBER, number.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate the "READ_ANALOG_INPUT" command with a set if inputs.
@@ -146,14 +128,12 @@ object CommandBuilder {
         for (input in inputs) {
             inputBuilder.append(input).append(',')
         }
-        inputBuilder.deleteCharAt(inputBuilder.length)
+        inputBuilder.deleteCharAt(inputBuilder.lastIndex)
 
-        val queueValue = QueueValue(
+        return QueueValue(
                 Commands.READ_DIGITAL_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, inputBuilder.toString()),
                 Pair(Params.NUMBER, number.toByte()))
-
-        return queueValue
 
     }
 
@@ -164,13 +144,10 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readAllDigitalInput(number: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun readAllDigitalInput(number: Int): ABaseQueueVal  = QueueValue(
                 Commands.READ_DIGITAL_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, "ALL"),
                 Pair(Params.NUMBER, number.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate the "ADD_ANALOG_INPUT" command with the given parameters.
@@ -179,13 +156,12 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      * *
-     * @throws IllegalArgumentException Thrown if the [AAnalogInput] contains incorrect values.
+     * @throws IllegalArgumentException Thrown if the [AAnalogInput] is of the improper type.
      * *
-     * @throws IllegalStateException    Thrown if the [AAnalogInput] is of the improper type.
      */
     @Throws(IllegalArgumentException::class, IllegalStateException::class)
     fun addAnalogInput(input: AAnalogInput): ABaseQueueVal {
-        val Input = input as AnalogInput_RevD
+        val Input = input as? AnalogInput_RevD ?: throw IllegalArgumentException()
         val queueValue = QueueValue(
                 Commands.ADD_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, Input.channelNumber.toByte()),
@@ -202,20 +178,17 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      * *
-     * @throws IllegalArgumentException Thrown if the [DigitalInput] contains incorrect values.
      * *
-     * @throws IllegalStateException    Thrown if the [DigitalInput] is of the improper type.
+     * @throws IllegalArgumentException    Thrown if the [DigitalInput] is of the improper type.
      */
-    @Throws(IllegalArgumentException::class, IllegalStateException::class)
-    fun addDigitalInput(input: DigitalInput): ABaseQueueVal {
-        val queueValue = QueueValue(
+    @Throws(IllegalArgumentException::class)
+    fun addDigitalInput(input: DigitalInput): ABaseQueueVal  = QueueValue(
                 Commands.ADD_DIGITAL_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, input.channelNumber.toByte()))
-        return queueValue
-    }
 
     /**
-     * Method to generate the "SET_DIGITAL_OUTPUTS" command with a [String] representing its binary state. Ie. "001100110011"
+     * Method to generate the "SET_DIGITAL_OUTPUTS" command with a [String] representing its binary state.
+     * Ie. "001100110011"
 
      * @param binaryString The [String] representing the desired values for the digital outputs as a binary string.
      * *
@@ -229,7 +202,8 @@ object CommandBuilder {
     }
 
     /**
-     * Method to generate the "SET_DIGITAL_OUTPUTS" command with a [String] representing its binary state. Ie. "001100110011"
+     * Method to generate the "SET_DIGITAL_OUTPUTS" command with a [String] representing its binary state.
+     * Ie. "001100110011"
 
      * @return The [ABaseQueueVal] of the command.
      */
@@ -244,17 +218,16 @@ object CommandBuilder {
     }
 
     /**
-     * Method to generate the "SET_DIGITAL_OUTPUTS" command with a [String] representing its binary state as a hex value. Ie. "FFFF"
+     * Method to generate the "SET_DIGITAL_OUTPUTS" command with a [String] representing its binary state
+     * as a hex value. Ie. "FFFF"
 
      * @param hex The [String] representing the desired values for the digital outputs as a hexadecimal code.
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun setDigitalOutputByHex(hex: String): ABaseQueueVal {
-        return QueueValue(
+    fun setDigitalOutputByHex(hex: String): ABaseQueueVal = QueueValue(
                 Commands.SET_DIGITAL_OUTPUT.ordinalCommandType,
                 Pair(Params.OUTPUT, hex))
-    }
 
     /**
      * Method to generate the "SET_DIGITAL_OUTPUTS" command with an array of booleans representing its desired state.
@@ -277,12 +250,9 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun removeAnalogInput(input: AAnalogInput): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun removeAnalogInput(input: AAnalogInput): ABaseQueueVal = QueueValue(
                 Commands.REMOVE_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, input.channelNumber.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate the "REMOVE_ANALOG_INPUT" command from input number.
@@ -291,19 +261,19 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun removeAnalogInputByNumber(input: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun removeAnalogInputByNumber(input: Int): ABaseQueueVal  = QueueValue(
                 Commands.REMOVE_ANALOG_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, input.toByte()))
-        return queueValue
-    }
 
     /**
-     * Method to generate a [List] of [ABaseQueueVal] representing the commands to remove all analog inputs on the given [Map].
+     * Method to generate a [List] of [ABaseQueueVal] representing the commands to remove all analog
+     * inputs on the given [Map].
 
      * @param inputs The [Map] of the inputs to be removed.
      * *
      * @return The [List] of [ABaseQueueVal] representing the commands.
+     *
+     * @throws IllegalArgumentException
      */
     fun removeMappedAnalogInputs(inputs: Map<Int, AAnalogInput>): List<ABaseQueueVal> {
         val keys = inputs.keys
@@ -312,7 +282,7 @@ object CommandBuilder {
                 .map {
                     QueueValue(
                             Commands.REMOVE_ANALOG_INPUT.ordinalCommandType,
-                            Pair(Params.INPUT, it!!.channelNumber.toByte()))
+                            Pair(Params.INPUT, it?.channelNumber?.toByte()?:throw IllegalArgumentException()))
                 }
         return queueVals
     }
@@ -324,12 +294,9 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun removeDigitalInput(input: DigitalInput): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun removeDigitalInput(input: DigitalInput): ABaseQueueVal = QueueValue(
                 Commands.REMOVE_DIGITAL_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, input.channelNumber.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the "REMOVE_DIGITAL_INPUT" command.
@@ -338,19 +305,18 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun removeDigitalInputByNumber(input: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun removeDigitalInputByNumber(input: Int): ABaseQueueVal  = QueueValue(
                 Commands.REMOVE_DIGITAL_INPUT.ordinalCommandType,
                 Pair(Params.INPUT, input.toByte()))
-        return queueValue
-    }
 
     /**
-     * Method to generate a [List] of [ABaseQueueVal] representing the commands to remove all digital inputs on the given [Map].
+     * Method to generate a [List] of [ABaseQueueVal] representing the commands to remove all digital
+     * inputs on the given [Map].
 
      * @param inputs The [Map] of the inputs to be removed.
      * *
      * @return The [List] of [ABaseQueueVal] representing the commands.
+     * @throws IllegalArgumentException
      */
     fun removeMappedDigitalInputs(inputs: Map<Int, DigitalInput>): List<ABaseQueueVal> {
         val keys = inputs.keys
@@ -359,19 +325,20 @@ object CommandBuilder {
                 .map {
                     QueueValue(
                             Commands.REMOVE_DIGITAL_INPUT.ordinalCommandType,
-                            Pair(Params.INPUT, it!!.channelNumber.toByte()))
+                            Pair(Params.INPUT, it?.channelNumber?.toByte() ?: throw IllegalArgumentException()))
                 }
         return queueVals
     }
 
     /**
      * Method to generate a [List] of [ABaseQueueVal] representing commands to remove all known added digital inputs.
-     * Note: The library only knows which inputs it has added on this session and not which were added to the tekdaqc before connecting.
+     * Note: The library only knows which inputs it has added on this session and not which were added to the
+     * tekdaqc before connecting.
 
      * @return The [List] of [ABaseQueueVal] representing the commands.
      */
     fun deactivateAllDigitalInputs(): List<ABaseQueueVal> {
-        val queueVals = (0..Tekdaqc_RevD.DIGITAL_INPUT_COUNT - 1).map {
+        val queueVals = (0 until Tekdaqc_RevD.DIGITAL_INPUT_COUNT).map {
             QueueValue(
                     Commands.REMOVE_DIGITAL_INPUT.ordinalCommandType,
                     Pair(Params.INPUT, it.toByte()))
@@ -381,7 +348,8 @@ object CommandBuilder {
 
     /**
      * Method to generate a [List] of [ABaseQueueVal] representing commands to remove all known added analog inputs.
-     * Note: The library only knows which inputs it has added on this session and not which were added to the tekdaqc before connecting.
+     * Note: The library only knows which inputs it has added on this session and not which were added to the
+     * tekdaqc before connecting.
 
      * @return The [List] of [ABaseQueueVal] representing the commands.
      */
@@ -403,60 +371,51 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun setAnalogInputScale(scale: ATekdaqc.AnalogScale): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun setAnalogInputScale(scale: ATekdaqc.AnalogScale): ABaseQueueVal = QueueValue(
                 Commands.SET_ANALOG_INPUT_SCALE.ordinalCommandType,
                 Pair(Params.SCALE, scale.toString()))
-        return queueValue
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "GET_ANALOG_SCALE".
 
      * @return The [ABaseQueueVal] of the command.
      */
-    val analogInputScale: ABaseQueueVal
-        get() = QueueValue(
+    fun getAnalogInputScale(): ABaseQueueVal = QueueValue(
                 Commands.GET_ANALOG_INPUT_SCALE.ordinalCommandType)
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "SYSTEM_GCAL" with the given parameters.
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @param input Inputs which are being calibrated
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun systemGainCalibrate(input: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun systemGainCalibrate(input: Int): ABaseQueueVal = QueueValue(
                 Commands.SYSTEM_GCAL.ordinalCommandType,
                 Pair(Params.INPUT, input.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "READ_SYSTEM_GCAL".
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readSystemGainCalibration(): ABaseQueueVal {
-        return QueueValue(
+    fun readSystemGainCalibration(): ABaseQueueVal = QueueValue(
                 Commands.READ_SYSTEM_GCAL.ordinalCommandType)
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "READ_SELF_GCAL" with the given parameters.
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @param gain   Gain of the cal to read.
      * *
@@ -466,34 +425,29 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readSelfGainCalibration(gain: AAnalogInput.Gain, rate: AAnalogInput.Rate, buffer: AnalogInput_RevD.BufferState): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun readSelfGainCalibration(gain: AAnalogInput.Gain,
+                                rate: AAnalogInput.Rate,
+                                buffer: AnalogInput_RevD.BufferState): ABaseQueueVal = QueueValue(
                 Commands.READ_SELF_GCAL.ordinalCommandType,
                 Pair(Params.GAIN, gain.gain),
                 Pair(Params.RATE, rate.rate),
                 Pair(Params.BUFFER, buffer.name))
-        return queueValue
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "UPGRADE".
 
      * @return The [ABaseQueueVal] of the command.
      */
-    fun upgrade(): ABaseQueueVal {
-        return QueueValue(
+    fun upgrade(): ABaseQueueVal = QueueValue(
                 Commands.UPGRADE.ordinalCommandType)
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "IDENTIFY".
 
      * @return The [ABaseQueueVal] of the command.
      */
-    fun identify(): ABaseQueueVal {
-        return QueueValue(
+    fun identify(): ABaseQueueVal = QueueValue(
                 Commands.IDENTIFY.ordinalCommandType)
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "SAMPLE" with the given parameters.
@@ -502,22 +456,17 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun sample(number: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun sample(number: Int): ABaseQueueVal = QueueValue(
                 Commands.SAMPLE.ordinalCommandType,
                 Pair(Params.NUMBER, number))
-        return queueValue
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "HALT".
 
      * @return The [ABaseQueueVal] of the command.
      */
-    fun halt(): ABaseQueueVal {
-        return QueueValue(
+    fun halt(): ABaseQueueVal = QueueValue(
                 Commands.HALT.ordinalCommandType)
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "SET_RTC" with the given parameters.
@@ -526,41 +475,36 @@ object CommandBuilder {
      * *
      * @return The [ABaseQueueVal] of the command.
      */
-    fun setRTC(timestamp: Long): ABaseQueueVal {
-        return QueueValue(
+    fun setRTC(timestamp: Long): ABaseQueueVal = QueueValue(
                 Commands.WRITE_CALIBRATION_TEMP.ordinalCommandType,
                 Pair(Params.VALUE, timestamp.toString()))
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "READ_ADC_REGISTERS".
 
      * @return The [ABaseQueueVal] of the command.
      */
-    fun readADCRegisters(): ABaseQueueVal {
-        return QueueValue(
+    fun readADCRegisters(): ABaseQueueVal = QueueValue(
                 Commands.READ_ADC_REGISTERS.ordinalCommandType)
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "GET_CAL_STATUS".
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @return The [ABaseQueueVal] of the command.
      */
-    val calibrationStatus: ABaseQueueVal
-        get() = QueueValue(
+    fun getCalibrationStatus(): ABaseQueueVal = QueueValue(
                 Commands.GET_CALIBRATION_STATUS.ordinalCommandType)
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "WRITE_CAL_TEMP" with the given parameters.
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @param temp  Temperature of the index.
      * *
@@ -568,20 +512,17 @@ object CommandBuilder {
      * *
      * @return he [ABaseQueueVal] of the command.
      */
-    fun writeCalibrationTemperature(temp: Double, index: Int): ABaseQueueVal {
-        val queueValue = QueueValue(
+    fun writeCalibrationTemperature(temp: Double, index: Int): ABaseQueueVal  = QueueValue(
                 Commands.WRITE_CALIBRATION_TEMP.ordinalCommandType,
                 Pair(Params.TEMPERATURE, temp.toString()),
                 Pair(Params.INDEX, index.toByte()))
-        return queueValue
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "WRITE_SYSTEM_GAIN_CAL" with the given parameters.
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @param value  correction value.
      * *
@@ -597,9 +538,12 @@ object CommandBuilder {
      * *
      * @return he [ABaseQueueVal] of the command.
      */
-    fun writeGainCalibrationValue(value: Float, gain: AAnalogInput.Gain, rate: AAnalogInput.Rate, buffer: AnalogInput_RevD.BufferState, scale: ATekdaqc.AnalogScale, temp: Int): ABaseQueueVal {
-
-        return QueueValue(
+    fun writeGainCalibrationValue(value: Float,
+                                  gain: AAnalogInput.Gain,
+                                  rate: AAnalogInput.Rate,
+                                  buffer: AnalogInput_RevD.BufferState,
+                                  scale: ATekdaqc.AnalogScale,
+                                  temp: Int): ABaseQueueVal = QueueValue(
                 Commands.WRITE_GAIN_CALIBRATION_VALUE.ordinalCommandType,
                 Pair(Params.TEMPERATURE, temp),
                 Pair(Params.VALUE, value),
@@ -607,21 +551,18 @@ object CommandBuilder {
                 Pair(Params.RATE, rate.rate),
                 Pair(Params.GAIN, gain.gain),
                 Pair(Params.SCALE, scale.scale))
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "WRITE_CAL_VALID".
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @return The [ABaseQueueVal] of the command.
      */
-    fun writeCalibrationValid(): ABaseQueueVal {
-        return QueueValue(
+    fun writeCalibrationValid(): ABaseQueueVal = QueueValue(
                 Commands.WRITE_CALIBRATION_VALID.ordinalCommandType)
-    }
 
     /**
      * Method to generate a [ABaseQueueVal] representing the command "DISCONNECT".
@@ -643,8 +584,8 @@ object CommandBuilder {
      * Method to generate a [ABaseQueueVal] representing the command "ENTER_CALIBRATION_MODE".
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @return The [ABaseQueueVal] of the command.
      */
@@ -654,8 +595,8 @@ object CommandBuilder {
      * Method to generate a [ABaseQueueVal] representing the command "EXIT_CALIBRATION_MODE".
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @return The [ABaseQueueVal] of the command.
      */
@@ -665,8 +606,8 @@ object CommandBuilder {
      * Method to generate a [ABaseQueueVal] representing the command "WRITE_SERIAL_NUMBER" with the given parameters.
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @param serial The serial number to write.
      * *
@@ -680,8 +621,8 @@ object CommandBuilder {
      * Method to generate a [ABaseQueueVal] representing the command "WRITE_MAC_ADDRESS" with the given parameters.
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @param mac The MAC address to write.
      * *
@@ -702,8 +643,8 @@ object CommandBuilder {
      * Method to generate a [ABaseQueueVal] representing the command "SYSTEM_CAL".
 
      * WARNING: THIS COMMAND IS USED IN CALIBRATION. IT IS NOT DESIGNED FOR AVERAGE USERS AND SHOULD ONLY BE RUN BY
-     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN RESULT IN UNRELIABLE,
-     * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
+     * THOSE WITH BOTH THE PREREQUISITE KNOWLEDGE AND EQUIPMENT. IMPROPER OR INCOMPLETE CALIBRATION CAN
+     * RESULT IN UNRELIABLE, INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
 
      * @return The [ABaseQueueVal] of the command.
      */

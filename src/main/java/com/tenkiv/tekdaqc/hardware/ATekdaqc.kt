@@ -1,7 +1,10 @@
 package com.tenkiv.tekdaqc.hardware
 
 import com.tenkiv.tekdaqc.communication.ascii.executors.ASCIIParsingExecutor
-import com.tenkiv.tekdaqc.communication.command.queue.*
+import com.tenkiv.tekdaqc.communication.command.queue.CommandQueueManager
+import com.tenkiv.tekdaqc.communication.command.queue.ICommandManager
+import com.tenkiv.tekdaqc.communication.command.queue.QueueCallback
+import com.tenkiv.tekdaqc.communication.command.queue.Task
 import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal
 import com.tenkiv.tekdaqc.communication.command.queue.values.IQueueObject
 import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData
@@ -20,15 +23,14 @@ import com.tenkiv.tekdaqc.telnet.client.SerialTelnetConnection
 import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError
-import com.tenkiv.tekdaqc.utility.*
+import com.tenkiv.tekdaqc.utility.reprepare
 import tec.uom.se.unit.Units
-
-import javax.measure.Quantity
-import javax.measure.quantity.Dimensionless
 import java.io.*
 import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.locks.ReentrantLock
+import javax.measure.Quantity
+import javax.measure.quantity.Dimensionless
 
 /**
  * Class which contains information about a specific Tekdaqc and provides
@@ -38,13 +40,14 @@ import java.util.concurrent.locks.ReentrantLock
  * *
  * @since 1.0.0.0
  */
-abstract class ATekdaqc protected constructor(): Externalizable, IParsingListener {
+abstract class ATekdaqc protected constructor() : Externalizable, IParsingListener {
 
     private var locatorResponse: LocatorResponse? = null
 
-    protected constructor(locatorResponse: LocatorResponse): this(){
+    protected constructor(locatorResponse: LocatorResponse) : this() {
         this.locatorResponse = locatorResponse
     }
+
     /**
      * Maximum length of a channel name.
      */
@@ -67,14 +70,14 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * Interval of the watchdog timer.
      */
-    protected val HEARTBEAT_TIMER_INTERVAL = 5000
+    private val heartbeatTimerInterval = 5000
 
     /**
      * Maps of inputs/outputs
      */
-    val analogInputs: Map<Int, AAnalogInput> = HashMap<Int, AAnalogInput>()
-    val digitalInputs: Map<Int, DigitalInput> = HashMap<Int, DigitalInput>()
-    val digitalOutputs: Map<Int, DigitalOutput> = HashMap<Int, DigitalOutput>()
+    val analogInputs: Map<Int, AAnalogInput> = HashMap()
+    val digitalInputs: Map<Int, DigitalInput> = HashMap()
+    val digitalOutputs: Map<Int, DigitalOutput> = HashMap()
 
     abstract val temperatureReference: AAnalogInput
 
@@ -84,16 +87,22 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     protected var readExecutor: ReadExecutor? = null
 
     /**
+     * Number of threads for parsing executor.
+     */
+    private val parsingThreadCount = 5
+
+    /**
      * The executor responsible for parsing split messages
      */
-    protected var parsingExecutor: ASCIIParsingExecutor = ASCIIParsingExecutor(5)
+    protected var parsingExecutor: ASCIIParsingExecutor = ASCIIParsingExecutor(parsingThreadCount)
 
     /**
      * Method returning the current throttled digital input rate in samples/millisecond..
 
      * @return An [Integer] of the throttled rate in samples/millisecond.
      */
-    @Transient var throttledDigitalInputSampleRate = 1000
+    @Transient
+    var throttledDigitalInputSampleRate = 1000
 
     private var _analogScale: AnalogScale = AnalogScale.ANALOG_SCALE_5V
 
@@ -104,7 +113,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
         get() = _analogScale
         set(value) {
             _analogScale = value
-            mCommandQueue.queueCommand(CommandBuilder.setAnalogInputScale(value))
+            commandQueue.queueCommand(CommandBuilder.setAnalogInputScale(value))
         }
 
     /**
@@ -122,12 +131,13 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * The [ICommandManager] which controls who commands to be executed are handled.
      */
-    @Transient internal var mCommandQueue: ICommandManager = CommandQueueManager(this)
+    @Transient
+    var commandQueue: ICommandManager = CommandQueueManager(this)
 
     /**
      * The Telnet connection.
      */
-    @Transient protected var mConnection: ITekdaqcTelnetConnection? = null
+    @Transient protected var connection: ITekdaqcTelnetConnection? = null
 
     /**
      * Gets the [InputStream] for this [ATekdaqc].
@@ -135,7 +145,8 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [InputStream] The reader for the data stream from the
      * * Tekdaqc.
      */
-    @Transient var inputStream: InputStream? = null
+    @Transient
+    var inputStream: InputStream? = null
         protected set
 
     /**
@@ -144,23 +155,24 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [OutputStream] The writer for the output data stream to the
      * * Tekdaqc.
      */
-    @Transient var outputStream: OutputStream? = null
+    @Transient
+    var outputStream: OutputStream? = null
         protected set
 
     /**
      * The [Timer] used when using throttled sampling.
      */
-    protected var mDigitalInputSampleTimer: Timer = Timer("Digital Input Sample Timer", true)
+    protected var digitalInputSampleTimer: Timer = Timer("Digital Input Sample Timer", true)
 
     /**
      * The list of [CriticalErrorListener]s.
      */
-    private val mCriticalErrorListener = ArrayList<CriticalErrorListener>()
+    private val criticalErrorListeners = ArrayList<CriticalErrorListener>()
 
     /**
      * The number of samples currently taken by throttled sampling.
      */
-    @Volatile protected var mThrottledSamples = -1
+    @Volatile protected var throttledSamples = -1
 
     /**
      * Boolean for if the tekdaqc is connected in the current tick.
@@ -214,14 +226,14 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     protected var mDigitalInputActivationTask: TimerTask = object : TimerTask() {
 
         override fun run() {
-            if (mConnection?.isConnected ?: throw NullPointerException()) {
-                mCommandQueue.queueCommand(CommandBuilder.readAllDigitalInput(1))
+            if (connection?.isConnected ?: throw IOException("Tekdaqc Not Connected")) {
+                commandQueue.queueCommand(CommandBuilder.readAllDigitalInput(1))
 
-                if (mThrottledSamples > 0) {
-                    mThrottledSamples--
+                if (throttledSamples > 0) {
+                    throttledSamples--
 
-                } else if (mThrottledSamples == 0) {
-                    mDigitalInputSampleTimer = mDigitalInputSampleTimer.reprepare()
+                } else if (throttledSamples == 0) {
+                    digitalInputSampleTimer = digitalInputSampleTimer.reprepare()
                 }
             }
         }
@@ -230,12 +242,12 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * Heartbeat timer to check for disconnection from the tekdaqc.
      */
-    protected var mHeartbeatTimer = Timer("Tekdaqc Heartbeat Timer", true)
+    protected var heartbeatTimer = Timer("Tekdaqc Heartbeat Timer", true)
 
     /**
      * A [TimerTask] to be executed for checking to see if the Tekdaqc connection is active.
      */
-    protected var mHeartbeatTimerTask: TimerTask = object : TimerTask() {
+    protected var heartbeatTimerTask: TimerTask = object : TimerTask() {
         override fun run() {
             if (keepAlivePacketSent && !tentativeIsConnected) {
                 isConnected = false
@@ -250,7 +262,6 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
         }
     }
 
-
     init {
         initializeBoardStatusLists()
     }
@@ -261,7 +272,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param listener The listener to be added.
      */
     fun addCriticalFailureListener(listener: CriticalErrorListener) {
-        mCriticalErrorListener.add(listener)
+        criticalErrorListeners.add(listener)
     }
 
     /**
@@ -270,7 +281,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param listener The listener to be removed.
      */
     fun removeCriticalFailureListener(listener: CriticalErrorListener) {
-        mCriticalErrorListener.remove(listener)
+        criticalErrorListeners.remove(listener)
     }
 
     /**
@@ -279,7 +290,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param error The [TekdaqcCriticalError] which has caused such a problem.
      */
     fun criticalErrorNotification(error: TekdaqcCriticalError) {
-        for (listener in mCriticalErrorListener) {
+        for (listener in criticalErrorListeners) {
             listener.onTekdaqcCriticalError(error)
         }
     }
@@ -323,7 +334,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
         }
 
         for (outputNumber in digitalOutputs.keys) {
-            if (digitalOutputs[outputNumber]?.getIsActivated()?: throw IndexOutOfBoundsException("Digital Output Out of Range,")) {
+            if (digitalOutputs[outputNumber]?.getIsActivated() ?: throw IndexOutOfBoundsException("Digital Output Out of Range,")) {
                 builder.replace(outputNumber, outputNumber + 1, "1")
             }
         }
@@ -342,8 +353,8 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     fun readThrottledDigitalInput(rateMillis: Int) {
         if (rateMillis > 0) {
             throttledDigitalInputSampleRate = rateMillis
-            mDigitalInputSampleTimer = mDigitalInputSampleTimer.reprepare()
-            mDigitalInputSampleTimer.schedule(mDigitalInputActivationTask, throttledDigitalInputSampleRate.toLong())
+            digitalInputSampleTimer = digitalInputSampleTimer.reprepare()
+            digitalInputSampleTimer.schedule(mDigitalInputActivationTask, throttledDigitalInputSampleRate.toLong())
 
         } else {
             throw IllegalArgumentException("Specified rate must be greater then 0.")
@@ -360,57 +371,48 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param reactivateChannels If channels should be reactivated after reconnection.
      */
     fun restoreTekdaqc(millisTimeout: Long, reactivateChannels: Boolean) {
-        try {
-            mCommandQueue.purge(false)
 
-            mConnection?.disconnect()
+        commandQueue.purge(false)
 
-            inputStream = null
-            outputStream = null
+        connection?.disconnect()
 
-            Locator.instance
-                    .blockingSearchForSpecificTekdaqcs(
-                            millisTimeout,
-                            ReentrantLock(),
-                            false, null,
-                            serialNumber)[0].connect(analogScale, CONNECTION_METHOD.ETHERNET)
+        inputStream = null
+        outputStream = null
+
+        Locator.instance
+                .blockingSearchForSpecificTekdaqcs(
+                        millisTimeout,
+                        ReentrantLock(),
+                        false, null,
+                        serialNumber)[0].connect(analogScale, CONNECTION_METHOD.ETHERNET)
 
 
-            val commands = ArrayList<ABaseQueueVal>()
+        val commands = ArrayList<ABaseQueueVal>()
 
-            commands.addAll(CommandBuilder.deactivateAllAnalogInputs())
+        commands.addAll(CommandBuilder.deactivateAllAnalogInputs())
 
-            commands.addAll(CommandBuilder.deactivateAllDigitalInputs())
+        commands.addAll(CommandBuilder.deactivateAllDigitalInputs())
 
-            if (reactivateChannels) {
+        if (reactivateChannels) {
 
-                for (input in analogInputs.values) {
-                    if (input.isActivated) {
-                        commands.add(CommandBuilder.addAnalogInput(input))
-                    }
-                }
+            analogInputs.values
+                    .filter { it.isActivated }
+                    .mapTo(commands) { CommandBuilder.addAnalogInput(it) }
 
-                for (input in digitalInputs.values) {
-                    if (input.isActivated) {
-                        commands.add(CommandBuilder.addDigitalInput(input))
-                    }
-                }
+            digitalInputs.values
+                    .filter { it.isActivated }
+                    .mapTo(commands) { CommandBuilder.addDigitalInput(it) }
+        }
+
+        queueTask(Task(object : ITaskComplete {
+            override fun onTaskSuccess(tekdaqc: ATekdaqc) {
+
             }
 
-            queueTask(Task(object : ITaskComplete {
-                override fun onTaskSuccess(tekdaqc: ATekdaqc) {
-
-                }
-
-                override fun onTaskFailed(tekdaqc: ATekdaqc) {
-                    criticalErrorNotification(TekdaqcCriticalError.FAILED_TO_REINITIALIZE)
-                }
-            }, commands))
-
-
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
+            override fun onTaskFailed(tekdaqc: ATekdaqc) {
+                criticalErrorNotification(TekdaqcCriticalError.FAILED_TO_REINITIALIZE)
+            }
+        }, commands))
 
     }
 
@@ -426,7 +428,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      */
     @Throws(IllegalArgumentException::class)
     fun readThrottledDigitalInput(rateMillis: Int, samples: Int) {
-        mThrottledSamples = samples
+        throttledSamples = samples
         readThrottledDigitalInput(rateMillis)
     }
 
@@ -434,7 +436,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * Method to halt the throttled sampling of the digital inputs.
      */
     fun haltThrottedDigitalInputReading() {
-        mDigitalInputSampleTimer = mDigitalInputSampleTimer.reprepare()
+        digitalInputSampleTimer = digitalInputSampleTimer.reprepare()
     }
 
     /**
@@ -443,7 +445,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The firmware version.
      */
     val firmwareVersion: String
-        get() = locatorResponse?.firwareVersion ?: throw NullPointerException()
+        get() = locatorResponse?.firwareVersion ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the board's revision code.
@@ -451,7 +453,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return char The boards revision code.
      */
     val revisionType: Char
-        get() = locatorResponse?.type?.toChar() ?: throw NullPointerException()
+        get() = locatorResponse?.type ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the board's IP address.
@@ -459,7 +461,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The board's IP address.
      */
     val hostIP: String
-        get() = locatorResponse?.hostIP ?: throw NullPointerException()
+        get() = locatorResponse?.hostIP ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the boards MAC address.
@@ -467,7 +469,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The board's MAC address.
      */
     val macAddress: String
-        get() = locatorResponse?.macAddress ?: throw NullPointerException()
+        get() = locatorResponse?.macAddress ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the serial number of this [ATekdaqc].
@@ -475,7 +477,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The serial number.
      */
     val serialNumber: String
-        get() = locatorResponse?.serial ?: throw NullPointerException()
+        get() = locatorResponse?.serial ?: throw UninitializedPropertyAccessException()
 
     /**
      * Retrieve the board's application title.
@@ -483,7 +485,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @return [String] The application title.
      */
     val title: String
-        get() = locatorResponse?.title ?: throw NullPointerException()
+        get() = locatorResponse?.title ?: throw UninitializedPropertyAccessException()
 
     /**
      * Fetches an analog input from this Tekdaqc.
@@ -546,21 +548,21 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * Instruct the Tekdaqc to return a list of all it's added analog inputs.
      */
     fun listAnalogInputs() {
-        mCommandQueue.queueCommand(CommandBuilder.listAnalogInputs())
+        commandQueue.queueCommand(CommandBuilder.listAnalogInputs())
     }
 
     /**
      * Instruct the Tekdaqc to initiate a system calibration.
      */
     fun systemCalibrate() {
-        mCommandQueue.queueCommand(CommandBuilder.systemCalibrate())
+        commandQueue.queueCommand(CommandBuilder.systemCalibrate())
     }
 
     /**
      * Retrieve the command string to instruct the Tekdaqc to do nothing.
      */
     fun none() {
-        mCommandQueue.queueCommand(CommandBuilder.none())
+        commandQueue.queueCommand(CommandBuilder.none())
     }
 
     /**
@@ -569,7 +571,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param object The command or callback to be executed.
      */
     fun queueCommand(command: IQueueObject) {
-        mCommandQueue.queueCommand(command)
+        commandQueue.queueCommand(command)
     }
 
     /**
@@ -578,7 +580,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param task The [Task] to be executed.
      */
     fun queueTask(task: Task) {
-        mCommandQueue.queueTask(task)
+        commandQueue.queueTask(task)
     }
 
     /**
@@ -711,21 +713,23 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
             throw IOException("Tekdaqc Already Connected")
         }
         when (method) {
-            ATekdaqc.CONNECTION_METHOD.ETHERNET -> mConnection = EthernetTelnetConnection(hostIP, EthernetTelnetConnection.TEKDAQC_TELNET_PORT)
-            ATekdaqc.CONNECTION_METHOD.SERIAL -> mConnection = SerialTelnetConnection()
-            ATekdaqc.CONNECTION_METHOD.USB -> mConnection = USBTelnetConnection()
+            ATekdaqc.CONNECTION_METHOD.ETHERNET -> connection = EthernetTelnetConnection(
+                    hostIP,
+                    EthernetTelnetConnection.TEKDAQC_TELNET_PORT)
+            ATekdaqc.CONNECTION_METHOD.SERIAL -> connection = SerialTelnetConnection()
+            ATekdaqc.CONNECTION_METHOD.USB -> connection = USBTelnetConnection()
         }
-        inputStream = mConnection?.inputStream
-        outputStream = mConnection?.outputStream
+        inputStream = connection?.inputStream
+        outputStream = connection?.outputStream
 
         readExecutor = ReadExecutor(this, this)
 
-        mCommandQueue.tryCommand()
+        commandQueue.tryCommand()
 
         analogScale = currentAnalogScale
 
         isConnected = true
-        mHeartbeatTimer.schedule(mHeartbeatTimerTask, HEARTBEAT_TIMER_INTERVAL.toLong(), HEARTBEAT_TIMER_INTERVAL.toLong())
+        heartbeatTimer.schedule(heartbeatTimerTask, heartbeatTimerInterval.toLong(), heartbeatTimerInterval.toLong())
     }
 
     /**
@@ -741,13 +745,13 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
         readExecutor?.shutdown()
         parsingExecutor.shutdown()
 
-        mCommandQueue.purge(true)
+        commandQueue.purge(true)
 
-        mConnection?.disconnect()
+        connection?.disconnect()
 
         isConnected = false
 
-        mHeartbeatTimer = mHeartbeatTimer.reprepare()
+        heartbeatTimer = heartbeatTimer.reprepare()
     }
 
     /**
@@ -757,16 +761,11 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      */
     fun disconnectCleanly() {
 
-        mCommandQueue.queueCommand(CommandBuilder.disconnect())
+        commandQueue.queueCommand(CommandBuilder.disconnect())
 
-        mCommandQueue.queueCommand(QueueCallback(object : ITaskComplete {
+        commandQueue.queueCommand(QueueCallback(object : ITaskComplete {
             override fun onTaskSuccess(tekdaqc: ATekdaqc) {
-                try {
-                    disconnect()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-
+                disconnect()
             }
 
             override fun onTaskFailed(tekdaqc: ATekdaqc) {
@@ -774,7 +773,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
             }
         }))
 
-        mHeartbeatTimer = mHeartbeatTimer.reprepare()
+        heartbeatTimer = heartbeatTimer.reprepare()
     }
 
     /**
@@ -782,7 +781,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      */
     fun readDigitalOutput() {
 
-        mCommandQueue.queueCommand(CommandBuilder.readDigitalOutput())
+        commandQueue.queueCommand(CommandBuilder.readDigitalOutput())
     }
 
     /**
@@ -792,7 +791,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * data.
      */
     fun enterCalibrationMode() {
-        mCommandQueue.queueCommand(CommandBuilder.enterCalibrationMode())
+        commandQueue.queueCommand(CommandBuilder.enterCalibrationMode())
     }
 
     /**
@@ -802,7 +801,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * write any new data.
      */
     fun exitCalibrationMode() {
-        mCommandQueue.queueCommand(CommandBuilder.exitCalibrationMode())
+        commandQueue.queueCommand(CommandBuilder.exitCalibrationMode())
     }
 
     /**
@@ -811,7 +810,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param serial [String] The serial number value.
      */
     fun writeSerialNumber(serial: String) {
-        mCommandQueue.queueCommand(CommandBuilder.writeSerialNumber(serial))
+        commandQueue.queueCommand(CommandBuilder.writeSerialNumber(serial))
     }
 
     /**
@@ -820,7 +819,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * @param mac `long` The factory MAC address value.
      */
     fun writeFactoryMacAddress(mac: Long) {
-        mCommandQueue.queueCommand(CommandBuilder.writeFactoryMacAddress(mac))
+        commandQueue.queueCommand(CommandBuilder.writeFactoryMacAddress(mac))
     }
 
     override fun toString(): String {
@@ -829,7 +828,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
 
     @Throws(IOException::class, ClassNotFoundException::class)
     override fun readExternal(input: ObjectInput) {
-        locatorResponse = input.readObject() as LocatorResponse
+        locatorResponse = input.readObject() as? LocatorResponse
         readIn(input)
     }
 
@@ -986,7 +985,8 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     protected abstract fun addAnalogInput(input: AAnalogInput)
 
     /**
-     * Activates an [AAnalogInput] so that it will be sampled when the "SAMPLE" or "READ_ANALOG_INPUT" commands are called.
+     * Activates an [AAnalogInput] so that it will be sampled when the "SAMPLE" or "READ_ANALOG_INPUT"
+     * commands are called.
 
      * @param inputNumber The physical input number of the [AAnalogInput] to be activated.
      * *
@@ -1002,7 +1002,8 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     abstract fun activateAnalogInput(inputNumber: Int): AAnalogInput
 
     /**
-     * Activates an [DigitalInput] so that it will be sampled when the "SAMPLE" or "READ_DIGITAL_INPUT" commands are called.
+     * Activates an [DigitalInput] so that it will be sampled when the "SAMPLE" or "READ_DIGITAL_INPUT"
+     * commands are called.
 
      * @param inputNumber The physical input number of the [DigitalInput] to be activated.
      * *
@@ -1094,24 +1095,24 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
     /**
      * The command to set the digital outputs to their desired state.
 
-     * @param binaryString The string representing the desired state of all digital outputs. Example: Only digital output 5
-     * *                     on would be represented as "0000010000000000".
+     * @param binaryString The string representing the desired state of all digital outputs.
+     * Example: Only digital output 5 on would be represented as "0000010000000000".
      */
     abstract fun setDigitalOutput(binaryString: String)
 
     /**
      * The command to set the digital outputs to their desired state.
 
-     * @param hex The string representing the desired state of all digital outputs in hexadecimal form. Example: All Digital Outputs on
-     * *            would be represented by "FFFF".
+     * @param hex The string representing the desired state of all digital outputs in hexadecimal form.
+     * Example: All Digital Outputs on would be represented by "FFFF".
      */
     abstract fun setDigitalOutputByHex(hex: String)
 
     /**
      * The command to set the digital outputs to their desired state.
 
-     * @param digitalOutputArray The array of booleans representing the desired state of all digital outputs with each index representing
-     * *                           the corresponding Digital Output.
+     * @param digitalOutputArray The array of booleans representing the desired state of all digital outputs
+     * with each index representing the corresponding Digital Output.
      */
     abstract fun setDigitalOutput(digitalOutputArray: BooleanArray)
 
@@ -1200,7 +1201,11 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
      * *
      * @param temperature `int` The temperature index this value is valid for.
      */
-    abstract fun writeGainCalibrationValue(value: Float, gain: Gain, rate: Rate, buffer: BufferState, scale: AnalogScale,
+    abstract fun writeGainCalibrationValue(value: Float,
+                                           gain: Gain,
+                                           rate: Rate,
+                                           buffer: BufferState,
+                                           scale: AnalogScale,
                                            temperature: Int)
 
     /**
@@ -1308,7 +1313,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
 
     /**
      * Enumeration of the available connection methods.
-
+     *
      * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
@@ -1319,7 +1324,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
 
     /**
      * Enumeration of the available communication methods.
-
+     *
      * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
@@ -1330,7 +1335,7 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
 
     /**
      * Enumeration of the available analog input voltage scales.
-
+     *
      * @author Tenkiv (software@tenkiv.com)
      * *
      * @since v1.0.0.0
@@ -1346,19 +1351,24 @@ abstract class ATekdaqc protected constructor(): Externalizable, IParsingListene
 
             private val mValueArray = AnalogScale.values()
 
-            fun getValueFromOrdinal(ordinal: Byte): AnalogScale {
-                return mValueArray[ordinal.toInt()]
-            }
+            /**
+             * Gets the AnalogScale corresponding to the ordinal position.
+             *
+             * @param ordinal The ordinal position to be fetched.
+             *
+             * @return The AnalogScale at the ordinal position.
+             */
+            fun getValueFromOrdinal(ordinal: Byte): AnalogScale = mValueArray[ordinal.toInt()]
 
-            fun fromString(scale: String): AnalogScale? {
-                for (s in values()) {
-                    if (s.scale == scale) {
-                        return s
-                    }
-                }
-                return null
-            }
+            /**
+             * Attempts to get the AnalogScale value from a string representation.
+             *
+             * @param scale The string to be parsed.
+             *
+             * @return The scale associated with the string or null on failure.
+             */
+            fun fromString(scale: String): AnalogScale? = values().firstOrNull { it.scale == scale }
+
         }
     }
-
 }

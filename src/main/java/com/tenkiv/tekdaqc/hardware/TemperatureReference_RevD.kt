@@ -1,6 +1,10 @@
 package com.tenkiv.tekdaqc.hardware
 
-class TemperatureReference_RevD(tekdaqc: ATekdaqc): AnalogInput_RevD(tekdaqc, 36) {
+/**
+ * Analog input specifically handling the board's internal temperature reference.
+ * Needed for calculating voltage correctly.
+ */
+class TemperatureReference_RevD(tekdaqc: ATekdaqc): AnalogInput_RevD(tekdaqc, Tekdaqc_RevD.ANALOG_INPUT_TEMP_SENSOR) {
     override fun getGain(): Gain = Gain.X4
     override fun getRate(): Rate = Rate.SPS_3750
     override fun getBufferState(): BufferState = BufferState.ENABLED

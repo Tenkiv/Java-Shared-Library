@@ -11,41 +11,64 @@ import java.util.regex.Pattern;
 public class ASCIIMessageUtils {
 
     public static final String V2_ANALOG_INPUT_HEADER = "?A";
+
     public static final String V2_DIGITAL_INPUT_HEADER = "?D";
+
     public static final String DIGITAL_PWM_INPUT_HEADER = "?P";
+
     public static final String V2_DIGITAL_OUTPUT_HEADER = "";
 
     public static final String V1_ANALOG_INPUT_HEADER = "Analog Input";
+
     public static final String V1_DIGITAL_INPUT_HEADER = "Digital Input";
+
     public static final String V1_DIGITAL_OUTPUT_HEADER = "Digital Output";
+
     public static final String DEBUG_MESSAGE_HEADER = "Debug Message";
+
     public static final String STATUS_MESSAGE_HEADER = "Status Message";
+
     public static final String COMMAND_MESSAGE_HEADER = "Command Data Message";
+
     public static final String ERROR_MESSAGE_HEADER = "Error Message";
+
     public static final String NETWORK_ERROR_FLAG = "[NETWORK]";
+
     public static final String MESSAGE_TAG = "Message: ";
+
     public static final String NAME_TAG = "Name: ";
+
     public static final String PHYSICAL_INPUT_TAG = "Physical Input: ";
+
     public static final String PGA_TAG = "PGA: ";
+
     public static final String RATE_TAG = "Rate: ";
+
     public static final String BUFFER_STATUS_TAG = "Buffer Status: ";
+
     public static final String TIMESTAMP_TAG = "Timestamp: ";
+
     public static final String VALUE_TAG = "Value: ";
+
     public static final String LEVEL_TAG = "Level: ";
+
     public static final String LINE_MARKER = "--------------------";
+
     public static final String HIGH_MARKER = "H";
+
     public static final String LOW_MARKER = "L";
+
     public static final int UNIT_SEPARATOR_CHAR = 0x1F;
+
     public static final int NEW_LINE_CHAR = 0x0A;
+
     public static final int CARRIAGE_RETURN_CHAR = 0x0D;
 
     public static final Pattern RECORD_SEPARATOR_PATTERN = Pattern
             .compile("\\x1E");
 
     private static ASCIIAnalogInputDataMessage getAnalogInputDataMessage() {
-
         return new ASCIIAnalogInputDataMessage();
-
     }
 
     private static ASCIIDigitalInputDataMessage getDigitalInputDataMessage() {
