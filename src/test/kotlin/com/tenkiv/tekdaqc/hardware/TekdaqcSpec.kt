@@ -12,7 +12,7 @@ import io.kotlintest.specs.ShouldSpec
  * Class to test Tekdaqc functions
  */
 class TekdaqcSpec: ShouldSpec({
-    "TekdaqcSpec"{
+    "Tekdaqc Spec"{
         val tekdaqc = Tekdaqc_RevD(getSimulatedLocatorResponse())
 
         should("Temperature reference check"){

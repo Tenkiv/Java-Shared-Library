@@ -55,12 +55,11 @@ public class ASCIIDigitalInputDataMessage extends AASCIIMessage implements IData
 
         if (raw != null && raw.contains(ASCIIMessageUtils.V2_DIGITAL_INPUT_HEADER)) {
             parseMessage(raw);
+        } else if(raw != null && raw.contains(ASCIIMessageUtils.V1_DIGITAL_INPUT_HEADER)){
+            throw new IllegalArgumentException("Please Update Your Tekdaqc Firmware or use an " +
+                    "Older Version of the Tekdaqc Java Library");
         } else {
-            try {
-                throw new Exception("Please Update Your Tekdaqc Firmware or use an Older Version of the Tekdaqc Java Library");
-            } catch (final Exception e) {
-                e.printStackTrace();
-            }
+            throw new IllegalArgumentException("String does not contain required header for parsing");
         }
     }
 

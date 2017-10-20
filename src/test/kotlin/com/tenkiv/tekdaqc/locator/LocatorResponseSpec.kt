@@ -38,7 +38,7 @@ val spoofedLocatorResponse = byteArrayOf(-2, 115, 2, 69, 48, 48, 48, 48, 48, 48,
  * Class to test LocatorResponse generation.
  */
 class LocatorResponseSpec: ShouldSpec ({
-    "LocatorResponseSpec"{
+    "Locator Response Spec"{
         val response = getSimulatedLocatorResponse()
 
         should("Equal correct values"){

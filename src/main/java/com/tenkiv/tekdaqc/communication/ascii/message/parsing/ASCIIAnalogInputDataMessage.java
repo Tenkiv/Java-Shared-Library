@@ -27,7 +27,7 @@ public class ASCIIAnalogInputDataMessage extends AASCIIMessage implements IDataP
     /**
      * Constructor.
      */
-    protected ASCIIAnalogInputDataMessage() {
+    public ASCIIAnalogInputDataMessage() {
         super();
     }
 
@@ -54,12 +54,11 @@ public class ASCIIAnalogInputDataMessage extends AASCIIMessage implements IDataP
 
         if (raw != null && raw.contains(ASCIIMessageUtils.V2_ANALOG_INPUT_HEADER)) {
             parseMessage(raw);
+        } else if(raw != null && raw.contains(ASCIIMessageUtils.V1_ANALOG_INPUT_HEADER)){
+            throw new IllegalArgumentException("Please Update Your Tekdaqc Firmware or use an " +
+                    "Older Version of the Tekdaqc Java Library");
         } else {
-            try {
-                throw new Exception("Please Update Your Tekdaqc Firmware or use an Older Version of the Tekdaqc Java Library");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            throw new IllegalArgumentException("String does not contain required header for parsing");
         }
     }
 
