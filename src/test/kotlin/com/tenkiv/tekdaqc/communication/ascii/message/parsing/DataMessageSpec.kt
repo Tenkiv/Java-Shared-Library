@@ -1,6 +1,6 @@
 package com.tenkiv.tekdaqc.communication.ascii.message.parsing
 
-import com.tenkiv.tekdaqc.serializeToAny
+import com.tenkiv.tekdaqc.*
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldNotBe
 import io.kotlintest.matchers.shouldThrow
@@ -164,14 +164,14 @@ class DataMessageSpec : ShouldSpec({
  *
  * @return A fake message
  */
-fun getAnalogTestMessage(): ASCIIAnalogInputDataMessage = ASCIIAnalogInputDataMessage("?A0\r\n967711311300,-512")
+fun getAnalogTestMessage(): ASCIIAnalogInputDataMessage = ASCIIAnalogInputDataMessage(TEST_ANALOG_INPUT_DATA)
 
 /**
  * Function to get fake DigitalMessage
  *
  * @return A fake message
  */
-fun getDigitalTestMessage(): ASCIIDigitalInputDataMessage = ASCIIDigitalInputDataMessage("?D0\r\n967711311300,L")
+fun getDigitalTestMessage(): ASCIIDigitalInputDataMessage = ASCIIDigitalInputDataMessage(TEST_DIGITAL_INPUT_DATA)
 
 /**
  * Function to get fake CommandMessage
@@ -179,7 +179,7 @@ fun getDigitalTestMessage(): ASCIIDigitalInputDataMessage = ASCIIDigitalInputDat
  * @return A fake message
  */
 fun getCommandTestMessage(): ASCIICommandMessage = ASCIICommandMessage(
-        "Command Data Message\r\nMessage: SomeMessage")
+        TEST_COMMAND_MESSAGE_DATA)
 
 /**
  * Function to get fake DebugMessage
@@ -187,7 +187,7 @@ fun getCommandTestMessage(): ASCIICommandMessage = ASCIICommandMessage(
  * @return A fake message
  */
 fun getDebugTestMessage(): ASCIIDebugMessage = ASCIIDebugMessage(
-        "Debug Message\r\nMessage: SomeMessage")
+        TEST_DEBUG_MESSAGE_DATA)
 
 /**
  * Function to get fake ErrorMessage
@@ -195,7 +195,7 @@ fun getDebugTestMessage(): ASCIIDebugMessage = ASCIIDebugMessage(
  * @return A fake message
  */
 fun getErrorTestMessage(): ASCIIErrorMessage = ASCIIErrorMessage(
-        "Error Message\r\nMessage: SomeMessage")
+        TEST_ERROR_MESSAGE_DATA)
 
 /**
  * Function to get fake StatusMessage
@@ -203,4 +203,4 @@ fun getErrorTestMessage(): ASCIIErrorMessage = ASCIIErrorMessage(
  * @return A fake message
  */
 fun getStatusTestMessage(): ASCIIStatusMessage = ASCIIStatusMessage(
-        "Status Message\r\nMessage: SomeMessage")
+        TEST_STATUS_MESSAGE_DATA)

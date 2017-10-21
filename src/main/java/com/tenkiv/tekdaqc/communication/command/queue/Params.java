@@ -1,8 +1,6 @@
 package com.tenkiv.tekdaqc.communication.command.queue;
 
-import com.tenkiv.tekdaqc.hardware.AAnalogInput;
 import com.tenkiv.tekdaqc.hardware.ATekdaqc;
-import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD;
 
 /**
  * Enum class handling all parameters of {@link Commands} sent to the {@link ATekdaqc}.
@@ -108,45 +106,6 @@ public enum Params {
      */
     public static Params getValueFromOrdinal(final byte ordinal) {
         return mValueArray[ordinal];
-    }
-
-    /**
-     * Gets the {@link String} corresponding to the {@link Byte} ordinal of {@link Params} value.
-     *
-     * @param param      The {@link Params} to get the corresponding value from.
-     * @param paramValue The {@link Byte} ordinal of the {@link Params} value.
-     * @return The {@link String} of the value.
-     */
-    public static String getParamValStringFromOrdinals(final Params param, final byte paramValue) {
-        switch (param) {
-            case RATE:
-                return AAnalogInput.Rate.getValueFromOrdinal(paramValue).toString();
-            case GAIN:
-                return AAnalogInput.Gain.getValueFromOrdinal(paramValue).toString();
-            case SCALE:
-                return ATekdaqc.AnalogScale.Companion.getValueFromOrdinal(paramValue).toString();
-            case BUFFER:
-                return AnalogInput_RevD.BufferState.getValueFromOrdinal(paramValue).toString();
-            case INPUT:
-                return paramValue + "";
-            case NUMBER:
-                return paramValue + "";
-            case OUTPUT:
-                return paramValue + "";
-            case VALUE:
-                return paramValue + "";
-            case TEMPERATURE:
-                return paramValue + "";
-            case STATE:
-                //NO SUCH VALUE USED YET
-            case INDEX:
-                //NO SUCH VALUE USED YET
-            case ALL:
-                //NO SUCH VALUE USED YET
-            default:
-                return null;
-
-        }
     }
 
     /**

@@ -211,7 +211,7 @@ public enum Commands {
     public static Commands toCommand(final String command) {
         try {
             return valueOf(command);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return NONE;
         }
     }

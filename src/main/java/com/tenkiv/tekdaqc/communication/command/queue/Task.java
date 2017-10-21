@@ -9,8 +9,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Class used for issuing of {@link IQueueObject} in blocks and ensuring that each command's execution is dependant on the success of all prior commands.
- * If a {@link IQueueObject} fails to execute, the command executor will cull until it has cleaned all commands remaining in the {@link Task}.
+ * Class used for issuing of {@link IQueueObject} in blocks and ensuring that each command's execution is dependant on
+ * the success of all prior commands. If a {@link IQueueObject} fails to execute, the command executor will cull until
+ * it has cleaned all commands remaining in the {@link Task}.
  */
 public class Task {
 

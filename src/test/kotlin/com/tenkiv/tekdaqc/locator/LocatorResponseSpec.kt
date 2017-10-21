@@ -2,6 +2,7 @@ package com.tenkiv.tekdaqc.locator
 
 import com.tenkiv.tekdaqc.*
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldNotBe
 import io.kotlintest.specs.ShouldSpec
 
 val spoofedLocatorResponse = byteArrayOf(-2, 115, 2, 69, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
@@ -53,6 +54,10 @@ class LocatorResponseSpec: ShouldSpec ({
             val obj = serializeToAny(response)
             (obj is LocatorResponse) shouldBe true
             (obj as LocatorResponse).mSerial shouldBe SERIAL
+        }
+
+        should("Generate sane string"){
+            response.toString() shouldNotBe null
         }
     }
 })

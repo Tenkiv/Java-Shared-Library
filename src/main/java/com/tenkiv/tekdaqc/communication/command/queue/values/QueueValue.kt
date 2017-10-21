@@ -11,13 +11,19 @@ import java.util.*
 /**
  * Created by tenkiv on 3/10/17.
  */
-class QueueValue(command: Byte) : ABaseQueueVal(command) {
+class QueueValue: ABaseQueueVal {
 
-    val parameters = ArrayList<Pair<Params,Any>>()
+    val parameters = ArrayList<Pair<Params, Any>>()
 
-    constructor(command: Byte, vararg params: Pair<Params,Any>): this(command) {
+    constructor(): super()
+
+    constructor(command: Byte): super(command)
+
+    constructor(command: Byte, vararg params: Pair<Params, Any>) : this(command) {
         parameters.addAll(params)
     }
+
+    //constructor() : this(Commands.NONE.ordinalCommandType)
 
     override fun generateCommandBytes(): ByteArray {
         val builder = StringBuilder()
@@ -39,9 +45,9 @@ class QueueValue(command: Byte) : ABaseQueueVal(command) {
     override fun writeExternal(out: ObjectOutput) {
         super.writeExternal(out)
 
+        out.writeInt(parameters.size)
         parameters.forEach {
-            out.write(parameters.size)
-            out.writeInt(it.first.ordinal)
+            out.writeByte(it.first.ordinal)
             out.writeObject(it.second.toString())
         }
 
@@ -52,11 +58,11 @@ class QueueValue(command: Byte) : ABaseQueueVal(command) {
         super.readExternal(`in`)
 
         val size = `in`.readInt()
-
-        (size..0).forEach {
+        (0 until size).forEach {
             parameters.add(
                     Pair(Params.getValueFromOrdinal(`in`.readByte()),
-                            `in`.readObject() as? String ?: throw NotSerializableException()))
+                            `in`.readObject() as? String ?: throw NotSerializableException())
+            )
         }
     }
 }

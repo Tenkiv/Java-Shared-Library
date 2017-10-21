@@ -67,38 +67,6 @@ public class ASCIIMessageUtils {
     public static final Pattern RECORD_SEPARATOR_PATTERN = Pattern
             .compile("\\x1E");
 
-    private static ASCIIAnalogInputDataMessage getAnalogInputDataMessage() {
-        return new ASCIIAnalogInputDataMessage();
-    }
-
-    private static ASCIIDigitalInputDataMessage getDigitalInputDataMessage() {
-        return new ASCIIDigitalInputDataMessage();
-    }
-
-    private static ASCIIPWMInputDataMessage getDigitalPWMInputDataMessage() {
-        return new ASCIIPWMInputDataMessage();
-    }
-
-    private static ASCIIDigitalOutputDataMessage getDigitalOutputDataMessage() {
-        return new ASCIIDigitalOutputDataMessage();
-    }
-
-    private static ASCIICommandMessage getCommandDataMessage() {
-        return new ASCIICommandMessage();
-    }
-
-    private static ASCIIErrorMessage getErrorMessage() {
-        return new ASCIIErrorMessage();
-    }
-
-    private static ASCIIDebugMessage getDebugMessage() {
-        return new ASCIIDebugMessage();
-    }
-
-    private static ASCIIStatusMessage getStatusMessage() {
-        return new ASCIIStatusMessage();
-    }
-
     /**
      * Factory method to produce the appropriate messages from the provided raw
      * message data.
@@ -111,55 +79,42 @@ public class ASCIIMessageUtils {
         try {
             if (messageData == null)
                 return null;
-
             /*
 			 * The order here is important because debug/status/error messages
 			 * may contain tags which could register as other message types.
 			 */
             if (messageData.contains(DEBUG_MESSAGE_HEADER)) {
                 // This is an ASCII Debug message
-                message = getDebugMessage();
-                message.setData(messageData);
+                message = new ASCIIDebugMessage(messageData);
             } else if (messageData.contains(STATUS_MESSAGE_HEADER)) {
                 // This is an ASCII Status message
-                message = getStatusMessage();
+                message = new ASCIIStatusMessage(messageData);
                 message.setData(messageData);
             } else if (messageData.contains(ERROR_MESSAGE_HEADER)) {
                 // This is an ASCII Error message
-                message = getErrorMessage();
-                message.setData(messageData);
+                message = new ASCIIErrorMessage(messageData);
             } else if (messageData.contains(COMMAND_MESSAGE_HEADER)) {
-                message = getCommandDataMessage();
-                message.setData(messageData);
+                message = new ASCIICommandMessage(messageData);
             } else if (messageData.contains(V1_ANALOG_INPUT_HEADER)
                     || messageData.contains(V2_ANALOG_INPUT_HEADER)) {
                 // This is an ASCII Analog Input Data message
-                message = getAnalogInputDataMessage();
-                message.setData(messageData);
+                message = new ASCIIAnalogInputDataMessage(messageData);
             } else if (messageData.contains(V1_DIGITAL_INPUT_HEADER)
                     || messageData.contains(V2_DIGITAL_INPUT_HEADER)) {
                 // This is an ASCII Digital Input Data message
-                message = getDigitalInputDataMessage();
-                message.setData(messageData);
+                message = new ASCIIDigitalInputDataMessage(messageData);
             } else if (messageData.contains(V1_DIGITAL_OUTPUT_HEADER)) {
                 // This is an ASCII Digital Output Data message
-                message = getDigitalOutputDataMessage();
-                message.setData(messageData);
+                message = new ASCIIDigitalOutputDataMessage(messageData);
             }else if (messageData.contains(DIGITAL_PWM_INPUT_HEADER)) {
                 // This is an ASCII Digital PWM Input Data message
-                message = getDigitalPWMInputDataMessage();
-                message.setData(messageData);
+                message = new ASCIIPWMInputDataMessage(messageData);
             } else {
                 // This is an unrecognized message format
-                /*System.out.println(TAG + "Unrecognized Message" +messageData);*/
                 message = null;
             }
         } catch (final Exception e) {
             e.printStackTrace();
-            /*System.err.println("ERROR MESSAGE: "+messageData);*/
-			/*System.err.println("Detected exception parsing message ("
-					+ e.getClass().getSimpleName() + "). Message Data:");
-			System.err.println(messageData);*///TODO REMOVE THIS ONCE FIRMWARE BECOMES UN-FUCKED.
             return null;
         }
         return message;
