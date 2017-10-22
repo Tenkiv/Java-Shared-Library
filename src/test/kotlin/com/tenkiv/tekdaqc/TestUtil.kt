@@ -32,6 +32,9 @@ internal const val TEST_ERROR_MESSAGE_DATA = "Error Message\r\nMessage: SomeMess
 
 internal const val TEST_STATUS_MESSAGE_DATA = "Status Message\r\nMessage: SomeMessage"
 
+/**
+ * Function test object serialization
+ */
 fun serializeToAny(serializable: Serializable): Any? {
     val byteOutStream = ByteArrayOutputStream()
     val outputStream = ObjectOutputStream(byteOutStream)

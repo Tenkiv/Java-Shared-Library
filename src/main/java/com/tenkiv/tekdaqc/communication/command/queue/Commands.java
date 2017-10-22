@@ -130,6 +130,9 @@ public enum Commands {
      */
     SET_PWM_OUTPUT,
 
+    /**
+     * Sets the pulse width modulation interval
+     */
     SET_PWM_OUTPUT_TIMER,
 
     /**
@@ -158,21 +161,80 @@ public enum Commands {
      * INACCURATE, OR EMPTY ANALOG INPUT VALUES. UNDERTAKE RECALIBRATION AT YOUR OWN RISK.
      */
     SYSTEM_GCAL,
+
+    /**
+     * Calls for a system calibration
+     */
     SYSTEM_CAL,
+
+    /**
+     * Reads the tekdaqc's gain calibration
+     */
     READ_SYSTEM_GCAL,
+
+    /**
+     * Gets if the calibration was completed
+     */
     GET_CALIBRATION_STATUS,
+
+    /**
+     * Enters calibration mode. Erasing all previous calibration
+     */
     ENTER_CALIBRATION_MODE,
+
+    /**
+     * Writes a gain calibration value if in calibration mode
+     */
     WRITE_GAIN_CALIBRATION_VALUE,
+
+    /**
+     * Writes a temperature point for the calibration
+     */
     WRITE_CALIBRATION_TEMP,
+
+    /**
+     * Writes the current calibration as valid
+     */
     WRITE_CALIBRATION_VALID,
+
+    /**
+     * Exits calibration mode
+     */
     EXIT_CALIBRATION_MODE,
+
+    /**
+     * Sets the board's serial number. This can only be done once.
+     */
     SET_BOARD_SERIAL_NUM,
+
+    /**
+     * Sets the MAC address of the board
+     */
     SET_FACTORY_MAC_ADDR,
+
+    /**
+     * Reads the self gain calibration
+     */
     READ_SELF_GCAL,
 
+    /**
+     * Adds a digital input as a pulse width modulation reading input
+     */
     ADD_PWM_INPUT,
+
+    /**
+     * Removes a pulse width modulation input
+     */
     REMOVE_PWM_INPUT,
+
+    /**
+     * Reads a pulse width modulation input
+     */
     READ_PWM_INPUT,
+
+    /**
+     * Lists all pulse width modulation inputs
+     */
     LIST_PWM_INPUTS;
 
     /**

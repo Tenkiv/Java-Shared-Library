@@ -4,6 +4,9 @@ import com.tenkiv.tekdaqc.*
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.ShouldSpec
 
+/**
+ * Class to functions in ASCIIMessageUtils
+ */
 class ASCIIMessageUtilsSpec: ShouldSpec({
     "ASCII Message Utils Spec"{
         should("Parse correctly"){
@@ -20,9 +23,9 @@ class ASCIIMessageUtilsSpec: ShouldSpec({
 
             (ASCIIMessageUtils.parseMessage(TEST_STATUS_MESSAGE_DATA) is ASCIIStatusMessage) shouldBe true
 
-            (ASCIIMessageUtils.parseMessage("TH1SisSOMEGIBBERISH")) shouldBe null
+            ASCIIMessageUtils.parseMessage("TH1SisSOMEGIBBERISH") shouldBe null
 
-            (ASCIIMessageUtils.parseMessage(null)) shouldBe null
+            ASCIIMessageUtils.parseMessage(null) shouldBe null
         }
     }
 })

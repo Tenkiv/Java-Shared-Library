@@ -16,7 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
 /**
- * Manager for commands to the Tekdaqc, ensuring that they are executed and managing the resulting callbacks for success and failure.
+ * Manager for commands to the Tekdaqc, ensuring that they are executed and managing the resulting callbacks
+ * for success and failure.
  *
  * Constructor for [CommandQueueManager] which assigns which [ATekdaqc] this class manages.
  *

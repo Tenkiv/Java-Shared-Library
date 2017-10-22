@@ -60,6 +60,9 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
      */
     internal val messageBroadcaster = MessageBroadcaster()
 
+    /**
+     * Gets the message broadcaster
+     */
     protected fun getMessageBroadcaster(): MessageBroadcaster = messageBroadcaster
 
     /**
@@ -334,7 +337,8 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
         }
 
         for (outputNumber in digitalOutputs.keys) {
-            if (digitalOutputs[outputNumber]?.getIsActivated() ?: throw IndexOutOfBoundsException("Digital Output Out of Range,")) {
+            if (digitalOutputs[outputNumber]?.getIsActivated() ?:
+                    throw IndexOutOfBoundsException("Digital Output Out of Range,")) {
                 builder.replace(outputNumber, outputNumber + 1, "1")
             }
         }
@@ -1319,7 +1323,20 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
      * @since v1.0.0.0
      */
     enum class CONNECTION_METHOD {
-        ETHERNET, SERIAL, USB
+        /**
+         * Communicating via Ethernet
+         */
+        ETHERNET,
+
+        /**
+         * Communicating via alternative Serial bus or port
+         */
+        SERIAL,
+
+        /**
+         * Communicating via USB
+         */
+        USB
     }
 
     /**
@@ -1330,7 +1347,15 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
      * @since v1.0.0.0
      */
     enum class COMMUNICATION_ENCODING {
-        ASCII, BINARY
+        /**
+         * Communicating via ASCII characters
+         */
+        ASCII,
+
+        /**
+         * Communicating via binary
+         */
+        BINARY
     }
 
     /**

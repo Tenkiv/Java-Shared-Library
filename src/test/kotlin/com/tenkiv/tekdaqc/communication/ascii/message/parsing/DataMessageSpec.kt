@@ -24,9 +24,9 @@ class DataMessageSpec : ShouldSpec({
         should("Serialize correctly") {
             val obj = serializeToAny(message)
             (obj is ASCIIAnalogInputDataMessage) shouldBe true
-            (obj as ASCIIAnalogInputDataMessage).mNumber shouldBe 0
-            (obj).mTimestamps shouldBe "967711311300"
-            (obj).mReadings shouldBe -512
+            (obj as? ASCIIAnalogInputDataMessage)?.mNumber shouldBe 0
+            (obj as? ASCIIAnalogInputDataMessage)?.mTimestamps shouldBe "967711311300"
+            (obj as? ASCIIAnalogInputDataMessage)?.mReadings shouldBe -512
         }
 
         should("Reset value") {
@@ -56,9 +56,9 @@ class DataMessageSpec : ShouldSpec({
         should("Serialize correctly") {
             val obj = serializeToAny(message)
             (obj is ASCIIDigitalInputDataMessage) shouldBe true
-            (obj as ASCIIDigitalInputDataMessage).mNumber shouldBe 0
-            (obj).mTimestamps shouldBe "967711311300"
-            (obj).mReadings shouldBe false
+            (obj as? ASCIIDigitalInputDataMessage)?.mNumber shouldBe 0
+            (obj as? ASCIIDigitalInputDataMessage)?.mTimestamps shouldBe "967711311300"
+            (obj as? ASCIIDigitalInputDataMessage)?.mReadings shouldBe false
         }
 
         should("Reset value") {
@@ -87,7 +87,7 @@ class DataMessageSpec : ShouldSpec({
         should("Serialize correctly") {
             val obj = serializeToAny(message)
             (obj is ASCIICommandMessage) shouldBe true
-            (obj as ASCIICommandMessage).mMessageString shouldNotBe null
+            (obj as? ASCIICommandMessage)?.mMessageString shouldNotBe null
         }
 
         should("Reset value") {
@@ -108,7 +108,7 @@ class DataMessageSpec : ShouldSpec({
         should("Serialize correctly") {
             val obj = serializeToAny(message)
             (obj is ASCIIDebugMessage) shouldBe true
-            (obj as ASCIIDebugMessage).mMessageString shouldNotBe null
+            (obj as? ASCIIDebugMessage)?.mMessageString shouldNotBe null
         }
 
         should("Reset value") {
@@ -129,7 +129,7 @@ class DataMessageSpec : ShouldSpec({
         should("Serialize correctly") {
             val obj = serializeToAny(message)
             (obj is ASCIIErrorMessage) shouldBe true
-            (obj as ASCIIErrorMessage).mMessageString shouldNotBe null
+            (obj as? ASCIIErrorMessage)?.mMessageString shouldNotBe null
         }
 
         should("Reset value") {
@@ -149,7 +149,7 @@ class DataMessageSpec : ShouldSpec({
         should("Serialize correctly") {
             val obj = serializeToAny(message)
             (obj is ASCIIStatusMessage) shouldBe true
-            (obj as ASCIIStatusMessage).mMessageString shouldNotBe null
+            (obj as? ASCIIStatusMessage)?.mMessageString shouldNotBe null
         }
 
         should("Reset value") {

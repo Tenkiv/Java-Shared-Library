@@ -104,26 +104,26 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     public void setGainByMaxVoltage(double maxVoltage) {
         ATekdaqc tekdaqc = this.getTekdaqc();
         double scaleDivisor;
-        if(tekdaqc.getAnalogScale() == ATekdaqc.AnalogScale.ANALOG_SCALE_5V) {
-            if(maxVoltage > 5.0D || maxVoltage < 0.0D) {
+        if (tekdaqc.getAnalogScale() == ATekdaqc.AnalogScale.ANALOG_SCALE_5V) {
+            if (maxVoltage > 5.0D || maxVoltage < 0.0D) {
                 throw new IllegalArgumentException("Max Voltage Can Only Be Between 0.0 and 5.0 for 5V Scale");
             }
 
             scaleDivisor = 5.0D;
         } else {
-            if(maxVoltage > 400.0D || maxVoltage < 0.0D) {
+            if (maxVoltage > 400.0D || maxVoltage < 0.0D) {
                 throw new IllegalArgumentException("Max Voltage Can Only Be Between 0.0 and 5.0 for 5V Scale");
             }
 
             scaleDivisor = 400.0D;
         }
 
-        int distance = Math.abs((int)(scaleDivisor / (double)AAnalogInput.Gain.values()[0].gain - maxVoltage));
+        int distance = Math.abs((int) (scaleDivisor / (double) AAnalogInput.Gain.values()[0].gain - maxVoltage));
         int idx = 0;
 
-        for(int i = 1; i < AAnalogInput.Gain.values().length; ++i) {
-            int cdistance = Math.abs((int)(scaleDivisor / (double)AAnalogInput.Gain.values()[0].gain - maxVoltage));
-            if(cdistance < distance) {
+        for (int i = 1; i < AAnalogInput.Gain.values().length; ++i) {
+            int cdistance = Math.abs((int) (scaleDivisor / (double) AAnalogInput.Gain.values()[0].gain - maxVoltage));
+            if (cdistance < distance) {
                 idx = i;
                 distance = cdistance;
             }
@@ -208,7 +208,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @param listener The {@link ICountListener} to add for callbacks.
      */
     public void addCountListener(ICountListener listener) {
-        getTekdaqc().addAnalogCountListener(listener,this);
+        getTekdaqc().addAnalogCountListener(listener, this);
     }
 
     /**
@@ -217,7 +217,7 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @param listener The {@link IVoltageListener} to add for callbacks.
      */
     public void addVoltageListener(IVoltageListener listener) {
-        getTekdaqc().addAnalogVoltageListener(listener,this);
+        getTekdaqc().addAnalogVoltageListener(listener, this);
     }
 
     /**
@@ -268,12 +268,41 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @since v1.0.0.0
      */
     public enum Gain {
-        X1(1), X2(2), X4(4), X8(8), X16(16), X32(32), X64(64);
+        /**
+         * Gain of 1
+         */
+        X1(1),
+        /**
+         * Gain of 2
+         */
+        X2(2),
+        /**
+         * Gain of 4
+         */
+        X4(4),
+        /**
+         * Gain of 8
+         */
+        X8(8),
+        /**
+         * Gain of 16
+         */
+        X16(16),
+        /**
+         * Gain of 32
+         */
+        X32(32),
+        /**
+         * Gain of 64
+         */
+        X64(64);
 
         private static final Gain[] mValueArray = Gain.values();
         public final int gain;
 
-        Gain(final int gain){this.gain = gain;}
+        Gain(final int gain) {
+            this.gain = gain;
+        }
 
         Gain(final String gain) {
             this.gain = Integer.valueOf(gain);
@@ -315,9 +344,70 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @since v1.0.0.0
      */
     public enum Rate {
-        SPS_30000("30000"), SPS_15000("15000"), SPS_7500("7500"), SPS_3750("3750"), SPS_2000("2000"), SPS_1000("1000"), SPS_500(
-                "500"), SPS_100("100"), SPS_60("60"), SPS_50("50"), SPS_30("30"), SPS_25("25"), SPS_15("15"), SPS_10(
-                "10"), SPS_5("5"), SPS_2_5("2.5");
+        /**
+         * Rate of 30,000 samples per second
+         */
+        SPS_30000("30000"),
+        /**
+         * Rate of 15,000 samples per second
+         */
+        SPS_15000("15000"),
+        /**
+         * Rate of 7,500 samples per second
+         */
+        SPS_7500("7500"),
+        /**
+         * Rate of 3,750 samples per second
+         */
+        SPS_3750("3750"),
+        /**
+         * Rate of 2000 samples per second
+         */
+        SPS_2000("2000"),
+        /**
+         * Rate of 1000 samples per second
+         */
+        SPS_1000("1000"),
+        /**
+         * Rate of 500 samples per second
+         */
+        SPS_500("500"),
+        /**
+         * Rate of 100 samples per second
+         */
+        SPS_100("100"),
+        /**
+         * Rate of 60 samples per second
+         */
+        SPS_60("60"),
+        /**
+         * Rate of 50 samples per second
+         */
+        SPS_50("50"),
+        /**
+         * Rate of 30 samples per second
+         */
+        SPS_30("30"),
+        /**
+         * Rate of 25 samples per second
+         */
+        SPS_25("25"),
+        /**
+         * Rate of 15 samples per second
+         */
+        SPS_15("15"),
+        /**
+         * Rate of 10 samples per second
+         */
+        SPS_10("10"),
+        /**
+         * Rate of 5 samples per second
+         */
+        SPS_5("5"),
+        /**
+         * Rate of 2.5 samples per second
+         */
+        SPS_2_5("2.5");
 
         private static final Rate[] mValueArray = Rate.values();
         public final String rate;
@@ -352,7 +442,22 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      * @since v1.0.0.0
      */
     public enum SensorCurrent {
-        _10uA("10"), _2uA("2"), _0_5uA("0.5"), OFF("0");
+        /**
+         * Sensor current of 10 micro volts
+         */
+        _10uA("10"),
+        /**
+         * Sensor current of 2 micro volts
+         */
+        _2uA("2"),
+        /**
+         * Sensor current of .5 micro volts
+         */
+        _0_5uA("0.5"),
+        /**
+         * Sensor current off
+         */
+        OFF("0");
 
         private static final SensorCurrent[] mValueArray = SensorCurrent.values();
         public final String mCurrent;

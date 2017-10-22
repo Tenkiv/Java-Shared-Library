@@ -10,59 +10,57 @@ import java.util.regex.Pattern;
  */
 public class ASCIIMessageUtils {
 
-    public static final String V2_ANALOG_INPUT_HEADER = "?A";
+    protected static final String V2_ANALOG_INPUT_HEADER = "?A";
 
-    public static final String V2_DIGITAL_INPUT_HEADER = "?D";
+    protected static final String V2_DIGITAL_INPUT_HEADER = "?D";
 
-    public static final String DIGITAL_PWM_INPUT_HEADER = "?P";
+    protected static final String DIGITAL_PWM_INPUT_HEADER = "?P";
 
-    public static final String V2_DIGITAL_OUTPUT_HEADER = "";
+    protected static final String V1_ANALOG_INPUT_HEADER = "Analog Input";
 
-    public static final String V1_ANALOG_INPUT_HEADER = "Analog Input";
+    protected static final String V1_DIGITAL_INPUT_HEADER = "Digital Input";
 
-    public static final String V1_DIGITAL_INPUT_HEADER = "Digital Input";
+    protected static final String DIGITAL_OUTPUT_HEADER = "Digital Output";
 
-    public static final String V1_DIGITAL_OUTPUT_HEADER = "Digital Output";
+    protected static final String DEBUG_MESSAGE_HEADER = "Debug Message";
 
-    public static final String DEBUG_MESSAGE_HEADER = "Debug Message";
+    protected static final String STATUS_MESSAGE_HEADER = "Status Message";
 
-    public static final String STATUS_MESSAGE_HEADER = "Status Message";
+    protected static final String COMMAND_MESSAGE_HEADER = "Command Data Message";
 
-    public static final String COMMAND_MESSAGE_HEADER = "Command Data Message";
+    protected static final String ERROR_MESSAGE_HEADER = "Error Message";
 
-    public static final String ERROR_MESSAGE_HEADER = "Error Message";
+    protected static final String NETWORK_ERROR_FLAG = "[NETWORK]";
 
-    public static final String NETWORK_ERROR_FLAG = "[NETWORK]";
+    protected static final String MESSAGE_TAG = "Message: ";
 
-    public static final String MESSAGE_TAG = "Message: ";
+    protected static final String NAME_TAG = "Name: ";
 
-    public static final String NAME_TAG = "Name: ";
+    protected static final String PHYSICAL_INPUT_TAG = "Physical Input: ";
 
-    public static final String PHYSICAL_INPUT_TAG = "Physical Input: ";
+    protected static final String PGA_TAG = "PGA: ";
 
-    public static final String PGA_TAG = "PGA: ";
+    protected static final String RATE_TAG = "Rate: ";
 
-    public static final String RATE_TAG = "Rate: ";
+    protected static final String BUFFER_STATUS_TAG = "Buffer Status: ";
 
-    public static final String BUFFER_STATUS_TAG = "Buffer Status: ";
+    protected static final String TIMESTAMP_TAG = "Timestamp: ";
 
-    public static final String TIMESTAMP_TAG = "Timestamp: ";
+    protected static final String VALUE_TAG = "Value: ";
 
-    public static final String VALUE_TAG = "Value: ";
+    protected static final String LEVEL_TAG = "Level: ";
 
-    public static final String LEVEL_TAG = "Level: ";
+    protected static final String LINE_MARKER = "--------------------";
 
-    public static final String LINE_MARKER = "--------------------";
+    protected static final String HIGH_MARKER = "H";
 
-    public static final String HIGH_MARKER = "H";
+    protected static final String LOW_MARKER = "L";
 
-    public static final String LOW_MARKER = "L";
+    protected static final int UNIT_SEPARATOR_CHAR = 0x1F;
 
-    public static final int UNIT_SEPARATOR_CHAR = 0x1F;
+    protected static final int NEW_LINE_CHAR = 0x0A;
 
-    public static final int NEW_LINE_CHAR = 0x0A;
-
-    public static final int CARRIAGE_RETURN_CHAR = 0x0D;
+    protected static final int CARRIAGE_RETURN_CHAR = 0x0D;
 
     public static final Pattern RECORD_SEPARATOR_PATTERN = Pattern
             .compile("\\x1E");
@@ -103,7 +101,7 @@ public class ASCIIMessageUtils {
                     || messageData.contains(V2_DIGITAL_INPUT_HEADER)) {
                 // This is an ASCII Digital Input Data message
                 message = new ASCIIDigitalInputDataMessage(messageData);
-            } else if (messageData.contains(V1_DIGITAL_OUTPUT_HEADER)) {
+            } else if (messageData.contains(DIGITAL_OUTPUT_HEADER)) {
                 // This is an ASCII Digital Output Data message
                 message = new ASCIIDigitalOutputDataMessage(messageData);
             }else if (messageData.contains(DIGITAL_PWM_INPUT_HEADER)) {
@@ -124,6 +122,37 @@ public class ASCIIMessageUtils {
      * Message type enumeration.
      */
     public static enum MESSAGE_TYPE {
-        DEBUG, STATUS, ERROR, ANALOG_INPUT_DATA, DIGITAL_INPUT_DATA, DIGITAL_OUTPUT_DATA, COMMAND_DATA, PWM_INPUT_DATA;
+        /**
+         * Debug
+         */
+        DEBUG,
+        /**
+         * Status
+         */
+        STATUS,
+        /**
+         * Error
+         */
+        ERROR,
+        /**
+         * AI Data
+         */
+        ANALOG_INPUT_DATA,
+        /**
+         * DI Data
+         */
+        DIGITAL_INPUT_DATA,
+        /**
+         * DO Data
+         */
+        DIGITAL_OUTPUT_DATA,
+        /**
+         * Command Data
+         */
+        COMMAND_DATA,
+        /**
+         * PWM Data
+         */
+        PWM_INPUT_DATA
     }
 }

@@ -39,7 +39,7 @@ class LocatorParamsSpec: ShouldSpec({
 
             (obj is LocatorParams) shouldBe true
 
-            (obj as LocatorParams).firmware shouldEqual FIRMWARE
+            (obj as? LocatorParams)?.firmware shouldEqual FIRMWARE
 
         }
     }

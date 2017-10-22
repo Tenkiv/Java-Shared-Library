@@ -7,6 +7,9 @@ import com.tenkiv.tekdaqc.serializeToAny
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.ShouldSpec
 
+/**
+ * Class to test QueueValue objects and functions
+ */
 class QueueValueSpec: ShouldSpec({
     "Queue Value Spec"{
         var queueVal: QueueValue
@@ -14,7 +17,7 @@ class QueueValueSpec: ShouldSpec({
             queueVal = QueueValue(Commands.NONE.ordinalCommandType)
             queueVal.mCommandType shouldBe Commands.NONE.ordinalCommandType
 
-            queueVal.parameters.size shouldBe 0
+            queueVal.parameters.isEmpty() shouldBe true
         }
 
         should("Serialize correctly"){
@@ -31,9 +34,9 @@ class QueueValueSpec: ShouldSpec({
 
             (obj is QueueValue) shouldBe true
 
-            (obj as QueueValue).mCommandType shouldBe Commands.ADD_ANALOG_INPUT.ordinalCommandType
+            (obj as? QueueValue)?.mCommandType shouldBe Commands.ADD_ANALOG_INPUT.ordinalCommandType
 
-            obj.parameters.size shouldBe 4
+            (obj as? QueueValue)?.parameters?.size shouldBe queueVal.parameters.size
         }
     }
 })

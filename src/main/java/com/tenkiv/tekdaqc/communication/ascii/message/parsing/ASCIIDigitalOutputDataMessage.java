@@ -49,7 +49,7 @@ public class ASCIIDigitalOutputDataMessage extends AASCIIMessage {
 
     @Override
     protected void parse(final String raw) throws NumberFormatException {
-        int start = raw.indexOf(ASCIIMessageUtils.V1_DIGITAL_OUTPUT_HEADER); // Determine where the message tag is
+        int start = raw.indexOf(ASCIIMessageUtils.DIGITAL_OUTPUT_HEADER); // Determine where the message tag is
         if (start < 0) {
             // The tag does not exist
             System.err.println("Digital output header not found. Returning null.");

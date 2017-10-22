@@ -147,7 +147,18 @@ public class AnalogInput_RevD extends AAnalogInput {
      * @since v1.0.0.0
      */
     public enum BufferState {
-        ENABLED, DISABLED, INVALID;
+        /**
+         * Buffer Enabled
+         */
+        ENABLED,
+        /**
+         * Buffer Disabled
+         */
+        DISABLED,
+        /**
+         * Buffer is invalid
+         */
+        INVALID;
 
         private static final BufferState[] mValueArray = BufferState.values();
 

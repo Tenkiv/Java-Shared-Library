@@ -53,7 +53,7 @@ class LocatorResponseSpec: ShouldSpec ({
         should("Serialize correctly"){
             val obj = serializeToAny(response)
             (obj is LocatorResponse) shouldBe true
-            (obj as LocatorResponse).mSerial shouldBe SERIAL
+            (obj as? LocatorResponse)?.mSerial shouldBe SERIAL
         }
 
         should("Generate sane string"){

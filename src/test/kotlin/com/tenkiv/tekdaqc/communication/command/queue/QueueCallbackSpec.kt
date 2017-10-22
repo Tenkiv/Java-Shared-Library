@@ -68,20 +68,20 @@ class QueueCallbackSpec : ShouldSpec({
 
             queueCallback = QueueCallback()
 
-            queueCallback.uid = uid
+            queueCallback.uid = UID
 
-            queueCallback.uid shouldBe uid.plusOrMinus(uidVariance)
+            queueCallback.uid shouldBe UID.plusOrMinus(UID_VARIANCE)
 
             val obj = serializeToAny(queueCallback)
             (obj is QueueCallback) shouldBe true
-            (obj as QueueCallback).uid shouldBe uid.plusOrMinus(uidVariance)
+            (obj as? QueueCallback)?.uid shouldBe UID.plusOrMinus(UID_VARIANCE)
         }
     }
 }){
     companion object {
 
-        const val uid = 10.0
+        const val UID = 10.0
 
-        const val uidVariance = 0.0001
+        const val UID_VARIANCE = 0.0001
     }
 }
