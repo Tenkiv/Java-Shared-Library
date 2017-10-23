@@ -14,7 +14,6 @@ class DigitalInputSpec: ShouldSpec({
         val digitalInput = simulatedTekdaqc.getDigitalInput(INPUT_NUMBER)
 
         should("Set values"){
-            digitalInput.isPWM shouldBe false
 
             digitalInput.channelNumber shouldBe INPUT_NUMBER
 
