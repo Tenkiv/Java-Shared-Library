@@ -63,7 +63,8 @@ public abstract class AAnalogInput extends IInputOutputHardware {
      */
     public AAnalogInput setName(final String name) throws IllegalArgumentException {
         if (name.length() >= ATekdaqc.Companion.getMAX_NAME_LENGTH()) {
-            throw new IllegalArgumentException("The maximum length of a name is " + ATekdaqc.Companion.getMAX_NAME_LENGTH() + " characters.");
+            throw new IllegalArgumentException(
+                    "The maximum length of a name is " + ATekdaqc.Companion.getMAX_NAME_LENGTH() + " characters.");
         } else {
             mName = name;
         }

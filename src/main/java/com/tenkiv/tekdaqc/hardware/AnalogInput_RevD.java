@@ -89,6 +89,8 @@ public class AnalogInput_RevD extends AAnalogInput {
      */
     @Override
     protected boolean isValidRate(final Rate rate) {
+        if(rate == null)
+            return false;
         switch (rate) {
             case SPS_2_5:
             case SPS_5:

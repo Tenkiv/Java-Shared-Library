@@ -18,7 +18,7 @@ public class DigitalInput extends IInputOutputHardware {
      */
     private volatile String mName = null;
 
-    private volatile Boolean isPWM = null;
+    private volatile Boolean isPWM = false;
 
     @Override
     public ChannelType getChannelType() {
