@@ -60,11 +60,12 @@ public class ReadExecutor implements ITekdaqcExecutor {
      * @throws IOException Exception thrown in the case of an unexpected break in communication with the board.
      */
     public void detectMessages() throws IOException {
-        final Scanner scan = new Scanner(mTekdaqc.getInputStream()).useDelimiter(ASCIIMessageUtils.RECORD_SEPARATOR_PATTERN);
+        final Scanner scan = new Scanner(mTekdaqc.getInputStream())
+                .useDelimiter(ASCIIMessageUtils.RECORD_SEPARATOR_PATTERN);
         while (scan.hasNext()) {
             final String message = scan.next();
             if (message != null && !message.isEmpty()) {
-                mCallback.onMessageDetetced(message);
+                mCallback.onMessageDetected(message);
             } else {
                 System.err.println("Null or empty message was detected.");
             }

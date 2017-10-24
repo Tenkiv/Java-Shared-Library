@@ -7,7 +7,6 @@ import tec.uom.se.unit.Units;
 
 import javax.measure.Quantity;
 import javax.measure.quantity.Dimensionless;
-import java.security.InvalidParameterException;
 
 /**
  * Container class for all data/settings of an digital output on the Tekdaqc.
@@ -122,13 +121,15 @@ public class DigitalOutput extends IInputOutputHardware {
      *
      * @param dutyCycle A int value between 0 and 100 to set as the uptime percentage.
      */
-    public void setPulseWidthModulation(final int dutyCycle){
-        if(dutyCycle < 0 || dutyCycle > 100){
-            throw new InvalidParameterException("Uptime must be a value between 0 and 100");
+    public void setPulseWidthModulation(final int dutyCycle) {
+        if (dutyCycle < 0 || dutyCycle > 100) {
+            throw new IllegalArgumentException("Uptime must be a value between 0 and 100");
+        } else if (!getTekdaqc().isConnected()) {
+            throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
         }
         isActivated = true;
         getTekdaqc().queueCommand(CommandBuilder.INSTANCE.setDigitalOutputPulseWidthModulation
-                        (DigitalOutputUtilities.intToHex(getChannelNumber()),dutyCycle));
+                (DigitalOutputUtilities.intToHex(getChannelNumber()), dutyCycle));
 
     }
 
@@ -138,7 +139,7 @@ public class DigitalOutput extends IInputOutputHardware {
      *
      * @param dutyCycle A {@link Quantity} that should contain a value in {@link Units#PERCENT}.
      */
-    public void setPulseWidthModulation(final Quantity<Dimensionless> dutyCycle){
+    public void setPulseWidthModulation(final Quantity<Dimensionless> dutyCycle) {
         int iUptime = dutyCycle.to(Units.PERCENT).getValue().intValue();
 
         setPulseWidthModulation(iUptime);

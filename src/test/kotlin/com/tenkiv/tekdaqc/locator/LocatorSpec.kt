@@ -97,8 +97,10 @@ class LocatorSpec : ShouldSpec({
             if(count > 0){
                 sendFakeTekdaqcUPD()
                 count--
+                return@timerTask
             }else{
                 this.cancel()
+                return@timerTask
             }
         },1000,1000)
 

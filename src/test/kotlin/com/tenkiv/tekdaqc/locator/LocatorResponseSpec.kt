@@ -4,6 +4,7 @@ import com.tenkiv.tekdaqc.*
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldNotBe
 import io.kotlintest.specs.ShouldSpec
+import java.net.InetAddress
 
 val spoofedLocatorResponse = byteArrayOf(-2, 115, 2, 69, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
         48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 50, -64, -88, 0, 118, 52, 104, 82, 22, 53, -106, 1,
@@ -45,7 +46,7 @@ class LocatorResponseSpec: ShouldSpec ({
         should("Equal correct values"){
             response.type shouldBe TYPE
             response.mMACAddress shouldBe MACADDR
-            response.hostIP shouldBe IPADDR
+            response.hostIP shouldBe InetAddress.getLocalHost().hostAddress
             response.mSerial shouldBe SERIAL
             response.firwareVersion shouldBe FIRMWARE
         }
@@ -68,4 +69,4 @@ class LocatorResponseSpec: ShouldSpec ({
  * @return A fake locatorResponse for testing
  */
 fun getSimulatedLocatorResponse(): LocatorResponse =
-        LocatorResponse(IPADDR, spoofedLocatorResponse)
+        LocatorResponse(InetAddress.getLocalHost().hostAddress, spoofedLocatorResponse)

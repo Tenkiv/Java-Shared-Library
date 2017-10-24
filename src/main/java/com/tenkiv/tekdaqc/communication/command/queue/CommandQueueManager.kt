@@ -204,10 +204,8 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
     }
 
     override fun onErrorMessageReceived(tekdaqc: ATekdaqc, message: ABoardMessage) {
-
         queueLock.lock()
         try {
-
             didTaskTimeout.set(false)
 
             cullQueueUntilCallback()
@@ -215,7 +213,6 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
             isTaskExecuting.set(false)
 
             println("Error Task Response - " + message)
-
         } finally {
             commandCondition.signal()
             queueLock.unlock()

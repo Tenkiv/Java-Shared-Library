@@ -4,8 +4,6 @@ import java.io.*
 
 internal const val FIRMWARE = "1.3.1.0"
 
-internal const val IPADDR = "0.0.0.0"
-
 internal const val MSG = "arbitrary"
 
 internal const val PORT = 8000

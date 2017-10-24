@@ -1,6 +1,7 @@
 package com.tenkiv.tekdaqc.hardware
 
 import com.tenkiv.tekdaqc.locator.getSimulatedLocatorResponse
+import com.tenkiv.tekdaqc.serializeToAny
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.ShouldSpec
@@ -17,6 +18,8 @@ class AnalogInputSpec: ShouldSpec({
             analogInput.rate = AAnalogInput.Rate.SPS_5
 
             analogInput.gain = AAnalogInput.Gain.X1
+
+            analogInput.sensorCurrent = AAnalogInput.SensorCurrent._10uA
 
             analogInput.channelNumber shouldBe INPUT_NUMBER
 
@@ -61,12 +64,28 @@ class AnalogInputSpec: ShouldSpec({
             AAnalogInput.Gain.fromString(STRING_OF_GAIN) shouldBe AAnalogInput.Gain.X1
 
             AAnalogInput.Gain.fromString(INVALID_STRING) shouldBe null
+
+            AAnalogInput.Gain.valueOf(VALUE_STRING_OF_GAIN) shouldBe AAnalogInput.Gain.X1
+
+            AAnalogInput.Gain.getValueFromOrdinal(ORDINAL_FIRST) shouldBe  AAnalogInput.Gain.X1
         }
 
-        should("Test Rate"){
+        should("Test rate"){
             AAnalogInput.Rate.fromString(STRING_OF_RATE) shouldBe AAnalogInput.Rate.SPS_5
 
+            AAnalogInput.Rate.getValueFromOrdinal(ORDINAL_FIRST) shouldBe  AAnalogInput.Rate.SPS_30000
+
+            AAnalogInput.Rate.SPS_5.toString() shouldBe STRING_OF_RATE
+
             AAnalogInput.Rate.fromString(INVALID_STRING) shouldBe null
+        }
+
+        should("Test current"){
+            AAnalogInput.SensorCurrent.valueOf(SENSOR_CURRENT_NAME) shouldBe AAnalogInput.SensorCurrent._10uA
+
+            AAnalogInput.SensorCurrent.getValueFromOrdinal(ORDINAL_FIRST) shouldBe AAnalogInput.SensorCurrent._10uA
+
+            AAnalogInput.SensorCurrent._10uA.toString() shouldBe SENSOR_CURRENT_STRING_VALUE
         }
     }
 }){
@@ -81,8 +100,12 @@ class AnalogInputSpec: ShouldSpec({
 
         private const val INT_OF_GAIN = 1
         private const val INVALID_INT_OF_GAIN = 92
+        private const val ORDINAL_FIRST: Byte = 0
 
+        private const val VALUE_STRING_OF_GAIN = "X1"
+        private const val SENSOR_CURRENT_NAME = "_10uA"
         private const val STRING_OF_GAIN = "1"
         private const val STRING_OF_RATE = "5"
+        private const val SENSOR_CURRENT_STRING_VALUE = "10"
     }
 }

@@ -222,7 +222,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     protected void addAnalogInput(final AAnalogInput input) throws IllegalArgumentException, IllegalStateException {
-        queueCommand(CommandBuilder.INSTANCE.addAnalogInput(input));
+        input.activate();
     }
 
     @Override
@@ -289,12 +289,12 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     public void removeAnalogInput(final AAnalogInput input) {
-        queueCommand(CommandBuilder.INSTANCE.removeAnalogInput(input));
+        input.deactivate();
     }
 
     @Override
     public void deactivateAnalogInput(final int input) {
-        queueCommand(CommandBuilder.INSTANCE.removeAnalogInputByNumber(input));
+        getAnalogInput(input).deactivate();
     }
 
     @Override
@@ -313,12 +313,12 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     public void deactivateDigitalInput(final DigitalInput input) {
-        queueCommand(CommandBuilder.INSTANCE.removeDigitalInput(input));
+        input.deactivate();
     }
 
     @Override
     public void deactivateDigitalInput(final int input) {
-        queueCommand(CommandBuilder.INSTANCE.removeDigitalInputByNumber(input));
+        getDigitalInput(input).deactivate();
     }
 
     @Override
@@ -337,7 +337,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     protected void addDigitalInput(final DigitalInput input) throws IllegalArgumentException, IllegalStateException {
-        queueCommand(CommandBuilder.INSTANCE.addDigitalInput(input));
+        input.activate();
     }
 
     public void systemGainCalibrate(final int input) {
@@ -550,8 +550,8 @@ public class Tekdaqc_RevD extends ATekdaqc {
     }
 
     @Override
-    public void onMessageDetetced(final String message) {
-        super.onMessageDetetced(message);
+    public void onMessageDetected(final String message) {
+        super.onMessageDetected(message);
         getParsingExecutor().parseMessage(message, this);
     }
 

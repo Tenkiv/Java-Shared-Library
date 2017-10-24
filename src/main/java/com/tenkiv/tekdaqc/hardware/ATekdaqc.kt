@@ -317,7 +317,7 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
         messageBroadcaster.setCallbackExecutor(callbackExecutor)
     }
 
-    override fun onMessageDetetced(message: String) {
+    override fun onMessageDetected(message: String) {
         if (keepAlivePacketSent) {
             keepAlivePacketSent = false
         }
