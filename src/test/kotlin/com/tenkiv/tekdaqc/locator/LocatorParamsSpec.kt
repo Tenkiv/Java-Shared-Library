@@ -4,6 +4,7 @@ import com.tenkiv.tekdaqc.*
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.specs.ShouldSpec
+import java.net.InetAddress
 
 /**
  * Class to test locator param building.
@@ -12,7 +13,7 @@ class LocatorParamsSpec: ShouldSpec({
     "Locator Params Spec"{
         val paramBuilder = LocatorParams.Builder()
         paramBuilder.setFirmware(FIRMWARE)
-        paramBuilder.setIpAddress(IPADDR)
+        paramBuilder.setIpAddress(InetAddress.getLocalHost().hostAddress)
         paramBuilder.setMessage(MSG)
         paramBuilder.setPort(PORT)
         paramBuilder.setSerial(SERIAL)
@@ -24,7 +25,7 @@ class LocatorParamsSpec: ShouldSpec({
 
         should("Equal locator values"){
             locatorParams.firmware shouldEqual FIRMWARE
-            locatorParams.ipAddress shouldEqual IPADDR
+            locatorParams.ipAddress shouldEqual InetAddress.getLocalHost().hostAddress
             locatorParams.message shouldEqual MSG
             locatorParams.port shouldEqual PORT
             locatorParams.serial shouldEqual SERIAL
