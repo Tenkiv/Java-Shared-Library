@@ -1041,6 +1041,13 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
     protected abstract fun removeAnalogInput(input: AAnalogInput)
 
     /**
+     * Removes an digital input from this Tekdaqc.
+
+     * @param input [DigitalInput] The input to remove from the board.
+     */
+    protected abstract fun removeDigitalInput(input: DigitalInput)
+
+    /**
      * Removes an analog input from this Tekdaqc.
 
      * @param input `int` The input to remove from the board.

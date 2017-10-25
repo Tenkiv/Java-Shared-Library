@@ -222,21 +222,22 @@ public abstract class AAnalogInput extends IInputOutputHardware {
     }
 
     /**
-     * Subclasses must implement to serialize their additional data.
+     * Method to remove a {@link ICountListener}.
      *
-     * @param output {@link ObjectOutput} The output stream for serialization.
-     * @throws IOException IoException.
+     * @param listener The {@link ICountListener} to be removed from callbacks.
      */
-    protected abstract void writeOut(final ObjectOutput output) throws IOException;
+    public void removeCountListener(ICountListener listener) {
+        getTekdaqc().removeAnalogCountListener(this, listener);
+    }
 
     /**
-     * Subclasses must implement to de-serialize their additional data.
+     * Method to remove a {@link IVoltageListener}.
      *
-     * @param input {@link ObjectInput} The input stream for serialization.
-     * @throws IOException            IoException.
-     * @throws ClassNotFoundException Class not found to parse.
+     * @param listener The {@link IVoltageListener} to be removed from callbacks.
      */
-    protected abstract void readIn(final ObjectInput input) throws IOException, ClassNotFoundException;
+    public void removeVoltageListener(IVoltageListener listener) {
+        getTekdaqc().removeAnalogVoltageListener(this, listener);
+    }
 
     /**
      * Checks if the provided {@link Gain} is valid for this input.

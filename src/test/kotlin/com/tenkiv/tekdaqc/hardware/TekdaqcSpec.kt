@@ -6,6 +6,7 @@ import com.tenkiv.tekdaqc.SERIAL
 import com.tenkiv.tekdaqc.TITLE
 import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData
 import com.tenkiv.tekdaqc.locator.getSimulatedLocatorResponse
+import com.tenkiv.tekdaqc.telnet.client.EthernetTelnetConnection
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.matchers.shouldEqual
 import io.kotlintest.matchers.shouldNotBe
@@ -14,7 +15,6 @@ import tec.uom.se.quantity.Quantities
 import tec.uom.se.unit.Units
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.lang.Thread.sleep
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.SocketException
@@ -45,6 +45,11 @@ class TekdaqcSpec: ShouldSpec({
             tekdaqc.macAddress shouldBe MACADDR
             tekdaqc.title shouldBe TITLE
             tekdaqc.serialNumber shouldBe SERIAL
+
+            tekdaqc.getAnalogInputCount() shouldBe ANALOG_INPUT_COUNT
+            tekdaqc.getDigitalInputCount() shouldBe DIGITAL_INPUT_COUNT
+            tekdaqc.getDigitalOutputCount() shouldBe DIGITAL_OUTPUT_COUNT
+            tekdaqc.getAnalogTemperatureReferenceChannel() shouldBe TEMP_SENSOR_NUMBER
         }
 
         should("Connect to spoofed Tekdaqc"){
@@ -65,18 +70,15 @@ class TekdaqcSpec: ShouldSpec({
 
 
             thread {
-                val socket = ServerSocket(9801).accept()
-
+                val socket = ServerSocket(EthernetTelnetConnection.TEKDAQC_TELNET_PORT).accept()
                 Thread.sleep(2000)
-
                 val r = BufferedReader(InputStreamReader(socket.getInputStream()))
-
                 while (true) {
                     try {
                         socket.getOutputStream().write(("--------------------\n" +
                                 "Status Message\n" +
                                 "\tMessage: SUCCESS - COMMAND: OK\n" +
-                                "--------------------${0x1E.toChar()}").toByteArray())
+                                "--------------------$RECORD_SPERATOR").toByteArray())
                         socket.getOutputStream().flush()
 
                         val command = r.readLine()
@@ -85,7 +87,6 @@ class TekdaqcSpec: ShouldSpec({
                             commandMap.put(command,true)
                         }
 
-                        sleep(100)
                     }catch (e: SocketException){
                         break
                     }
@@ -95,22 +96,34 @@ class TekdaqcSpec: ShouldSpec({
             tekdaqc.connect(ATekdaqc.AnalogScale.ANALOG_SCALE_5V,ATekdaqc.CONNECTION_METHOD.ETHERNET)
 
             tekdaqc.activateAnalogInput(HW_NUMBER)
-
-            tekdaqc.activateDigitalInput(HW_NUMBER)
-
-            tekdaqc.toggleDigitalOutput(HW_NUMBER,true)
-
-            tekdaqc.setDigitalOutputByHex("0000")
-
-            tekdaqc.deactivateDigitalInput(HW_NUMBER)
-
             tekdaqc.deactivateAnalogInput(HW_NUMBER)
 
+            tekdaqc.activateDigitalInput(HW_NUMBER)
+            tekdaqc.deactivateDigitalInput(HW_NUMBER)
+
+            tekdaqc.toggleDigitalOutput(HW_NUMBER,true)
+            tekdaqc.setDigitalOutputByHex("0000")
             tekdaqc.toggleDigitalOutput(HW_NUMBER,false)
-
             tekdaqc.setPulseWidthModulation(HW_NUMBER,100)
-
             tekdaqc.setPulseWidthModulation(HW_NUMBER,Quantities.getQuantity(0, Units.PERCENT))
+
+            tekdaqc.addAnalogInput(tekdaqc.getAnalogInput(HW_NUMBER))
+            tekdaqc.removeAnalogInput(tekdaqc.getAnalogInput(HW_NUMBER))
+
+            tekdaqc.addDigitalInput(tekdaqc.getDigitalInput(HW_NUMBER))
+            tekdaqc.removeDigitalInput(tekdaqc.getDigitalInput(HW_NUMBER))
+
+            tekdaqc.deactivateAllAnalogInputs()
+            tekdaqc.deactivateAllDigitalInputs()
+
+            tekdaqc.activateAnalogInput(HW_NUMBER)
+            tekdaqc.activateDigitalInput(HW_NUMBER)
+            tekdaqc.deactivateAllAddedDigitalInputs()
+            tekdaqc.deactivateAllAddedAnalogInputs()
+
+
+            tekdaqc.getDigitalInput(0).activatePWM()
+            tekdaqc.getDigitalInput(0).deactivatePWM()
 
             tekdaqc.disconnectCleanly()
 
@@ -245,11 +258,17 @@ class TekdaqcSpec: ShouldSpec({
     }
 }){
     companion object {
+        const val RECORD_SPERATOR = 0x1E.toChar()
         const val INCREMENT_NUMBER = 2
         const val HW_NUMBER = 0
         const val HW_END = 10
         const val TIME_STAMP = 1000L
         const val TEST_DATA = 1500
         const val SAMPLE_NUMBER = 10
+
+        const val ANALOG_INPUT_COUNT = 32
+        const val DIGITAL_INPUT_COUNT = 24
+        const val DIGITAL_OUTPUT_COUNT = 16
+        const val TEMP_SENSOR_NUMBER = 36
     }
 }

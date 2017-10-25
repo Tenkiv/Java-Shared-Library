@@ -132,16 +132,6 @@ public class AnalogInput_RevD extends AAnalogInput {
         }
     }
 
-    @Override
-    protected void writeOut(ObjectOutput output) throws IOException {
-        output.writeObject(mBuffer);
-    }
-
-    @Override
-    protected void readIn(ObjectInput input) throws IOException, ClassNotFoundException {
-        mBuffer = (BufferState) input.readObject();
-    }
-
     /**
      * Set of possible input buffer states.
      *

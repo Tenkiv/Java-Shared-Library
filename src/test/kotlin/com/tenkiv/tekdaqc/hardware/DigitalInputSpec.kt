@@ -30,6 +30,14 @@ class DigitalInputSpec: ShouldSpec({
             shouldThrow<IllegalStateException>({
                 digitalInput.deactivate()
             })
+
+            shouldThrow<IllegalStateException>({
+                digitalInput.activatePWM()
+            })
+
+            shouldThrow<IllegalStateException>({
+                digitalInput.deactivatePWM()
+            })
         }
     }
 }){

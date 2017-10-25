@@ -5,7 +5,6 @@ import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIDigitalInputD
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIErrorMessage;
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIPWMInputDataMessage;
 import com.tenkiv.tekdaqc.communication.command.queue.Commands;
-import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
 import com.tenkiv.tekdaqc.communication.command.queue.values.QueueValue;
 import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData;
 import com.tenkiv.tekdaqc.communication.data_points.DataPoint;
@@ -293,22 +292,23 @@ public class Tekdaqc_RevD extends ATekdaqc {
     }
 
     @Override
+    public void removeDigitalInput(final DigitalInput input) {
+        input.deactivate();
+    }
+
+    @Override
     public void deactivateAnalogInput(final int input) {
         getAnalogInput(input).deactivate();
     }
 
     @Override
     public void deactivateAllAddedAnalogInputs() {
-        for (final ABaseQueueVal queueValue : CommandBuilder.INSTANCE.removeMappedAnalogInputs(getAnalogInputs())) {
-            queueCommand(queueValue);
-        }
+        getAnalogInputs().values().stream().filter(it -> it.isActivated).forEach(AAnalogInput::deactivate);
     }
 
     @Override
     public void deactivateAllAnalogInputs() {
-        for (final ABaseQueueVal queueValue : CommandBuilder.INSTANCE.deactivateAllAnalogInputs()) {
-            queueCommand(queueValue);
-        }
+        getAnalogInputs().values().forEach(AAnalogInput::deactivate);
     }
 
     @Override
@@ -323,16 +323,12 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     public void deactivateAllAddedDigitalInputs() {
-        for (ABaseQueueVal queueValue : CommandBuilder.INSTANCE.removeMappedDigitalInputs(getDigitalInputs())) {
-            queueCommand(queueValue);
-        }
+        getDigitalInputs().values().stream().filter(it -> it.isActivated).forEach(DigitalInput::deactivate);
     }
 
     @Override
     public void deactivateAllDigitalInputs() {
-        for (ABaseQueueVal queueValue : CommandBuilder.INSTANCE.deactivateAllDigitalInputs()) {
-            queueCommand(queueValue);
-        }
+        getDigitalInputs().values().forEach(DigitalInput::deactivate);
     }
 
     @Override
