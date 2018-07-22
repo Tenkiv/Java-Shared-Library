@@ -24,7 +24,6 @@ import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError
 import com.tenkiv.tekdaqc.utility.reprepare
-import tec.uom.se.unit.Units
 import java.io.*
 import java.util.*
 import java.util.concurrent.Executor

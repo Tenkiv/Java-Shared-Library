@@ -2,7 +2,7 @@ package com.tenkiv.tekdaqc.communication.message;
 
 import com.tenkiv.tekdaqc.hardware.AAnalogInput;
 import org.tenkiv.coral.ValueInstant;
-import tec.uom.se.ComparableQuantity;
+import tec.units.indriya.ComparableQuantity;
 
 import javax.measure.quantity.ElectricPotential;
 
