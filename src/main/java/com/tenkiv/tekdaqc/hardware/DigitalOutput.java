@@ -3,7 +3,7 @@ package com.tenkiv.tekdaqc.hardware;
 
 import com.tenkiv.tekdaqc.utility.ChannelType;
 import com.tenkiv.tekdaqc.utility.DigitalOutputUtilities;
-import tec.uom.se.unit.Units;
+import tec.units.indriya.unit.Units;
 
 import javax.measure.Quantity;
 import javax.measure.quantity.Dimensionless;

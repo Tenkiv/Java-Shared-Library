@@ -10,9 +10,9 @@ import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.DigitalInput
 import com.tenkiv.tekdaqc.hardware.IInputOutputHardware
 import org.tenkiv.coral.ValueInstant
-import tec.uom.se.ComparableQuantity
-import tec.uom.se.quantity.Quantities
-import tec.uom.se.unit.Units
+import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.quantity.Quantities
+import tec.units.indriya.unit.Units
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
