@@ -89,6 +89,8 @@ public class AnalogInput_RevD extends AAnalogInput {
      */
     @Override
     protected boolean isValidRate(final Rate rate) {
+        if(rate == null)
+            return false;
         switch (rate) {
             case SPS_2_5:
             case SPS_5:
@@ -130,16 +132,6 @@ public class AnalogInput_RevD extends AAnalogInput {
         }
     }
 
-    @Override
-    protected void writeOut(ObjectOutput output) throws IOException {
-        output.writeObject(mBuffer);
-    }
-
-    @Override
-    protected void readIn(ObjectInput input) throws IOException, ClassNotFoundException {
-        mBuffer = (BufferState) input.readObject();
-    }
-
     /**
      * Set of possible input buffer states.
      *
@@ -147,7 +139,18 @@ public class AnalogInput_RevD extends AAnalogInput {
      * @since v1.0.0.0
      */
     public enum BufferState {
-        ENABLED, DISABLED, INVALID;
+        /**
+         * Buffer Enabled
+         */
+        ENABLED,
+        /**
+         * Buffer Disabled
+         */
+        DISABLED,
+        /**
+         * Buffer is invalid
+         */
+        INVALID;
 
         private static final BufferState[] mValueArray = BufferState.values();
 

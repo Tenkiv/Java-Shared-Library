@@ -15,7 +15,7 @@ public class PWMInputData extends DataPoint {
 
     protected int mTotalTransitions;
 
-    protected double mPercetageOn;
+    protected double mPercentageOn;
 
     /**
      * Provided for externalization. User code should not use this constructor.
@@ -27,7 +27,7 @@ public class PWMInputData extends DataPoint {
 
     public PWMInputData(final int channel, final String name, final long timestamp, final double percetageOn, final int totalCount) {
         super(name, channel, timestamp);
-        mPercetageOn = percetageOn;
+        mPercentageOn = percetageOn;
         mTotalTransitions = totalCount;
     }
 
@@ -45,25 +45,24 @@ public class PWMInputData extends DataPoint {
      *
      * @return Number of transitions
      */
-    public double getPercetageOn() {
-        return mPercetageOn;
+    public double getPercentageOn() {
+        return mPercentageOn;
     }
 
     @Override
-    public DATA_TYPE getType() {
-        return DATA_TYPE.PWM_INPUT;
+    public DataType getType() {
+        return DataType.PWM_INPUT;
     }
-
 
     @Override
     protected void readIn(final ObjectInput input) throws IOException, ClassNotFoundException {
-        mPercetageOn =  input.readDouble();
+        mPercentageOn =  input.readDouble();
         mTotalTransitions = input.readInt();
     }
 
     @Override
     protected void writeOut(final ObjectOutput output) throws IOException {
-        output.writeObject(mPercetageOn);
+        output.writeDouble(mPercentageOn);
         output.writeInt(mTotalTransitions);
     }
 }

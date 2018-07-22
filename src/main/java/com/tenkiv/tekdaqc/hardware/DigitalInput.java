@@ -72,6 +72,7 @@ public class DigitalInput extends IInputOutputHardware {
     @Override
     public void activate() {
         if (getTekdaqc().isConnected() && isPWM == null) {
+            isActivated = true;
             isPWM = false;
             getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addDigitalInput(this));
         } else if(!getTekdaqc().isConnected()){
@@ -84,6 +85,7 @@ public class DigitalInput extends IInputOutputHardware {
     @Override
     public void deactivate() {
         if (getTekdaqc().isConnected()) {
+            isActivated = false;
             isPWM = null;
             getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removeDigitalInput(this));
         } else {
@@ -132,6 +134,8 @@ public class DigitalInput extends IInputOutputHardware {
      */
     public void activatePWM(){
         if (getTekdaqc().isConnected() && isPWM == null) {
+            isActivated = true;
+            isPWM = true;
             getTekdaqc().queueCommand(CommandBuilder.INSTANCE.addPWMInput(this));
         } else if(!getTekdaqc().isConnected()){
             throw new IllegalStateException(TEKDAQC_NOT_CONNECTED_EXCEPTION_TEXT);
@@ -145,6 +149,7 @@ public class DigitalInput extends IInputOutputHardware {
      */
     public void deactivatePWM(){
         if (getTekdaqc().isConnected()) {
+            isActivated = true;
             isPWM = null;
             getTekdaqc().queueCommand(CommandBuilder.INSTANCE.removePWMInput(this.getChannelNumber()));
         } else {

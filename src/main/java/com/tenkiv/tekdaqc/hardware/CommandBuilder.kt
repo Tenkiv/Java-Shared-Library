@@ -212,7 +212,7 @@ object CommandBuilder {
             throw IllegalArgumentException("Duty Cycle must not be less then 0 or greater than 100.")
 
         return QueueValue(
-                Commands.SET_DIGITAL_OUTPUT.ordinalCommandType,
+                Commands.SET_PWM_OUTPUT.ordinalCommandType,
                 Pair(Params.OUTPUT, hex),
                 Pair(Params.DUTYCYCLE, dutyCycle))
     }

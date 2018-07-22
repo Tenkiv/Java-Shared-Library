@@ -64,25 +64,25 @@ public class ASCIIPWMInputDataMessage extends AASCIIMessage implements IDataPoin
         }
         start += ASCIIMessageUtils.DIGITAL_PWM_INPUT_HEADER.length();
         int end = raw.indexOf("\r", start);
-
         mNumber = Integer.parseInt(raw.substring(start, end));
+
         start = raw.indexOf(ASCIIMessageUtils.NEW_LINE_CHAR, end) + 1;
         end = raw.indexOf(",", start);
-
         mTotalTransitions = Integer.parseInt(raw.substring(start, end));
-        start = raw.indexOf(", ", end) + 2;
-        end = raw.indexOf(ASCIIMessageUtils.NEW_LINE_CHAR, start);
 
+        start = raw.indexOf(",", end) + 1;
+        end = raw.indexOf(ASCIIMessageUtils.NEW_LINE_CHAR, start);
         mOnPercentage = Double.parseDouble(raw.substring(start,end));
+
         start = raw.indexOf(ASCIIMessageUtils.NEW_LINE_CHAR, end) + 1;
         end = raw.length();
-
         mTimestamp = raw.substring(start, end);
     }
 
     @Override
     public String toString() {
-        return "DIGITAL PWM DATA MESSAGE (" + mTimestamp + "): Physical Input:" + mNumber + " Percentage:" + mOnPercentage;
+        return "DIGITAL PWM DATA MESSAGE (" + mTimestamp + "):" +
+                " Physical Input:" + mNumber + " Percentage:" + mOnPercentage;
     }
 
     @Override
@@ -92,7 +92,11 @@ public class ASCIIPWMInputDataMessage extends AASCIIMessage implements IDataPoin
 
     @Override
     public DataPoint toDataPoints() {
-        return new PWMInputData(mNumber, mName, Long.parseLong(mTimestamp.replaceAll("\\s", "")), mOnPercentage, mTotalTransitions);
+        return new PWMInputData(mNumber,
+                mName,
+                Long.parseLong(mTimestamp.replaceAll("\\s", "")),
+                mOnPercentage,
+                mTotalTransitions);
     }
 
     @Override
@@ -113,6 +117,5 @@ public class ASCIIPWMInputDataMessage extends AASCIIMessage implements IDataPoin
         output.writeObject(mTimestamp);
         output.writeDouble(mOnPercentage);
         output.writeInt(mTotalTransitions);
-
     }
 }

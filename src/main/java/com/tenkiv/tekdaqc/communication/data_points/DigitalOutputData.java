@@ -39,10 +39,6 @@ public class DigitalOutputData extends ABoardMessage {
         mTimestamp = timestamp;
     }
 
-    public boolean[] getDigitalState() {
-        return mDigitalState;
-    }
-
     /**
      * Retrieve the data for this data point.
      *
