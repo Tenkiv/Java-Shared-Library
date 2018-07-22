@@ -48,8 +48,8 @@ public class DigitalInputData extends DataPoint {
     }
 
     @Override
-    public DATA_TYPE getType() {
-        return DATA_TYPE.DIGITAL_INPUT;
+    public DataType getType() {
+        return DataType.DIGITAL_INPUT;
     }
 
 

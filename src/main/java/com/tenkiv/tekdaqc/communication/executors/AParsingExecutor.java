@@ -67,7 +67,7 @@ public abstract class AParsingExecutor implements ITekdaqcExecutor {
          */
         void onParsingComplete(final ABoardMessage message);
 
-        void onMessageDetetced(final String message);
+        void onMessageDetected(final String message);
     }
 
     /**

@@ -94,9 +94,9 @@ public abstract class DataPoint implements Externalizable {
     /**
      * Retrieve the type of data point.
      *
-     * @return {@link DATA_TYPE} The type of data this data point corresponds to.
+     * @return {@link DataType} The type of data this data point corresponds to.
      */
-    public abstract DATA_TYPE getType();
+    public abstract DataType getType();
 
     /**
      * Provided to allow subclasses to de-serialize information.
@@ -121,7 +121,7 @@ public abstract class DataPoint implements Externalizable {
      * @author Tenkiv (software@tenkiv.com)
      * @since v1.0.0.0
      */
-    public enum DATA_TYPE {
+    public enum DataType {
         ANALOG_INPUT, ANALOG_OUTPUT, DIGITAL_INPUT, DIGITAL_OUTPUT, PWM_INPUT
     }
 }

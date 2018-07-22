@@ -19,8 +19,6 @@ import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.LocatorResponse
 import com.tenkiv.tekdaqc.telnet.client.EthernetTelnetConnection
 import com.tenkiv.tekdaqc.telnet.client.ITekdaqcTelnetConnection
-import com.tenkiv.tekdaqc.telnet.client.SerialTelnetConnection
-import com.tenkiv.tekdaqc.telnet.client.USBTelnetConnection
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError
 import com.tenkiv.tekdaqc.utility.reprepare
@@ -59,6 +57,9 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
      */
     internal val messageBroadcaster = MessageBroadcaster()
 
+    /**
+     * Gets the message broadcaster
+     */
     protected fun getMessageBroadcaster(): MessageBroadcaster = messageBroadcaster
 
     /**
@@ -313,7 +314,7 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
         messageBroadcaster.setCallbackExecutor(callbackExecutor)
     }
 
-    override fun onMessageDetetced(message: String) {
+    override fun onMessageDetected(message: String) {
         if (keepAlivePacketSent) {
             keepAlivePacketSent = false
         }
@@ -325,17 +326,31 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
 
      * @return A Binary [String] representing the state of the [DigitalOutput]s.
      */
-    fun generateBinaryStringFromOutput(): String {
+    fun generateBinaryStateStringFromOutput(): String {
         val builder = StringBuilder()
 
         for (i in 0 until getDigitalOutputCount()) {
             builder.append(0)
         }
 
-        for (outputNumber in digitalOutputs.keys) {
-            if (digitalOutputs[outputNumber]?.getIsActivated() ?: throw IndexOutOfBoundsException("Digital Output Out of Range,")) {
-                builder.replace(outputNumber, outputNumber + 1, "1")
+        digitalOutputs.forEach { index, output ->
+            if (output.getIsActivated() &&
+                    output.pulseWidthModulationDutyCycle == -1) {
+                builder.replace(index, index + 1, "1")
             }
+        }
+        return builder.toString()
+    }
+
+    fun generatePwmStringFromOutput(): String {
+        val builder = StringBuilder()
+
+        digitalOutputs.forEach { index, output ->
+            if (output.getIsActivated() &&
+                    output.pulseWidthModulationDutyCycle != -1) {
+                builder.append(1)
+            }else
+                builder.append(0)
         }
         return builder.toString()
     }
@@ -715,8 +730,8 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
             ATekdaqc.CONNECTION_METHOD.ETHERNET -> connection = EthernetTelnetConnection(
                     hostIP,
                     EthernetTelnetConnection.TEKDAQC_TELNET_PORT)
-            ATekdaqc.CONNECTION_METHOD.SERIAL -> connection = SerialTelnetConnection()
-            ATekdaqc.CONNECTION_METHOD.USB -> connection = USBTelnetConnection()
+            ATekdaqc.CONNECTION_METHOD.SERIAL -> throw IllegalArgumentException("Unimplemented connection type")
+            ATekdaqc.CONNECTION_METHOD.USB -> throw IllegalArgumentException("Unimplemented connection type")
         }
         inputStream = connection?.inputStream
         outputStream = connection?.outputStream
@@ -1036,6 +1051,13 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
     protected abstract fun removeAnalogInput(input: AAnalogInput)
 
     /**
+     * Removes an digital input from this Tekdaqc.
+
+     * @param input [DigitalInput] The input to remove from the board.
+     */
+    protected abstract fun removeDigitalInput(input: DigitalInput)
+
+    /**
      * Removes an analog input from this Tekdaqc.
 
      * @param input `int` The input to remove from the board.
@@ -1318,7 +1340,20 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
      * @since v1.0.0.0
      */
     enum class CONNECTION_METHOD {
-        ETHERNET, SERIAL, USB
+        /**
+         * Communicating via Ethernet
+         */
+        ETHERNET,
+
+        /**
+         * Communicating via alternative Serial bus or port
+         */
+        SERIAL,
+
+        /**
+         * Communicating via USB
+         */
+        USB
     }
 
     /**
@@ -1329,7 +1364,15 @@ abstract class ATekdaqc protected constructor() : Externalizable, IParsingListen
      * @since v1.0.0.0
      */
     enum class COMMUNICATION_ENCODING {
-        ASCII, BINARY
+        /**
+         * Communicating via ASCII characters
+         */
+        ASCII,
+
+        /**
+         * Communicating via binary
+         */
+        BINARY
     }
 
     /**

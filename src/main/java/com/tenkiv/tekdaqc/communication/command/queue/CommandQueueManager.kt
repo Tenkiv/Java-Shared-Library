@@ -16,7 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
 /**
- * Manager for commands to the Tekdaqc, ensuring that they are executed and managing the resulting callbacks for success and failure.
+ * Manager for commands to the Tekdaqc, ensuring that they are executed and managing the resulting callbacks
+ * for success and failure.
  *
  * Constructor for [CommandQueueManager] which assigns which [ATekdaqc] this class manages.
  *
@@ -123,7 +124,7 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
         } finally {
             //If task timed out and we're still connected, attempt to send the command again.
             if (didTaskTimeout.get() && mTekdaqc.isConnected) {
-                println("Interrupt Hit. Not Woken in time")
+                //println("Interrupt Hit. Not Woken in time")
                 //If failures is less then total failure count, resend.
                 if (failureCount.get() < maximumAllowedFailures) {
                     //Get and increment failure count.
@@ -203,10 +204,8 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
     }
 
     override fun onErrorMessageReceived(tekdaqc: ATekdaqc, message: ABoardMessage) {
-
         queueLock.lock()
         try {
-
             didTaskTimeout.set(false)
 
             cullQueueUntilCallback()
@@ -214,7 +213,6 @@ class CommandQueueManager(private val mTekdaqc: ATekdaqc) : ICommandManager, IMe
             isTaskExecuting.set(false)
 
             println("Error Task Response - " + message)
-
         } finally {
             commandCondition.signal()
             queueLock.unlock()

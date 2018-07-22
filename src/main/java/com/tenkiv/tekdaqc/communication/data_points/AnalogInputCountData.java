@@ -45,8 +45,8 @@ public class AnalogInputCountData extends DataPoint {
     }
 
     @Override
-    public DATA_TYPE getType() {
-        return DATA_TYPE.ANALOG_INPUT;
+    public DataType getType() {
+        return DataType.ANALOG_INPUT;
     }
 
     @Override

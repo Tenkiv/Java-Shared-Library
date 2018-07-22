@@ -5,7 +5,6 @@ import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIDigitalInputD
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIErrorMessage;
 import com.tenkiv.tekdaqc.communication.ascii.message.parsing.ASCIIPWMInputDataMessage;
 import com.tenkiv.tekdaqc.communication.command.queue.Commands;
-import com.tenkiv.tekdaqc.communication.command.queue.values.ABaseQueueVal;
 import com.tenkiv.tekdaqc.communication.command.queue.values.QueueValue;
 import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData;
 import com.tenkiv.tekdaqc.communication.data_points.DataPoint;
@@ -222,7 +221,7 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     protected void addAnalogInput(final AAnalogInput input) throws IllegalArgumentException, IllegalStateException {
-        queueCommand(CommandBuilder.INSTANCE.addAnalogInput(input));
+        input.activate();
     }
 
     @Override
@@ -289,55 +288,52 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     public void removeAnalogInput(final AAnalogInput input) {
-        queueCommand(CommandBuilder.INSTANCE.removeAnalogInput(input));
+        input.deactivate();
+    }
+
+    @Override
+    public void removeDigitalInput(final DigitalInput input) {
+        input.deactivate();
     }
 
     @Override
     public void deactivateAnalogInput(final int input) {
-        queueCommand(CommandBuilder.INSTANCE.removeAnalogInputByNumber(input));
+        getAnalogInput(input).deactivate();
     }
 
     @Override
     public void deactivateAllAddedAnalogInputs() {
-        for (final ABaseQueueVal queueValue : CommandBuilder.INSTANCE.removeMappedAnalogInputs(getAnalogInputs())) {
-            queueCommand(queueValue);
-        }
+        getAnalogInputs().values().stream().filter(it -> it.isActivated).forEach(AAnalogInput::deactivate);
     }
 
     @Override
     public void deactivateAllAnalogInputs() {
-        for (final ABaseQueueVal queueValue : CommandBuilder.INSTANCE.deactivateAllAnalogInputs()) {
-            queueCommand(queueValue);
-        }
+        getAnalogInputs().values().forEach(AAnalogInput::deactivate);
     }
 
     @Override
     public void deactivateDigitalInput(final DigitalInput input) {
-        queueCommand(CommandBuilder.INSTANCE.removeDigitalInput(input));
+        input.deactivate();
     }
 
     @Override
     public void deactivateDigitalInput(final int input) {
-        queueCommand(CommandBuilder.INSTANCE.removeDigitalInputByNumber(input));
+        getDigitalInput(input).deactivate();
     }
 
     @Override
     public void deactivateAllAddedDigitalInputs() {
-        for (ABaseQueueVal queueValue : CommandBuilder.INSTANCE.removeMappedDigitalInputs(getDigitalInputs())) {
-            queueCommand(queueValue);
-        }
+        getDigitalInputs().values().stream().filter(it -> it.isActivated).forEach(DigitalInput::deactivate);
     }
 
     @Override
     public void deactivateAllDigitalInputs() {
-        for (ABaseQueueVal queueValue : CommandBuilder.INSTANCE.deactivateAllDigitalInputs()) {
-            queueCommand(queueValue);
-        }
+        getDigitalInputs().values().forEach(DigitalInput::deactivate);
     }
 
     @Override
     protected void addDigitalInput(final DigitalInput input) throws IllegalArgumentException, IllegalStateException {
-        queueCommand(CommandBuilder.INSTANCE.addDigitalInput(input));
+        input.activate();
     }
 
     public void systemGainCalibrate(final int input) {
@@ -519,39 +515,43 @@ public class Tekdaqc_RevD extends ATekdaqc {
 
     @Override
     public void onParsingComplete(final ABoardMessage message) {
-        switch (message.getType()) {
-            case DEBUG: // Fall through for all message types
-            case STATUS:
-            case COMMAND_DATA:
-            case DIGITAL_OUTPUT_DATA:
-                getMessageBroadcaster().broadcastMessage(this, message);
-                break;
-            case ERROR:
-                if (((ASCIIErrorMessage) message).isNetworkError) {
-                    getMessageBroadcaster().broadcastNetworkError(this, message);
-                }
-                getMessageBroadcaster().broadcastMessage(this, message);
-                break;
-            case ANALOG_INPUT_DATA:
-                final DataPoint analogInputData = ((ASCIIAnalogInputDataMessage) message).toDataPoints();
-                getMessageBroadcaster().broadcastAnalogInputDataPoint(this, (AnalogInputCountData) analogInputData);
-                break;
-            case DIGITAL_INPUT_DATA:
-                final DataPoint digitalInputData = ((ASCIIDigitalInputDataMessage) message).toDataPoints();
-                getMessageBroadcaster().broadcastDigitalInputDataPoint(this, (DigitalInputData) digitalInputData);
-                break;
-            case PWM_INPUT_DATA:
-                final DataPoint pwmInputData = ((ASCIIPWMInputDataMessage) message).toDataPoints();
-                getMessageBroadcaster().broadcastPWMInputDataPoint(this, (PWMInputData) pwmInputData);
-                break;
-            default:
-                break;
+        try {
+            switch (message.getType()) {
+                case DEBUG: // Fall through for all message types
+                case STATUS:
+                case COMMAND_DATA:
+                case DIGITAL_OUTPUT_DATA:
+                    getMessageBroadcaster().broadcastMessage(this, message);
+                    break;
+                case ERROR:
+                    if (((ASCIIErrorMessage) message).isNetworkError) {
+                        getMessageBroadcaster().broadcastNetworkError(this, message);
+                    }
+                    getMessageBroadcaster().broadcastMessage(this, message);
+                    break;
+                case ANALOG_INPUT_DATA:
+                    final DataPoint analogInputData = ((ASCIIAnalogInputDataMessage) message).toDataPoints();
+                    getMessageBroadcaster().broadcastAnalogInputDataPoint(this, (AnalogInputCountData) analogInputData);
+                    break;
+                case DIGITAL_INPUT_DATA:
+                    final DataPoint digitalInputData = ((ASCIIDigitalInputDataMessage) message).toDataPoints();
+                    getMessageBroadcaster().broadcastDigitalInputDataPoint(this, (DigitalInputData) digitalInputData);
+                    break;
+                case PWM_INPUT_DATA:
+                    final DataPoint pwmInputData = ((ASCIIPWMInputDataMessage) message).toDataPoints();
+                    getMessageBroadcaster().broadcastPWMInputDataPoint(this, (PWMInputData) pwmInputData);
+                    break;
+                default:
+                    break;
+            }
+        }catch (NumberFormatException e){
+            e.printStackTrace();
         }
     }
 
     @Override
-    public void onMessageDetetced(final String message) {
-        super.onMessageDetetced(message);
+    public void onMessageDetected(final String message) {
+        super.onMessageDetected(message);
         getParsingExecutor().parseMessage(message, this);
     }
 
