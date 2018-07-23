@@ -39,10 +39,8 @@ uploadArchives {
         repositories {
             mavenDeployer {
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-                pom.artifactId = POM_ARTIFACT_ID
-                println(pom.artifactId)
-
+                project.version = VERSION_NAME
+                project.group = GROUP
                 snapshotRepository(url: isSnapshotBuild() ?
                         "https://oss.sonatype.org/content/repositories/snapshots" :
                         mavenLocal().url) {
