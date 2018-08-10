@@ -21,7 +21,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 buildscript {
-    ext.kotlin_version = '1.2.51'
+    ext.kotlin_version = '1.2.60'
 
     repositories {
         jcenter()
@@ -52,11 +52,13 @@ tasks.withType(Javadoc) {
 dependencies {
     compile(group: 'commons-net', name: 'commons-net', version: '3.3', ext: 'jar')
 
-    compile 'tec.units:indriya:1.0'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-    compile 'org.tenkiv.coral:coral:2.0.0.1'
+    implementation "org.tenkiv.daqc:daqc-tools:+"
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile 'org.tenkiv.physikal:core:2.0.2.2-SNAPSHOT'
+
+    compile 'org.tenkiv.coral:coral:2.0.1.1'
 
     testCompile 'io.kotlintest:kotlintest:2.0.7'
 }
@@ -65,6 +67,7 @@ apply from: 'maven_push.gradle'
 
 jacoco {
     toolVersion = '0.7.9'
+    reportsDir = file("$buildDir/customJacocoReportDir")
 }
 
 jacocoTestReport {
